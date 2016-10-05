@@ -43,7 +43,7 @@ namespace NinjaCatDiscordBot
         #region Constants
 
         private const string AppName = "Ninja Cat Bot";
-        private const string AppUrl = "https://github.com/Goldfish64/NinjaCatBot";
+        private const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
         private const string UserName = "NinjaCat";
         private const string Nickname = "Ninja Cat";
 
