@@ -68,6 +68,9 @@ namespace NinjaCatDiscordBot
         private const string LatestBuildCommand = "latestbuild";
         private const string LatestBuildCommandDesc = "gets the latest Insider build";
         private readonly string[] LatestBuildKeywords = { "latest build", "latest insider build", "latest windows 10 build", "latest windows build", "latest insider preview build" };
+        private const string JoinCommand = "join";
+        private const string JoinCommandDesc = "join the Insider program";
+        private const string JoinCommandUrl = "https://insider.windows.com/";
         private const string TimeCommand = "time";
         private const string TimeCommandDesc = "shows the current time";
         private const string TimeCommandKeyword = "time";
@@ -124,31 +127,35 @@ namespace NinjaCatDiscordBot
             client.ServerAvailable += async (s, e) => await e.Server.CurrentUser.Edit(nickname: Nickname);
 
             // Register the about command.
-            client.GetService<CommandService>().CreateCommand(CommandPrefix + AboutCommand).Alias(new string[] { CommandPrefixShort + AboutCommand })
+            client.GetService<CommandService>().CreateCommand(CommandPrefix + AboutCommand).Alias(CommandPrefixShort + AboutCommand)
                 .Description(AboutCommandDesc).Do(async e => await SendAbout(e.Channel));
 
             // Register the help command.
-            client.GetService<CommandService>().CreateCommand(CommandPrefix + HelpCommand).Alias(new string[] { CommandPrefixShort + HelpCommand })
+            client.GetService<CommandService>().CreateCommand(CommandPrefix + HelpCommand).Alias(CommandPrefixShort + HelpCommand)
                 .Description(HelpCommandDesc).Do(async e => await SendHelp(e.Channel));
 
             // Register the ping command.
-            client.GetService<CommandService>().CreateCommand(CommandPrefix + PingCommand).Alias(new string[] { CommandPrefixShort + PingCommand })
+            client.GetService<CommandService>().CreateCommand(CommandPrefix + PingCommand).Alias(CommandPrefixShort + PingCommand)
                 .Description(PingCommandDesc).Do(async e => await SendPing(e.User, e.Channel));
 
             // Register the trex command.
-            client.GetService<CommandService>().CreateCommand(CommandPrefix + TrexCommand).Alias(new string[] { CommandPrefixShort + TrexCommand })
+            client.GetService<CommandService>().CreateCommand(CommandPrefix + TrexCommand).Alias(CommandPrefixShort + TrexCommand)
                 .Description(TrexCommandDesc).Do(async e => await SendTrex(e.Channel));
 
             // Register the latest command.
-            client.GetService<CommandService>().CreateCommand(CommandPrefix + LatestBuildCommand).Alias(new string[] { CommandPrefixShort + LatestBuildCommand })
+            client.GetService<CommandService>().CreateCommand(CommandPrefix + LatestBuildCommand).Alias(CommandPrefixShort + LatestBuildCommand)
                 .Description(LatestBuildCommandDesc).Do(async e => await SendLatestBuild(e.Channel));
 
+            // Register the join command.
+            client.GetService<CommandService>().CreateCommand(CommandPrefix + JoinCommand).Alias(CommandPrefixShort + JoinCommand)
+                .Description(JoinCommandDesc).Do(async e => await SendJoin(e.Channel));
+
             // Register the time command.
-            client.GetService<CommandService>().CreateCommand(CommandPrefix + TimeCommand).Alias(new string[] { CommandPrefixShort + TimeCommand })
+            client.GetService<CommandService>().CreateCommand(CommandPrefix + TimeCommand).Alias(CommandPrefixShort + TimeCommand)
                 .Description(TimeCommandDesc).Do(async e => await SendTime(e.Channel));
 
             // Register the platform command.
-            client.GetService<CommandService>().CreateCommand(CommandPrefix + PlatformCommand).Alias(new string[] { CommandPrefixShort + PlatformCommand })
+            client.GetService<CommandService>().CreateCommand(CommandPrefix + PlatformCommand).Alias(CommandPrefixShort + PlatformCommand)
                 .Description(PlatformCommandDesc).Do(async e => await SendPlatform(e.Channel));
 
             // Try to connect to Discord until connected.
@@ -294,7 +301,7 @@ namespace NinjaCatDiscordBot
 
                 case 1:
                     await channel.SendMessage(
-                        $"Greetings! I am the {Nickname}, a bot built using the Discord.Net library!\n" +
+                        $"Greetings! I am the {Nickname}, a bot built using the Discord.Net and Tweetinvi libraries!\n" +
                         $"I was activated on October 2, 2016 by <@191330317439598593> with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
                         $"Your wish is my command, so type **{CommandHelpPrefix}{HelpCommand}** or **{CommandHelpPrefixShort}{HelpCommand}** for info on what I can do for you.");
                     break;
@@ -330,28 +337,30 @@ namespace NinjaCatDiscordBot
             switch (random.Next(2))
             {
                 default:
-                    await channel.SendMessage($"So you need help huh? You've come to the right place.\n\n" +
+                    await channel.SendMessage($"So you need help huh? You've come to the right place. :cat::question:\n\n" +
                         $"My commands are:\n" +
-                        $"**{CommandHelpPrefix}{AboutCommand}** or **{CommandHelpPrefixShort}{AboutCommand}**: {AboutCommandDesc}. :cat:\n" +
-                        $"**{CommandHelpPrefix}{HelpCommand}** or **{CommandHelpPrefixShort}{HelpCommand}**: {HelpCommandDesc}. :question:\n" +
-                        $"**{CommandHelpPrefix}{PingCommand}** or **{CommandHelpPrefixShort}{PingCommand}**: {PingCommandDesc}. :ping_pong:\n" +
-                        $"**{CommandHelpPrefix}{TrexCommand}** or **{CommandHelpPrefixShort}{TrexCommand}**: {TrexCommandDesc}. :gift:\n" +
-                        $"**{CommandHelpPrefix}{LatestBuildCommand}** or **{CommandHelpPrefixShort}{LatestBuildCommand}**: {LatestBuildCommandDesc}. :mailbox_with_mail:\n" +
-                        $"**{CommandHelpPrefix}{TimeCommand}** or **{CommandHelpPrefixShort}{TimeCommand}**: {TimeCommandDesc}. :alarm_clock:\n" +
-                        $"**{CommandHelpPrefix}{PlatformCommand}** or **{CommandHelpPrefixShort}{PlatformCommand}**: {PlatformCommandDesc}. :house:\n\n" +
+                        $"**{CommandHelpPrefix}{AboutCommand}** or **{CommandHelpPrefixShort}{AboutCommand}**: {AboutCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{HelpCommand}** or **{CommandHelpPrefixShort}{HelpCommand}**: {HelpCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{PingCommand}** or **{CommandHelpPrefixShort}{PingCommand}**: {PingCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{TrexCommand}** or **{CommandHelpPrefixShort}{TrexCommand}**: {TrexCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{LatestBuildCommand}** or **{CommandHelpPrefixShort}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{JoinCommand}** or **{CommandHelpPrefixShort}{JoinCommand}**: {JoinCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{TimeCommand}** or **{CommandHelpPrefixShort}{TimeCommand}**: {TimeCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{PlatformCommand}** or **{CommandHelpPrefixShort}{PlatformCommand}**: {PlatformCommandDesc}.\n\n" +
                         $"If you mention me and include a command, I'll usually respond in some fashion.");
                     break;
 
                 case 1:
-                    await channel.SendMessage($"You need help? Why didn't you just say so?\n\n" +
+                    await channel.SendMessage($"You need help? Why didn't you just say so? :cat::question:\n\n" +
                         $"My set of commands include:\n" +
-                        $"**{CommandHelpPrefix}{AboutCommand}** or **{CommandHelpPrefixShort}{AboutCommand}**: {AboutCommandDesc}. :cat:\n" +
-                        $"**{CommandHelpPrefix}{HelpCommand}** or **{CommandHelpPrefixShort}{HelpCommand}**: {HelpCommandDesc}. :question:\n" +
-                        $"**{CommandHelpPrefix}{PingCommand}** or **{CommandHelpPrefixShort}{PingCommand}**: {PingCommandDesc}. :ping_pong:\n" +
-                        $"**{CommandHelpPrefix}{TrexCommand}** or **{CommandHelpPrefixShort}{TrexCommand}**: {TrexCommandDesc}. :gift:\n" +
-                        $"**{CommandHelpPrefix}{LatestBuildCommand}** or **{CommandHelpPrefixShort}{LatestBuildCommand}**: {LatestBuildCommandDesc}. :mailbox_with_mail:\n" +
-                        $"**{CommandHelpPrefix}{TimeCommand}** or **{CommandHelpPrefixShort}{TimeCommand}**: {TimeCommandDesc}. :alarm_clock:\n" +
-                        $"**{CommandHelpPrefix}{PlatformCommand}** or **{CommandHelpPrefixShort}{PlatformCommand}**: {PlatformCommandDesc}. :house:\n\n" +
+                        $"**{CommandHelpPrefix}{AboutCommand}** or **{CommandHelpPrefixShort}{AboutCommand}**: {AboutCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{HelpCommand}** or **{CommandHelpPrefixShort}{HelpCommand}**: {HelpCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{PingCommand}** or **{CommandHelpPrefixShort}{PingCommand}**: {PingCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{TrexCommand}** or **{CommandHelpPrefixShort}{TrexCommand}**: {TrexCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{LatestBuildCommand}** or **{CommandHelpPrefixShort}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{JoinCommand}** or **{CommandHelpPrefixShort}{JoinCommand}**: {JoinCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{TimeCommand}** or **{CommandHelpPrefixShort}{TimeCommand}**: {TimeCommandDesc}.\n" +
+                        $"**{CommandHelpPrefix}{PlatformCommand}** or **{CommandHelpPrefixShort}{PlatformCommand}**: {PlatformCommandDesc}.\n\n" +
                         $"If you mention me with a command, I might get back to you.");
                     break;
             }
@@ -471,6 +480,22 @@ namespace NinjaCatDiscordBot
                         break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Sends the join URL to the specified channel.
+        /// </summary>
+        /// <param name="channel">The <see cref="Channel"/> to send the URL to.</param>
+        private async Task SendJoin(Channel channel)
+        {
+            // Bot is typing.
+            await channel.SendIsTyping();
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Send URL.
+            await channel.SendMessage($"{JoinCommandUrl}");
         }
 
         /// <summary>

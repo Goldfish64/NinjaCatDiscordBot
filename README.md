@@ -6,10 +6,11 @@ Ninja Cat is a [Discord.Net](https://github.com/RogueException/Discord.Net) bot 
 Currently it responds to commands beginning with **$ninjacat** or **$nj**, but it will respond to more natural-type queries, thanks to its advanced cat language programming.
 
 Commands:
-* **$ninjacat-about** or **$nj-about**: shows the bot's about message. :cat:
-* **$ninjacat-help** or **$nj-help**: shows the bot's help. :question:
-* **$ninjacat-ping** or **$nj-ping**: pong. :ping_pong:
-* **$ninjacat-trex** or **$nj-trex**: shows the Windows 10 Skype emoticon. :gift:
-* **$ninjacat-latestbuild** or **$nj-latestbuild**: gets the latest Insider build. :mailbox_with_mail:
-* **$ninjacat-time** or **$nj-time**: shows the current time. :alarm_clock:
-* **$ninjacat-platform** or **$nj-platform**: shows the platform the bot is running on. :house:
+* **$ninjacat-about** or **$nj-about**: shows the bot's about message.
+* **$ninjacat-help** or **$nj-help**: shows the bot's help.
+* **$ninjacat-ping** or **$nj-ping**: pong.
+* **$ninjacat-trex** or **$nj-trex**: shows the Windows 10 Skype emoticon.
+* **$ninjacat-latestbuild** or **$nj-latestbuild**: gets the latest Insider build.
+* **$ninjacat-join** or **$nj-join**: join the Insider program.
+* **$ninjacat-time** or **$nj-time**: shows the current time.
+* **$ninjacat-platform** or **$nj-platform**: shows the platform the bot is running on.
