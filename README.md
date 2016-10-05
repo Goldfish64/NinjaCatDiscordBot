@@ -1,7 +1,7 @@
 ![](src/avatar.png?raw=true)
 
 # Ninja Cat: a Windows Insider build bot for Discord
-Ninja Cat is a [Discord.Net](https://github.com/RogueException/Discord.Net) bot designed to send a messages when a new [Windows 10 Insider](https://insider.windows.com/) build is posted. Simple as that.
+Ninja Cat is a [Discord.Net](https://github.com/RogueException/Discord.Net) bot designed to alert the channel when a new [Windows 10 Insider](https://insider.windows.com/) build is posted. Simple as that.
 
 Currently it responds to commands beginning with **$ninjacat** or **$nj**, but it will respond to more natural-type queries, thanks to its advanced cat language programming.
 
