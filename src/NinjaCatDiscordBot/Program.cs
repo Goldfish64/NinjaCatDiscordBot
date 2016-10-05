@@ -243,6 +243,9 @@ namespace NinjaCatDiscordBot
             if (!(e.Message.Text.StartsWith(CommandPrefixChar + CommandPrefix) || e.Message.Text.StartsWith(CommandPrefixChar + CommandPrefixShort)))
                 return;
 
+            // Bot is typing.
+            await e.Channel.SendIsTyping();
+
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
