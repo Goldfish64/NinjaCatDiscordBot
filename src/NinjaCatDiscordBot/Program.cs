@@ -240,6 +240,11 @@ namespace NinjaCatDiscordBot
         private async void OnCommandError(object sender, CommandErrorEventArgs e)
         {
             // If the command doesn't begin with the prefix and "nj" or "ninjacat", ignore it.
+            if (!(e.Message.Text.StartsWith(CommandPrefixChar + CommandPrefix) || e.Message.Text.StartsWith(CommandPrefixChar + CommandPrefixShort)))
+                return;
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get error message. If it is valid, send it.
             var message = e.Exception?.Message;
