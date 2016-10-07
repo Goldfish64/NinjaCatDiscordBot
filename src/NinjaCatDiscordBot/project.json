@@ -5,12 +5,14 @@
   },
 
   "dependencies": {
-    "Discord.Net": "0.9.5",
-    "Discord.Net.Commands": "0.9.5",
+    "Discord.Net": "1.0.0-*",
+    "Discord.Net.Commands": "1.0.0-*",
+    "Microsoft.AspNet.WebApi.Client": "5.2.2",
     "Microsoft.NETCore.App": {
       "type": "platform",
       "version": "1.0.1"
     },
+    "System.Runtime.Serialization.Xml": "4.1.1",
     "TweetinviAPI": "1.1.1"
   },
 
