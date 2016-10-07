@@ -314,7 +314,7 @@ namespace NinjaCatDiscordBot
 
                 // Parse JSON and get the latest public build.
                 var builds = JArray.Parse(response).ToList();
-                var newestBuild = builds.First(b => (int)b["SourceType"] == 0 && b["SourceDetails"].ToString().Contains("insider"));
+                var newestBuild = builds.First(b => (int)b["SourceType"] == 0);
 
                 // Pause for realism.
                 await Task.Delay(TimeSpan.FromSeconds(1));
@@ -323,19 +323,19 @@ namespace NinjaCatDiscordBot
                 switch (client.GetRandomNumber(4))
                 {
                     default:
-                        await message.Channel.SendMessageAsync($"I've got the latest Insider build for you. It is **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** as of yesterday. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
+                        await message.Channel.SendMessageAsync($"I've got the latest public build for you. It is **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}**. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
                         break;
 
                     case 1:
-                        await message.Channel.SendMessageAsync($"Ask and you shall receive. The latest Insider build as of yesterday is **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}**. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
+                        await message.Channel.SendMessageAsync($"Ask and you shall receive. The latest public build is **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}**. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
                         break;
 
                     case 2:
-                        await message.Channel.SendMessageAsync($"Yes master. Right away master. **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** is the latest and greatest as of yesterday. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
+                        await message.Channel.SendMessageAsync($"Yes master. Right away master. **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** is the latest and greatest. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
                         break;
 
                     case 3:
-                        await message.Channel.SendMessageAsync($"**{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** is the newest Insider build as of yesterday according to my sources. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
+                        await message.Channel.SendMessageAsync($"**{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** is the newest public build according to my sources. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
                         break;
                 }
             }
