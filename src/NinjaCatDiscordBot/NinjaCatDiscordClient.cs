@@ -22,9 +22,11 @@
 * IN THE SOFTWARE.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+using Discord;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot
 {
@@ -58,7 +60,7 @@ namespace NinjaCatDiscordBot
 
         #endregion
 
-        #region Public methods
+        #region Methods
 
         /// <summary>
         /// Gets a random number.
@@ -69,6 +71,37 @@ namespace NinjaCatDiscordBot
         {
             // Return a random number.
             return random.Next(maxValue);
+        }
+
+        /// <summary>
+        /// Gets the speaking channel for the specified guild.
+        /// </summary>
+        /// <param name="guild">The <see cref="IGuild"/> to get the channel for.</param>
+        /// <returns>An <see cref="ITextChannel"/> that should be used.</returns>
+        public async Task<ITextChannel> GetSpeakingChannelForGuildAsync(IGuild guild)
+        {
+            // Create channel variable.
+            ITextChannel channel = null;
+
+            // Try to get the saved channel.
+            if (SpeakingChannels.ContainsKey(guild.Id))
+            {
+                // If it is zero, return null to not speak.
+                if (SpeakingChannels[guild.Id] == 0)
+                    return null;
+                else
+                    channel = await guild.GetTextChannelAsync(SpeakingChannels[guild.Id]);
+            }
+
+            // If the channel is null, delete the entry from the dictionary and use the default one.
+            if (channel == null)
+            {
+                SpeakingChannels.Remove(guild.Id);
+                channel = await guild.GetDefaultChannelAsync();
+            }
+
+            // Return the channel.
+            return channel;
         }
 
         #endregion

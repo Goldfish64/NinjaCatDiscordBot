@@ -100,8 +100,15 @@ namespace NinjaCatDiscordBot
                 // Pause for 5 seconds.
                 await Task.Delay(TimeSpan.FromSeconds(5));
 
-                // Get default channel.
-                var channel = await guild.GetDefaultChannelAsync();
+                // Create variable for speaking channel mention.
+                var speakingChannel = string.Empty;
+
+                // Get speaking channel.
+                var channel = await client.GetSpeakingChannelForGuildAsync(guild);
+
+                // Get the mention if speaking is enabled.
+                if (channel != null)
+                    speakingChannel = channel.Mention;
 
                 // Bot is typing in default channel.
                 await channel.TriggerTypingAsync();
@@ -109,16 +116,37 @@ namespace NinjaCatDiscordBot
                 // Pause for realism.
                 await Task.Delay(TimeSpan.FromSeconds(1));
 
-                // Select and send welcome message.
-                switch (client.GetRandomNumber(2))
+                // Dev began Oct 2. 2016.
+                // Is a speaking channel set?
+                if (!string.IsNullOrEmpty(speakingChannel))
                 {
-                    default:
-                        await (await guild.GetDefaultChannelAsync()).SendMessageAsync(Constants.AboutMessage1);
-                        break;
+                    // Select and send message.
+                    switch (client.GetRandomNumber(2))
+                    {
+                        default:
+                            await channel.SendMessageAsync($"{Constants.AboutMessage1}\n\n" +
+                                $"By default, I'll speak in {speakingChannel}, but you can change it with the **{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** command.");
+                            break;
 
-                    case 1:
-                        await (await guild.GetDefaultChannelAsync()).SendMessageAsync(Constants.AboutMessage2);
-                        break;
+                        case 1:
+                            await channel.SendMessageAsync($"{Constants.AboutMessage2}\n\n" +
+                                $"I'll speak in {speakingChannel} by default, but it can be changed with the **{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** command.");
+                            break;
+                    }
+                }
+                else
+                {
+                    // Select and send message.
+                    switch (client.GetRandomNumber(2))
+                    {
+                        default:
+                            await channel.SendMessageAsync(Constants.AboutMessage1);
+                            break;
+
+                        case 1:
+                            await channel.SendMessageAsync(Constants.AboutMessage2);
+                            break;
+                    }
                 }
             };
 
@@ -262,7 +290,7 @@ namespace NinjaCatDiscordBot
                     foreach (var guild in await client.GetGuildsAsync())
                     {
                         // Get channel.
-                        var channel = await GetSpeakingChannelForGuild(guild);
+                        var channel = await client.GetSpeakingChannelForGuildAsync(guild);
 
                         // If the channel is null, continue on to the next guild.
                         if (channel == null)
@@ -328,7 +356,7 @@ namespace NinjaCatDiscordBot
                     foreach (var guild in await client.GetGuildsAsync())
                     {
                         // Get channel.
-                        var channel = await GetSpeakingChannelForGuild(guild);
+                        var channel = await client.GetSpeakingChannelForGuildAsync(guild);
 
                         // If the channel is null, continue on to the next guild.
                         if (channel == null)
@@ -376,37 +404,6 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Gets the speaking channel for the specified guild.
-        /// </summary>
-        /// <param name="guild">The <see cref="IGuild"/> to get the channel for.</param>
-        /// <returns>An <see cref="IMessageChannel"/> that should be used.</returns>
-        private async Task<IMessageChannel> GetSpeakingChannelForGuild(IGuild guild)
-        {
-            // Create channel variable.
-            IMessageChannel channel = null;
-
-            // Try to get the saved channel.
-            if (client.SpeakingChannels.ContainsKey(guild.Id))
-            {
-                // If it is zero, return null to not speak.
-                if (client.SpeakingChannels[guild.Id] == 0)
-                    return null;
-                else
-                    channel = await guild.GetTextChannelAsync(client.SpeakingChannels[guild.Id]);
-            }
-
-            // If the channel is null, delete the entry from the dictionary and use the default one.
-            if (channel == null)
-            {
-                client.SpeakingChannels.Remove(guild.Id);
-                channel = await guild.GetDefaultChannelAsync();
-            }
-
-            // Return the channel.
-            return channel;
-        }
-
-        /// <summary>
         /// Triggers the typing message in all guilds.
         /// </summary>
         private async Task TriggerTypingInAllGuilds()
@@ -415,7 +412,7 @@ namespace NinjaCatDiscordBot
             foreach (var guild in await client.GetGuildsAsync())
             {
                 // Get channel.
-                var channel = await GetSpeakingChannelForGuild(guild);
+                var channel = await client.GetSpeakingChannelForGuildAsync(guild);
 
                 // If the channel is null, continue on to the next guild.
                 if (channel == null)

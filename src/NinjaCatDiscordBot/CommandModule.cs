@@ -37,7 +37,7 @@ namespace NinjaCatDiscordBot
     /// Contains commands for the bot.
     /// </summary>
     [Module]
-    public class CommandModule
+    public sealed class CommandModule
     {
         #region Private variables
 
@@ -75,20 +75,55 @@ namespace NinjaCatDiscordBot
             // Bot is typing.
             await message.Channel.TriggerTypingAsync();
 
+            // Create variable for speaking channel mention.
+            var speakingChannel = string.Empty;
+
+            // Get guild. If null, ignore it.
+            var guild = (message.Channel as IGuildChannel)?.Guild;
+            if (guild != null)
+            {
+                // Get speaking channel.
+                var channel = await client.GetSpeakingChannelForGuildAsync(guild);
+
+                // Get the mention if speaking is enabled.
+                if (channel != null)
+                    speakingChannel = channel.Mention;
+            }
+
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Dev began Oct 2. 2016.
-            // Select and send message.
-            switch (client.GetRandomNumber(2))
+            // Is a speaking channel set?
+            if (!string.IsNullOrEmpty(speakingChannel))
             {
-                default:
-                    await message.Channel.SendMessageAsync(Constants.AboutMessage1);
-                    break;
+                // Select and send message.
+                switch (client.GetRandomNumber(2))
+                {
+                    default:
+                        await message.Channel.SendMessageAsync($"{Constants.AboutMessage1}\n\n" +
+                            $"I'm currently speaking in {speakingChannel}, but you can change it with the **{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** command.");
+                        break;
 
-                case 1:
-                    await message.Channel.SendMessageAsync(Constants.AboutMessage2);
-                    break;
+                    case 1:
+                        await message.Channel.SendMessageAsync($"{Constants.AboutMessage2}\n\n" +
+                            $"I'm currently speaking in {speakingChannel}, but it can be changed with the **{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** command.");
+                        break;
+                }
+            }
+            else
+            {
+                // Select and send message.
+                switch (client.GetRandomNumber(2))
+                {
+                    default:
+                        await message.Channel.SendMessageAsync(Constants.AboutMessage1);
+                        break;
+
+                    case 1:
+                        await message.Channel.SendMessageAsync(Constants.AboutMessage2);
+                        break;
+                }
             }
         }
 
