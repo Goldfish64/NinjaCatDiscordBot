@@ -273,8 +273,11 @@ namespace NinjaCatDiscordBot
                     }
 
                     // Check to see if URL has what it takes.
-                    if (fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
+                    if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
                         break;
+
+                    // Clear URL.
+                    fullUrl = string.Empty;
                 }
 
                 // Is it a no-build tweet?
