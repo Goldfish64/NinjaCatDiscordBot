@@ -31,8 +31,9 @@ namespace NinjaCatDiscordBot
     {
         #region Constants
 
-        public const string AppName = "Ninja Cat Bot";
+        public const string AppName = "Ninja Cat";
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
+        public const string InviteUrl = "https://discordapp.com/oauth2/authorize?permissions=0&client_id=232369430456172545&scope=bot";
         public const string UserName = "NinjaCat";
         public const string Nickname = "Ninja Cat";
 
@@ -43,6 +44,13 @@ namespace NinjaCatDiscordBot
         public const string HelpCommand = "help";
         public const string HelpCommandDesc = "get help";
         public const string HelpCommandKeyword = "help";
+        public const string HomeCommand = "home";
+        public const string HomeCommandDesc = "go to my homepage";
+        public const string HomeCommandAlias = "sourcecode";
+        public const string HomeCommandUrl = AppUrl;
+        public const string InviteCommand = "invite";
+        public const string InviteCommandDesc = "invite me to your server";
+        public const string InviteCommandUrl = InviteUrl;
         public const string PingCommand = "ping";
         public const string PingCommandDesc = "pong";
         public static readonly string[] PingCommandKeywords = { "ping", "pong", "ping-pong" };

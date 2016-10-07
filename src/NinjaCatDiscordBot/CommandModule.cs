@@ -145,9 +145,11 @@ namespace NinjaCatDiscordBot
             {
                 default:
                     await message.Channel.SendMessageAsync($"So you need help huh? You've come to the right place. :cat::question:\n\n" +
-                        $"My commands are:\n" +
+                        $"My set of commands include:\n" +
                         $"**{Constants.CommandPrefix}{Constants.AboutCommand}**: {Constants.AboutCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.HelpCommand}**: {Constants.HelpCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.HomeCommand}** or **{Constants.CommandPrefix}{Constants.HomeCommandAlias}**: {Constants.HomeCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.InviteCommand}**: {Constants.InviteCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.PingCommand}**: {Constants.PingCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.TrexCommand}**: {Constants.TrexCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.LatestBuildCommand}**: {Constants.LatestBuildCommandDesc}.\n" +
@@ -156,9 +158,9 @@ namespace NinjaCatDiscordBot
                         $"**{Constants.CommandPrefix}{Constants.PlatformCommand}**: {Constants.PlatformCommandDesc}.\n\n" +
                         $"Settings commands:\n" +
                         $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.GetGroup} {Constants.NicknameCommand}**: {Constants.GetNicknameCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.NicknameCommand}**: {Constants.SetNicknameCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.NicknameCommand}** *nickname*: {Constants.SetNicknameCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.GetGroup} {Constants.ChannelCommand}**: {Constants.GetChannelCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}**: {Constants.SetChannelCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** *channel*: {Constants.SetChannelCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.DisableGroup} {Constants.ChannelCommand}**: {Constants.DisableChannelCommandDesc}.\n\n" +
                         $"If you mention me and include a command, I'll usually respond in some fashion.");
                     break;
@@ -168,6 +170,8 @@ namespace NinjaCatDiscordBot
                         $"My set of commands include:\n" +
                         $"**{Constants.CommandPrefix}{Constants.AboutCommand}**: {Constants.AboutCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.HelpCommand}**: {Constants.HelpCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.HomeCommand}** or **{Constants.CommandPrefix}{Constants.HomeCommandAlias}**: {Constants.HomeCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.InviteCommand}**: {Constants.InviteCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.PingCommand}**: {Constants.PingCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.TrexCommand}**: {Constants.TrexCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.LatestBuildCommand}**: {Constants.LatestBuildCommandDesc}.\n" +
@@ -176,9 +180,9 @@ namespace NinjaCatDiscordBot
                         $"**{Constants.CommandPrefix}{Constants.PlatformCommand}**: {Constants.PlatformCommandDesc}.\n\n" +
                         $"Settings commands:\n" +
                         $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.GetGroup} {Constants.NicknameCommand}**: {Constants.GetNicknameCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.NicknameCommand}**: {Constants.SetNicknameCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.NicknameCommand}** *nickname*: {Constants.SetNicknameCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.GetGroup} {Constants.ChannelCommand}**: {Constants.GetChannelCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}**: {Constants.SetChannelCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** *channel*: {Constants.SetChannelCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.DisableGroup} {Constants.ChannelCommand}**: {Constants.DisableChannelCommandDesc}.\n\n" +
                         $"If you mention me with a command, I might get back to you.");
                     break;
@@ -186,11 +190,46 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
+        /// Replies to the specified message with the homepage URL.
+        /// </summary>
+        /// <param name="message">The message to reply to.</param>
+        [Command(Constants.HomeCommand)]
+        [Alias(Constants.HomeCommandAlias)]
+        private async Task ReplyHomeAsync(IUserMessage message)
+        {
+            // Bot is typing.
+            await message.Channel.TriggerTypingAsync();
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Send URL.
+            await message.Channel.SendMessageAsync(Constants.HomeCommandUrl);
+        }
+
+        /// <summary>
+        /// Replies to the specified message with the invite URL.
+        /// </summary>
+        /// <param name="message">The message to reply to.</param>
+        [Command(Constants.InviteCommand)]
+        private async Task ReplyInviteAsync(IUserMessage message)
+        {
+            // Bot is typing.
+            await message.Channel.TriggerTypingAsync();
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Send invite URL.
+            await message.Channel.SendMessageAsync(Constants.InviteCommandUrl);
+        }
+
+        /// <summary>
         /// Replies to the specified message with a pong.
         /// </summary>
         /// <param name="message">The message to reply to.</param>
         [Command(Constants.PingCommand)]
-        private async Task ReplyPing(IUserMessage message)
+        private async Task ReplyPingAsync(IUserMessage message)
         {
             // Bot is typing.
             await message.Channel.TriggerTypingAsync();
@@ -316,7 +355,7 @@ namespace NinjaCatDiscordBot
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Send URL.
-            await message.Channel.SendMessageAsync($"{Constants.EnrollCommandUrl}");
+            await message.Channel.SendMessageAsync(Constants.EnrollCommandUrl);
         }
 
         /// <summary>
