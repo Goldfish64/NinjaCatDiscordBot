@@ -5,6 +5,9 @@ Hi there! I am Ninja Cat, a [Discord.Net](https://github.com/RogueException/Disc
 
 Currently I respond to commands beginning with **$nj-**, but I will respond to more natural-type queries, thanks to my advanced cat language programming.
 
+### [Click here to invite me to your server!](https://discordapp.com/oauth2/authorize?permissions=0&client_id=232369430456172545&scope=bot) ###
+
+## Commands ##
 My set of commands include:
 * **$nj-about**: get to know me.
 * **$nj-help**: get help.
