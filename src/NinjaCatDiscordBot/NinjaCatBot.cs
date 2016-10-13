@@ -349,7 +349,7 @@ namespace NinjaCatDiscordBot
                         platform = " for Mobile";
 
                     // Get the build number and format it.
-                    var build = Regex.Match(fullUrl, @"\d{4,}").Value;
+                    var build = Regex.Match(fullUrl, @"\d{5,}").Value;
                     if (!string.IsNullOrWhiteSpace(build))
                         build = $"Windows 10 Insider Preview Build {build}";
                     else
