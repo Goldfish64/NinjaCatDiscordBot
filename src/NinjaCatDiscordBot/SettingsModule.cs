@@ -179,40 +179,77 @@ namespace NinjaCatDiscordBot
 
                 // Try to get the saved channel.
                 if (client.SpeakingChannels.ContainsKey(guild.Id))
-                    channel = await guild.GetTextChannelAsync(client.SpeakingChannels[guild.Id]);
-
-                // If the channel is null, delete the entry from the dictionary and use the default one.
-                if (channel == null)
                 {
-                    client.SpeakingChannels.Remove(guild.Id);
-                    channel = await guild.GetDefaultChannelAsync();
+                    // If it is zero, that means announce is disabled.
+                    if (client.SpeakingChannels[guild.Id] != 0)
+                        channel = await guild.GetTextChannelAsync(client.SpeakingChannels[guild.Id]);
+                }
+                else
+                {
+                    // If the channel is null, delete the entry from the dictionary and use the default one.
+                    if (channel == null)
+                    {
+                        client.SpeakingChannels.Remove(guild.Id);
+                        channel = await guild.GetDefaultChannelAsync();
+                        client.SaveSettings();
+                    }
                 }
 
                 // Pause for realism.
                 await Task.Delay(TimeSpan.FromSeconds(1));
 
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
+                // If the channel is still null, that means no announcements.
+                if (channel == null)
                 {
-                    default:
-                        await message.Channel.SendMessageAsync($"The channel I'll speak in is {channel.Mention}.");
-                        break;
+                    // Select and send message.
+                    switch (client.GetRandomNumber(4))
+                    {
+                        default:
+                            await message.Channel.SendMessageAsync($"I'm not speaking in any channel.");
+                            break;
 
-                    case 1:
-                        await message.Channel.SendMessageAsync($"My announcement channel is currently {channel.Mention}.");
-                        break;
+                        case 1:
+                            await message.Channel.SendMessageAsync($"I'm not making announcements.");
+                            break;
 
-                    case 2:
-                        await message.Channel.SendMessageAsync($"When new builds are released, I'll announce them in {channel.Mention}.");
-                        break;
+                        case 2:
+                            await message.Channel.SendMessageAsync($"When new builds are released, I'm keeping quiet.");
+                            break;
 
-                    case 3:
-                        await message.Channel.SendMessageAsync($"{channel.Mention} is the channel I'll speak in.");
-                        break;
+                        case 3:
+                            await message.Channel.SendMessageAsync($"I'm being quiet right now.");
+                            break;
 
-                    case 4:
-                        await message.Channel.SendMessageAsync($"I'll only announce builds in {channel.Mention}.");
-                        break;
+                        case 4:
+                            await message.Channel.SendMessageAsync($"I'm not announcing any builds.");
+                            break;
+                    }
+                }
+                else
+                {
+                    // Select and send message.
+                    switch (client.GetRandomNumber(4))
+                    {
+                        default:
+                            await message.Channel.SendMessageAsync($"The channel I'll speak in is {channel.Mention}.");
+                            break;
+
+                        case 1:
+                            await message.Channel.SendMessageAsync($"My announcement channel is currently {channel.Mention}.");
+                            break;
+
+                        case 2:
+                            await message.Channel.SendMessageAsync($"When new builds are released, I'll announce them in {channel.Mention}.");
+                            break;
+
+                        case 3:
+                            await message.Channel.SendMessageAsync($"{channel.Mention} is the channel I'll speak in.");
+                            break;
+
+                        case 4:
+                            await message.Channel.SendMessageAsync($"I'll only announce builds in {channel.Mention}.");
+                            break;
+                    }
                 }
             }
 
@@ -268,8 +305,8 @@ namespace NinjaCatDiscordBot
                 // Pause for realism.
                 await Task.Delay(TimeSpan.FromSeconds(1));
 
-                // If the user is null or lacks the manage server permission, show error.
-                if (user?.GuildPermissions.ManageGuild != true)
+                // If the user is null, lacks the manage server permission, or is not master, show error.
+                if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
                 {
                     // Select and send message.
                     switch (client.GetRandomNumber(4))
@@ -363,8 +400,8 @@ namespace NinjaCatDiscordBot
                 // Pause for realism.
                 await Task.Delay(TimeSpan.FromSeconds(1));
 
-                // If the user is null or lacks the manage server permission, show error.
-                if (user?.GuildPermissions.ManageGuild != true)
+                // If the user is null, lacks the manage server permission, or is not master, show error.
+                if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
                 {
                     // Select and send message.
                     switch (client.GetRandomNumber(4))
@@ -390,6 +427,7 @@ namespace NinjaCatDiscordBot
 
                 // Save channel.
                 client.SpeakingChannels[channel.Guild.Id] = channel.Id;
+                client.SaveSettings();
 
                 // Select and send message.
                 switch (client.GetRandomNumber(4))
@@ -497,8 +535,8 @@ namespace NinjaCatDiscordBot
                 // Pause for realism.
                 await Task.Delay(TimeSpan.FromSeconds(1));
 
-                // If the user is null or lacks the manage server permission, show error.
-                if (user?.GuildPermissions.ManageGuild != true)
+                // If the user is null, lacks the manage server permission, or is not master, show error.
+                if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
                 {
                     // Select and send message.
                     switch (client.GetRandomNumber(4))
@@ -524,6 +562,7 @@ namespace NinjaCatDiscordBot
 
                 // Set channel to 0.
                 client.SpeakingChannels[guild.Id] = 0;
+                client.SaveSettings();
 
                 // Select and send message.
                 switch (client.GetRandomNumber(4))

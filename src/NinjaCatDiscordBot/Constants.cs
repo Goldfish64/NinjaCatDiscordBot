@@ -31,11 +31,15 @@ namespace NinjaCatDiscordBot
     {
         #region Constants
 
+        public const string LogFileName = "nj-logfile.log";
+        public const string SettingsFileName = "nj-settings.json";
+
         public const string AppName = "Ninja Cat";
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
         public const string InviteUrl = "https://discordapp.com/oauth2/authorize?permissions=0&client_id=232369430456172545&scope=bot";
         public const string UserName = "NinjaCat";
         public const string Nickname = "Ninja Cat";
+        public const ulong OwnerId = 191330317439598593;
 
         public const string CommandPrefix = "$nj-";
 

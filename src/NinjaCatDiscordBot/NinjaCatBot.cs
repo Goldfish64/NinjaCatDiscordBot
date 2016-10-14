@@ -24,6 +24,7 @@
 
 using Discord;
 using Discord.Commands;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -68,7 +69,7 @@ namespace NinjaCatDiscordBot
         private async Task Start()
         {
             // Open log file.
-            logStreamWriter = File.AppendText("logfile.log");
+            logStreamWriter = File.AppendText(Constants.LogFileName);
 
             // Write startup messages.
             LogOutput($"{Constants.AppName} has started.");
@@ -349,7 +350,7 @@ namespace NinjaCatDiscordBot
                         platform = " for Mobile";
 
                     // Get the build number and format it.
-                    var build = Regex.Match(fullUrl, @"\d{5,}").Value;
+                    var build = Regex.Match(Regex.Match(fullUrl, @"build-\d{5,}").Value, @"\d").Value;
                     if (!string.IsNullOrWhiteSpace(build))
                         build = $"Windows 10 Insider Preview Build {build}";
                     else

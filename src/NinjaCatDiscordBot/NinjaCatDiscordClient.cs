@@ -24,8 +24,10 @@
 
 using Discord;
 using Discord.WebSocket;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot
@@ -46,7 +48,19 @@ namespace NinjaCatDiscordBot
         /// <summary>
         /// Initializes a new instance of the <see cref="NinjaCatDiscordClient"/> class.
         /// </summary>
-        public NinjaCatDiscordClient() { }
+        public NinjaCatDiscordClient()
+        {
+            // Create temporary dictionary.
+            var channels = new Dictionary<ulong, ulong>();
+
+            // Does the settings file exist? If so, seserialize JSON.
+            if (File.Exists(Constants.SettingsFileName))
+                channels = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.SettingsFileName));
+
+            // Add each entry to the client.
+            foreach (var entry in channels)
+                SpeakingChannels.Add(entry.Key, entry.Value);
+        }
 
         #endregion
 
@@ -98,10 +112,20 @@ namespace NinjaCatDiscordBot
             {
                 SpeakingChannels.Remove(guild.Id);
                 channel = await guild.GetDefaultChannelAsync();
+                SaveSettings();
             }
 
             // Return the channel.
             return channel;
+        }
+
+        /// <summary>
+        /// Saves the settings.
+        /// </summary>
+        public void SaveSettings()
+        {
+            // Serialize settings to JSON.
+            File.WriteAllText(Constants.SettingsFileName, JsonConvert.SerializeObject(SpeakingChannels));
         }
 
         #endregion
