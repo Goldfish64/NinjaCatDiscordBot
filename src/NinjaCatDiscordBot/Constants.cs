@@ -40,6 +40,7 @@ namespace NinjaCatDiscordBot
         public const string UserName = "NinjaCat";
         public const string Nickname = "Ninja Cat";
         public const ulong OwnerId = 191330317439598593;
+        public const ulong BotsGuildId = 110373943822540800;
 
         public const string CommandPrefix = "$nj-";
 

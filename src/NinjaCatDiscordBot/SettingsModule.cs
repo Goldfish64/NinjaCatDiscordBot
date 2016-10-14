@@ -174,6 +174,17 @@ namespace NinjaCatDiscordBot
                     return;
                 }
 
+                // If the guild is the Bots server, never speak.
+                if (guild.Id == Constants.BotsGuildId)
+                {
+                    // Pause for realism.
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+
+                    // Send message.
+                    await message.Channel.SendMessageAsync($"Because this is the bots server, I can't speak in any channels.");
+                    return;
+                }
+
                 // Create channel variable.
                 ITextChannel channel = null;
 
@@ -425,6 +436,40 @@ namespace NinjaCatDiscordBot
                     return;
                 }
 
+                // Get guild. If null show error.
+                var guild = (message.Channel as IGuildChannel)?.Guild;
+                if (guild == null)
+                {
+                    // Select and send message.
+                    switch (client.GetRandomNumber(4))
+                    {
+                        default:
+                            await message.Channel.SendMessageAsync($"I can only speak within a server. Run this command again from a server channel.");
+                            break;
+
+                        case 1:
+                            await message.Channel.SendMessageAsync($"No can do. You need to run this command from a server channel to change my speaking channel.");
+                            break;
+
+                        case 2:
+                            await message.Channel.SendMessageAsync($"I'm sorry {message.Author.Mention}, I'm afraid I can't do that. To change the channel I speak in, run this command in a server channel.");
+                            break;
+
+                        case 3:
+                            await message.Channel.SendMessageAsync($"Not happening. My channel can only be changed from a server channel.");
+                            break;
+                    }
+                    return;
+                }
+
+                // If the guild is the Bots server, never speak.
+                if (guild.Id == Constants.BotsGuildId)
+                {
+                    // Send message.
+                    await message.Channel.SendMessageAsync($"Because this is the bots server, I can't speak in any channels.");
+                    return;
+                }
+
                 // Save channel.
                 client.SpeakingChannels[channel.Guild.Id] = channel.Id;
                 client.SaveSettings();
@@ -500,6 +545,12 @@ namespace NinjaCatDiscordBot
                 // Bot is typing.
                 await message.Channel.TriggerTypingAsync();
 
+                // Get the user.
+                var user = message.Author as IGuildUser;
+
+                // Pause for realism.
+                await Task.Delay(TimeSpan.FromSeconds(1));
+
                 // Get guild. If null show error.
                 var guild = (message.Channel as IGuildChannel)?.Guild;
                 if (guild == null)
@@ -529,11 +580,13 @@ namespace NinjaCatDiscordBot
                     return;
                 }
 
-                // Get the user.
-                var user = message.Author as IGuildUser;
-
-                // Pause for realism.
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                // If the guild is the Bots server, never speak.
+                if (guild.Id == Constants.BotsGuildId)
+                {
+                    // Send message.
+                    await message.Channel.SendMessageAsync($"Because this is the bots server, I can't speak in any channels.");
+                    return;
+                }
 
                 // If the user is null, lacks the manage server permission, or is not master, show error.
                 if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)

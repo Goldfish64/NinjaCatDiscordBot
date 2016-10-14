@@ -94,6 +94,10 @@ namespace NinjaCatDiscordBot
         /// <returns>An <see cref="ITextChannel"/> that should be used.</returns>
         public async Task<ITextChannel> GetSpeakingChannelForGuildAsync(IGuild guild)
         {
+            // If the guild is the Bots server, never speak.
+            if (guild.Id == Constants.BotsGuildId)
+                return null;
+
             // Create channel variable.
             ITextChannel channel = null;
 
