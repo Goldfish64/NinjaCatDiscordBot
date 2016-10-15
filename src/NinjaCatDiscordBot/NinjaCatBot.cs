@@ -170,7 +170,7 @@ namespace NinjaCatDiscordBot
                     var successResult = ParseResult.FromSuccess(new ReadOnlyCollection<TypeReaderResult>(new List<TypeReaderResult>()), new ReadOnlyCollection<TypeReaderResult>(new List<TypeReaderResult>()));
 
                     // LINQ stuff from http://stackoverflow.com/a/2912483.
-                    if (msg.Content.Contains(Constants.HelpCommandKeyword))
+                    if (msg.Content.ToLowerInvariant().Contains(Constants.HelpCommandKeyword))
                     {
                         // Execute the help command and return.
                         await commands.Commands.Single(c => c.Text == Constants.HelpCommand).Execute(msg, successResult);
@@ -178,19 +178,19 @@ namespace NinjaCatDiscordBot
                     }
                     //else if (PingCommandKeywords.Any(s => command.Contains(s)))
                     //    await SendPing(user, channel);
-                    else if (Constants.TrexCommandKeywords.Any(s => msg.Content.Contains(s)))
+                    else if (Constants.TrexCommandKeywords.Any(s => msg.Content.ToLowerInvariant().Contains(s)))
                     {
                         // Execute the trex command and return.
                         await commands.Commands.Single(c => c.Text == Constants.TrexCommand).Execute(msg, successResult);
                         return;
                     }
-                    else if (Constants.LatestBuildKeywords.Any(s => msg.Content.Contains(s)))
+                    else if (Constants.LatestBuildKeywords.Any(s => msg.Content.ToLowerInvariant().Contains(s)))
                     {
                         // Execute the latestbuild command and return.
                         await commands.Commands.Single(c => c.Text == Constants.LatestBuildCommand).Execute(msg, successResult);
                         return;
                     }
-                    else if (msg.Content.Contains(Constants.TimeCommandKeyword))
+                    else if (msg.Content.ToLowerInvariant().Contains(Constants.TimeCommandKeyword))
                     {
                         // Execute the time command and return.
                         await commands.Commands.Single(c => c.Text == Constants.TimeCommand).Execute(msg, successResult);
