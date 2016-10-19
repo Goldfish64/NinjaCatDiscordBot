@@ -155,7 +155,9 @@ namespace NinjaCatDiscordBot
                         $"**{Constants.CommandPrefix}{Constants.LatestBuildCommand}**: {Constants.LatestBuildCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.EnrollCommand}**: {Constants.EnrollCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.TimeCommand}**: {Constants.TimeCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.PlatformCommand}**: {Constants.PlatformCommandDesc}.\n\n" +
+                        $"**{Constants.CommandPrefix}{Constants.PlatformCommand}**: {Constants.PlatformCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.UptimeCommand}**: {Constants.UptimeCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.ServersCommand}**: {Constants.ServersCommandDesc}.\n\n" +
                         $"Settings commands:\n" +
                         $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.GetGroup} {Constants.NicknameCommand}**: {Constants.GetNicknameCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.NicknameCommand}** *nickname*: {Constants.SetNicknameCommandDesc}.\n" +
@@ -177,7 +179,9 @@ namespace NinjaCatDiscordBot
                         $"**{Constants.CommandPrefix}{Constants.LatestBuildCommand}**: {Constants.LatestBuildCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.EnrollCommand}**: {Constants.EnrollCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.TimeCommand}**: {Constants.TimeCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.PlatformCommand}**: {Constants.PlatformCommandDesc}.\n\n" +
+                        $"**{Constants.CommandPrefix}{Constants.PlatformCommand}**: {Constants.PlatformCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.UptimeCommand}**: {Constants.UptimeCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.ServersCommand}**: {Constants.ServersCommandDesc}.\n\n" +
                         $"Settings commands:\n" +
                         $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.GetGroup} {Constants.NicknameCommand}**: {Constants.GetNicknameCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.NicknameCommand}** *nickname*: {Constants.SetNicknameCommandDesc}.\n" +
@@ -440,6 +444,93 @@ namespace NinjaCatDiscordBot
                     await message.Channel.SendMessageAsync($"I live in a box running {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} and {RuntimeInformation.FrameworkDescription.Trim()}. What's that? You live in one too?");
                     break;
             }
+        }
+
+        /// <summary>
+        /// Replies to the specified message with the bot's uptime.
+        /// </summary>
+        /// <param name="message">The message to reply to.</param>
+        [Command(Constants.UptimeCommand)]
+        private async Task ReplyUptimeAsync(IUserMessage message)
+        {
+            // Bot is typing.
+            await message.Channel.TriggerTypingAsync();
+
+            // Get passed time.
+            var time = DateTime.Now.ToLocalTime() - client.StartTime.ToLocalTime();
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Send message.
+            await message.Channel.SendMessageAsync($"I've been up for {time.ToString("%d")} days, {time.ToString("%h")} hours, {time.ToString("%m")} minutes, and {time.ToString("%s")} seconds.");
+        }
+
+        /// <summary>
+        /// Replies to the specified message with the bot's servers.
+        /// </summary>
+        /// <param name="message">The message to reply to.</param>
+        [Command(Constants.ServersCommand)]
+        private async Task ReplyServersAsync(IUserMessage message)
+        {
+            // Bot is typing.
+            await message.Channel.TriggerTypingAsync();
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Send message.
+            await message.Channel.SendMessageAsync($"I'm currently a member of {(await client.GetGuildsAsync()).Count} servers.");
+        }
+
+        /// <summary>
+        /// Replies to the specified message with the bot's servers.
+        /// </summary>
+        /// <param name="message">The message to reply to.</param>
+        /// <returns></returns>
+        [Command(Constants.ServerNamesCommand)]
+        public async Task ReplyServerNamesAsync(IUserMessage message)
+        {
+            // Bot is typing.
+            await message.Channel.TriggerTypingAsync();
+
+            // Get the user.
+            var user = message.Author as IGuildUser;
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // If the user is not master, show error.
+            if (user?.Id != Constants.OwnerId)
+            {
+                // Select and send message.
+                switch (client.GetRandomNumber(4))
+                {
+                    default:
+                        await message.Channel.SendMessageAsync($"Sorry, but only my master can list the servers I'm in.");
+                        break;
+
+                    case 1:
+                        await message.Channel.SendMessageAsync($"No can do. You aren't my owner.");
+                        break;
+
+                    case 2:
+                        await message.Channel.SendMessageAsync($"I'm sorry {message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
+                        break;
+
+                    case 3:
+                        await message.Channel.SendMessageAsync($"Not happening. Only my owner can list the servers I'm in.");
+                        break;
+                }
+                return;
+            }
+
+            // Get guilds.
+            var guilds = await client.GetGuildsAsync();
+
+            // Send message.
+            await message.Channel.SendMessageAsync($"I'm currently a member of {guilds.Count} servers:");
+            await message.Channel.SendMessageAsync(string.Join(", ", guilds));
         }
 
         #endregion

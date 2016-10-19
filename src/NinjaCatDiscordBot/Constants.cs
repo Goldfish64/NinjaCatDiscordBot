@@ -37,8 +37,7 @@ namespace NinjaCatDiscordBot
         public const string AppName = "Ninja Cat";
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
         public const string InviteUrl = "https://discordapp.com/oauth2/authorize?permissions=0&client_id=232369430456172545&scope=bot";
-        public const string UserName = "NinjaCat";
-        public const string Nickname = "Ninja Cat";
+        public const string UserName = "Ninja Cat";
         public const ulong OwnerId = 191330317439598593;
         public const ulong BotsGuildId = 110373943822540800;
 
@@ -74,6 +73,11 @@ namespace NinjaCatDiscordBot
         public const string TimeCommandKeyword = "time";
         public const string PlatformCommand = "platform";
         public const string PlatformCommandDesc = "shows where I live";
+        public const string UptimeCommand = "uptime";
+        public const string UptimeCommandDesc = "shows my uptime";
+        public const string ServersCommand = "servers";
+        public const string ServersCommandDesc = "shows the number of servers I'm part of";
+        public const string ServerNamesCommand = "servernames"; // Only for bot owner.
 
         public const string SettingsModule = "settings";
         public const string GetGroup = "get";
@@ -88,11 +92,11 @@ namespace NinjaCatDiscordBot
         public const string DisableChannelCommandDesc = "disables announcements";
 
         public static readonly string AboutMessage1 = 
-            $"Hi there! I am {Nickname}, a Discord.Net bot!\n" +
+            $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
             $"I was created by <@191330317439598593> with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
             $"For help on what I can do, type **{CommandPrefix}{HelpCommand}**.";
         public static readonly string AboutMessage2 =
-            $"Greetings! I am the {Nickname}, a bot built using the Discord.Net and Tweetinvi libraries!\n" +
+            $"Greetings! I am the {UserName}, a bot built using the Discord.Net and Tweetinvi libraries!\n" +
             $"I was activated by <@191330317439598593> with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
             $"Your wish is my command, so type **{CommandPrefix}{HelpCommand}** for info on what I can do for you.";
 

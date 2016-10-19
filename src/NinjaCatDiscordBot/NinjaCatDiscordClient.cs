@@ -72,6 +72,11 @@ namespace NinjaCatDiscordBot
         /// <remarks>Guild is the key, channel is the value.</remarks>
         public Dictionary<ulong, ulong> SpeakingChannels { get; } = new Dictionary<ulong, ulong>();
 
+        /// <summary>
+        /// Gets the time the client started.
+        /// </summary>
+        public DateTime StartTime { get; } = DateTime.Now;
+
         #endregion
 
         #region Methods

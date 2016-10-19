@@ -19,6 +19,8 @@ My set of commands include:
 * **$nj-enrollinsider**: enroll in the Insider program.
 * **$nj-time**: shows the current time.
 * **$nj-platform**: shows where I live.
+* **$nj-uptime**: shows my uptime.
+* **$nj-servers**: shows the number of servers I'm part of.
 
 Settings commands:
 * **$nj-settings get nickname**: gets my nickname.

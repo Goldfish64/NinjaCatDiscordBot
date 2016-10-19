@@ -94,9 +94,6 @@ namespace NinjaCatDiscordBot
             // Certain things are to be done when the bot joins a guild.
             client.JoinedGuild += async (guild) =>
             {
-                // Set default nickname.
-                await (await guild.GetCurrentUserAsync()).ModifyAsync(p => p.Nickname = Constants.Nickname);
-
                 // Pause for 5 seconds.
                 await Task.Delay(TimeSpan.FromSeconds(5));
 
@@ -223,6 +220,9 @@ namespace NinjaCatDiscordBot
             // Log in to Discord. Token is stored in the Credentials class.
             await client.LoginAsync(TokenType.Bot, Credentials.DiscordToken);
             await client.ConnectAsync();
+
+            // Set username.
+            await (await client.GetCurrentUserAsync()).ModifyAsync(p => p.Username = Constants.UserName);
 
             // Set game.
             await (await client.GetCurrentUserAsync()).ModifyStatusAsync(p => p.Game = new Game("on Windows 10"));
