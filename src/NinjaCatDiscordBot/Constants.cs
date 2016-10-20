@@ -32,7 +32,7 @@ namespace NinjaCatDiscordBot
         #region Constants
 
         public const string LogFileName = "nj-logfile.log";
-        public const string SettingsFileName = "nj-settings.json";
+        public const string ChannelsFileName = "nj-channels.json";
 
         public const string AppName = "Ninja Cat";
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";

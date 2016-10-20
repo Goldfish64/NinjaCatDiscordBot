@@ -53,9 +53,9 @@ namespace NinjaCatDiscordBot
             // Create temporary dictionary.
             var channels = new Dictionary<ulong, ulong>();
 
-            // Does the settings file exist? If so, seserialize JSON.
-            if (File.Exists(Constants.SettingsFileName))
-                channels = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.SettingsFileName));
+            // Does the channels file exist? If so, seserialize JSON.
+            if (File.Exists(Constants.ChannelsFileName))
+                channels = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.ChannelsFileName));
 
             // Add each entry to the client.
             foreach (var entry in channels)
@@ -134,7 +134,7 @@ namespace NinjaCatDiscordBot
         public void SaveSettings()
         {
             // Serialize settings to JSON.
-            File.WriteAllText(Constants.SettingsFileName, JsonConvert.SerializeObject(SpeakingChannels));
+            File.WriteAllText(Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
         }
 
         #endregion

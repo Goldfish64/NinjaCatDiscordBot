@@ -233,55 +233,21 @@ namespace NinjaCatDiscordBot
 
             // Create Twitter stream to follow @donasarkar.
             var donaUser = User.GetUserFromScreenName("donasarkar");
+            var insiderUser = User.GetUserFromScreenName("windowsinsider");
             var stream = Tweetinvi.Stream.CreateFilteredStream();
             stream.AddFollow(donaUser);
+            stream.AddFollow(insiderUser);
 
             // Listen for incoming tweets from Dona.
             stream.MatchingTweetReceived += async (s, e) =>
             {
                 // If the tweet is a reply or if it doesn't belong to Dona, ignore it.
-                if (e.Tweet.CreatedBy.Id != donaUser.Id || !string.IsNullOrEmpty(e.Tweet.InReplyToScreenName))
+                if (e.Tweet.CreatedBy.Id != donaUser.Id || e.Tweet.CreatedBy.Id == insiderUser.Id || !string.IsNullOrEmpty(e.Tweet.InReplyToScreenName))
                     return;
 
-                // Check the URL.
-                var fullUrl = string.Empty;
-                foreach (var url in e.Tweet.Urls)
-                {
-                    // Encode URL for transport.
-                    var tempUrl = WebUtility.UrlEncode(url.ExpandedURL);
-
-                    // Create the HttpClient.
-                    using (var httpClient = new HttpClient())
-                    {
-                        // Configure the HttpClient to use https://lengthenurl.info/.
-                        httpClient.BaseAddress = new Uri("https://lengthenurl.info/");
-                        httpClient.DefaultRequestHeaders.Accept.Clear();
-                        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                        // Retry up to three times.
-                        for (int i = 0; i < 3; i++)
-                        {
-                            // Send the request with the short URL and get the response back containing the long URL.
-                            var response = await httpClient.GetAsync($"api/longurl/shorturl/?inputURL={tempUrl}");
-
-                            // Did the request succeed? If it did, get the URL. Otherwise, log the error and retry.
-                            if (response.IsSuccessStatusCode)
-                                fullUrl = (await response.Content.ReadAsAsync<ServicedUrl>()).LongURL.ToLowerInvariant();
-                            else
-                                LogOutput($"URLFETCH ERROR: {response.StatusCode}");
-                        }
-                    }
-
-                    // Check to see if URL has what it takes.
-                    if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
-                        break;
-
-                    // Clear URL.
-                    fullUrl = string.Empty;
-                }
-
-                // Is it a no-build tweet?
-                if (e.Tweet.FullText.Contains("no build") || e.Tweet.FullText.ToLowerInvariant().Contains("no new build"))
+                // Is it a no-build tweet from Dona?
+                if (e.Tweet.FullText.Contains("no build") || e.Tweet.FullText.ToLowerInvariant().Contains("no new build") ||
+                    e.Tweet.FullText.ToLowerInvariant().Contains("not releasing") || e.Tweet.FullText.ToLowerInvariant().Contains("not flighting"))
                 {
                     // Bot is typing.
                     await TriggerTypingInAllGuilds();
@@ -319,9 +285,55 @@ namespace NinjaCatDiscordBot
                         }
                     }
                 }
-                // Is it a new build tweet (yay!)? It must contain a 5 or more digit number and the blogs URL.
-                else if (e.Tweet.FullText.Count(c => char.IsDigit(c)) >= 5 && !string.IsNullOrEmpty(fullUrl))
+                // Is the tweet from windowsinsider?
+                else if (e.Tweet.CreatedBy.Id == insiderUser.Id)
                 {
+                    // Get build number. If empty, ignore the tweet.
+                    var build = Regex.Match(e.Tweet.FullText, @"\d{5,}").Value;
+                    if (string.IsNullOrWhiteSpace(build))
+                        return;
+
+                    // Try to get a blogs URL.
+                    var fullUrl = string.Empty;
+                    foreach (var url in e.Tweet.RetweetedTweet.Urls)
+                    {
+                        // Encode URL for transport.
+                        var tempUrl = WebUtility.UrlEncode(url.ExpandedURL);
+
+                        // Create the HttpClient.
+                        using (var httpClient = new HttpClient())
+                        {
+                            // Configure the HttpClient to use https://lengthenurl.info/.
+                            httpClient.BaseAddress = new Uri("https://lengthenurl.info/");
+                            httpClient.DefaultRequestHeaders.Accept.Clear();
+                            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                            // Retry up to three times.
+                            for (int i = 0; i < 3; i++)
+                            {
+                                // Send the request with the short URL and get the response back containing the long URL.
+                                var response = await httpClient.GetAsync($"api/longurl/shorturl/?inputURL={tempUrl}");
+
+                                // Did the request succeed? If it did, get the URL. Otherwise, log the error and retry.
+                                if (response.IsSuccessStatusCode)
+                                    fullUrl = (await response.Content.ReadAsAsync<ServicedUrl>()).LongURL.ToLowerInvariant();
+                                else
+                                    LogOutput($"URLFETCH ERROR: {response.StatusCode}");
+                            }
+                        }
+
+                        // Check to see if URL has what it takes.
+                        if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
+                            break;
+
+                        // Clear URL.
+                        fullUrl = string.Empty;
+                    }
+
+                    // If URL is invalid, return.
+                    if (string.IsNullOrWhiteSpace(fullUrl))
+                        return;
+
                     // Bot is typing.
                     await TriggerTypingInAllGuilds();
 
@@ -348,13 +360,6 @@ namespace NinjaCatDiscordBot
                     else if (e.Tweet.FullText.ToLowerInvariant().Contains("mobile"))
                         platform = " for Mobile";
 
-                    // Get the build number and format it.
-                    var build = Regex.Match(Regex.Match(fullUrl, @"build-\d{5,}").Value, @"\d").Value;
-                    if (!string.IsNullOrWhiteSpace(build))
-                        build = $"Windows 10 Insider Preview Build {build}";
-                    else
-                        build = $"A new Windows 10 Insider Preview build";
-
                     // Announce in the specified channel of each guild.
                     foreach (var guild in await client.GetGuildsAsync())
                     {
@@ -372,15 +377,15 @@ namespace NinjaCatDiscordBot
                         switch (client.GetRandomNumber(3))
                         {
                             default:
-                                await channel.SendMessageAsync($"Yay! {build} has just been released{ring}{platform}! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
+                                await channel.SendMessageAsync($"Yay! Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
                                 break;
 
                             case 1:
-                                await channel.SendMessageAsync($"{build} has just been released{ring}{platform}! Yes! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
+                                await channel.SendMessageAsync($"Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! Yes! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
                                 break;
 
                             case 2:
-                                await channel.SendMessageAsync($"Better check for updates now! {build} has just been released{ring}{platform}! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
+                                await channel.SendMessageAsync($"Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
                                 break;
                         }
                     }

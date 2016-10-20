@@ -456,14 +456,33 @@ namespace NinjaCatDiscordBot
             // Bot is typing.
             await message.Channel.TriggerTypingAsync();
 
-            // Get passed time.
-            var time = DateTime.Now.ToLocalTime() - client.StartTime.ToLocalTime();
-
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Send message.
-            await message.Channel.SendMessageAsync($"I've been up for {time.ToString("%d")} days, {time.ToString("%h")} hours, {time.ToString("%m")} minutes, and {time.ToString("%s")} seconds.");
+            // Get passed time.
+            var time = DateTime.Now.ToLocalTime() - client.StartTime.ToLocalTime();
+
+            // Create string.
+            var values = (time.Days > 0 ? time.Days.ToString() + $" day{(time.Days > 1 ? "s" : "")}{(time.Hours > 0 ? ", " : "")}" : string.Empty) +
+                (time.Hours > 0 ? time.Hours.ToString() + $" hour{(time.Hours > 1 ? "s" : "")}{(time.Minutes > 0 ? ", " : "")}" : string.Empty) +
+                (time.Minutes > 0 ? time.Minutes.ToString() + $" minute{(time.Minutes > 1 ? "s" : "")}{(time.Seconds > 0 ? ", " : "")}" : string.Empty) +
+                (time.Seconds > 0 ? time.Seconds.ToString() + $" second{(time.Seconds > 1 ? "s" : "")}" : string.Empty);
+
+            // Select and send message.
+            switch (client.GetRandomNumber(3))
+            {
+                default:
+                    await message.Channel.SendMessageAsync($"I've been up for {values}.");
+                    break;
+
+                case 0:
+                    await message.Channel.SendMessageAsync($"It's been {values} since I started.");
+                    break;
+
+                case 1:
+                    await message.Channel.SendMessageAsync($"I started {values} ago.");
+                    break;
+            }
         }
 
         /// <summary>
@@ -479,8 +498,24 @@ namespace NinjaCatDiscordBot
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Send message.
-            await message.Channel.SendMessageAsync($"I'm currently a member of {(await client.GetGuildsAsync()).Count} servers.");
+            // Get guild count.
+            var count = (await client.GetGuildsAsync()).Count;
+
+            // Select and send message.
+            switch (client.GetRandomNumber(3))
+            {
+                default:
+                    await message.Channel.SendMessageAsync($"I'm currently a member of {count} server{(count > 1 ? "s" : "")}.");
+                    break;
+
+                case 1:
+                    await message.Channel.SendMessageAsync($"I'm part of {count} server{(count > 1 ? "s" : "")}.");
+                    break;
+
+                case 2:
+                    await message.Channel.SendMessageAsync($"I reside in {count} server{(count > 1 ? "s" : "")} currently.");
+                    break;
+            }
         }
 
         /// <summary>
@@ -494,11 +529,11 @@ namespace NinjaCatDiscordBot
             // Bot is typing.
             await message.Channel.TriggerTypingAsync();
 
-            // Get the user.
-            var user = message.Author as IGuildUser;
-
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Get the user.
+            var user = message.Author as IUser;
 
             // If the user is not master, show error.
             if (user?.Id != Constants.OwnerId)
@@ -529,8 +564,7 @@ namespace NinjaCatDiscordBot
             var guilds = await client.GetGuildsAsync();
 
             // Send message.
-            await message.Channel.SendMessageAsync($"I'm currently a member of {guilds.Count} servers:");
-            await message.Channel.SendMessageAsync(string.Join(", ", guilds));
+            await message.Channel.SendMessageAsync($"I'm currently a member of {guilds.Count} server{(guilds.Count > 1 ? "s" : "")}:\n{string.Join(", ", guilds)}");
         }
 
         #endregion

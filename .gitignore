@@ -3,6 +3,8 @@
 
 # Don't place the credentials in Git.
 Credentials.cs
+nj-log.log
+nj-settings.json
 
 # User-specific files
 *.suo
