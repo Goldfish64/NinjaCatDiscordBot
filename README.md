@@ -28,3 +28,4 @@ Settings commands:
 * **$nj-settings get channel**: gets the channel I speak in.
 * **$nj-settings set channel** *channel*: sets the channel I speak in.
 * **$nj-settings disable channel**: disables announcements.
+
