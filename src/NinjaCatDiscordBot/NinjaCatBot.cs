@@ -103,6 +103,13 @@ namespace NinjaCatDiscordBot
                 // Get speaking channel.
                 var channel = await client.GetSpeakingChannelForGuildAsync(guild);
 
+                // Get current user.
+                var user = await channel.Guild.GetCurrentUserAsync();
+
+                // Does the bot have permission to message? If not return.
+                if (!user.GetPermissions(channel).SendMessages)
+                    return;
+
                 // Get the mention if speaking is enabled.
                 if (channel != null)
                     speakingChannel = channel.Mention;
@@ -238,22 +245,35 @@ namespace NinjaCatDiscordBot
             stream.AddFollow(donaUser);
             stream.AddFollow(insiderUser);
 
+#if DEBUG
+            // Used for testing tweets.
+            var goldfishUser = User.GetUserFromScreenName("goldfishx64");
+            stream.AddFollow(goldfishUser);
+#endif
+
             // Listen for incoming tweets from Dona.
             stream.MatchingTweetReceived += async (s, e) =>
             {
-                // If the tweet is a reply or if it doesn't belong to Dona, ignore it.
-                if (e.Tweet.CreatedBy.Id != donaUser.Id || e.Tweet.CreatedBy.Id == insiderUser.Id || !string.IsNullOrEmpty(e.Tweet.InReplyToScreenName))
+                // Get tweet.
+#if DEBUG
+                var tweet = e.Tweet.RetweetedTweet ?? e.Tweet;
+#else
+                var tweet = e.Tweet;
+#endif
+
+                // If the tweet is a reply or if it doesn't belong to a known user, ignore it.
+                if (!(tweet.CreatedBy.Id == donaUser.Id || tweet.CreatedBy.Id == insiderUser.Id || string.IsNullOrEmpty(tweet.InReplyToScreenName)))
                     return;
 
                 // Is it a no-build tweet from Dona?
-                if (e.Tweet.FullText.Contains("no build") || e.Tweet.FullText.ToLowerInvariant().Contains("no new build") ||
-                    e.Tweet.FullText.ToLowerInvariant().Contains("not releasing") || e.Tweet.FullText.ToLowerInvariant().Contains("not flighting"))
+                if (tweet.FullText.Contains("no build") || tweet.FullText.ToLowerInvariant().Contains("no new build") ||
+                    tweet.FullText.ToLowerInvariant().Contains("not releasing") || tweet.FullText.ToLowerInvariant().Contains("not flighting"))
                 {
                     // Bot is typing.
                     await TriggerTypingInAllGuilds();
 
                     // Log tweet.
-                    LogOutput($"TWEET: {e.Tweet.FullText}");
+                    LogOutput($"TWEET: {tweet.FullText}");
 
                     // Announce in the specified channel of each guild.
                     foreach (var guild in await client.GetGuildsAsync())
@@ -286,16 +306,16 @@ namespace NinjaCatDiscordBot
                     }
                 }
                 // Is the tweet from windowsinsider?
-                else if (e.Tweet.CreatedBy.Id == insiderUser.Id)
+                else if (tweet.CreatedBy.Id == insiderUser.Id)
                 {
                     // Get build number. If empty, ignore the tweet.
-                    var build = Regex.Match(e.Tweet.FullText, @"\d{5,}").Value;
+                    var build = Regex.Match(tweet.FullText, @"\d{5,}").Value;
                     if (string.IsNullOrWhiteSpace(build))
                         return;
 
                     // Try to get a blogs URL.
                     var fullUrl = string.Empty;
-                    foreach (var url in e.Tweet.RetweetedTweet.Urls)
+                    foreach (var url in tweet.Urls)
                     {
                         // Encode URL for transport.
                         var tempUrl = WebUtility.UrlEncode(url.ExpandedURL);
@@ -338,26 +358,26 @@ namespace NinjaCatDiscordBot
                     await TriggerTypingInAllGuilds();
 
                     // Log tweet.
-                    LogOutput($"TWEET: {e.Tweet.FullText}");
+                    LogOutput($"TWEET: {tweet.FullText}");
 
                     // Create variables.
                     var ring = string.Empty;
                     var platform = string.Empty;
 
                     // Check for fast or slow, or both.
-                    if (e.Tweet.FullText.ToLowerInvariant().Contains("fast") && e.Tweet.FullText.ToLowerInvariant().Contains("slow"))
+                    if (tweet.FullText.ToLowerInvariant().Contains("fast") && tweet.FullText.ToLowerInvariant().Contains("slow"))
                         ring = " to both the Fast and Slow rings";
-                    else if (e.Tweet.FullText.ToLowerInvariant().Contains("fast"))
+                    else if (tweet.FullText.ToLowerInvariant().Contains("fast"))
                         ring = " to the Fast ring";
-                    else if (e.Tweet.FullText.ToLowerInvariant().Contains("slow"))
+                    else if (tweet.FullText.ToLowerInvariant().Contains("slow"))
                         ring = " to the Slow ring";
 
                     // Check for PC or mobile, or both.
-                    if (e.Tweet.FullText.ToLowerInvariant().Contains("pc") && e.Tweet.FullText.ToLowerInvariant().Contains("mobile"))
+                    if (tweet.FullText.ToLowerInvariant().Contains("pc") && tweet.FullText.ToLowerInvariant().Contains("mobile"))
                         platform = " for both PC and Mobile";
-                    else if (e.Tweet.FullText.ToLowerInvariant().Contains("pc"))
+                    else if (tweet.FullText.ToLowerInvariant().Contains("pc"))
                         platform = " for PC";
-                    else if (e.Tweet.FullText.ToLowerInvariant().Contains("mobile"))
+                    else if (tweet.FullText.ToLowerInvariant().Contains("mobile"))
                         platform = " for Mobile";
 
                     // Announce in the specified channel of each guild.
@@ -431,6 +451,6 @@ namespace NinjaCatDiscordBot
             }
         }
 
-        #endregion
+#endregion
     }
 }
