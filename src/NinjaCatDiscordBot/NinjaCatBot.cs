@@ -23,6 +23,7 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using Discord;
+using Discord.API.Rest;
 using Discord.Commands;
 using System;
 using System.Collections.Generic;
@@ -224,9 +225,6 @@ namespace NinjaCatDiscordBot
             // Log in to Discord. Token is stored in the Credentials class.
             await client.LoginAsync(TokenType.Bot, Credentials.DiscordToken);
             await client.ConnectAsync();
-
-            // Set username.
-            await client.CurrentUser.ModifyAsync(p => p.Username = Constants.UserName);
 
             // Set game.
             await client.SetGame("on Windows 10");
