@@ -89,7 +89,7 @@ namespace NinjaCatDiscordBot
 
             // Add client to map and load commands from assembly.
             commandMap.Add<IDiscordClient>(client);
-            await commands.LoadAssembly(Assembly.GetEntryAssembly(), commandMap);
+            await commands.AddModules(Assembly.GetEntryAssembly());
 
             // Certain things are to be done when the bot joins a guild.
             client.JoinedGuild += async (guild) =>
@@ -129,12 +129,12 @@ namespace NinjaCatDiscordBot
                     {
                         default:
                             await channel.SendMessageAsync($"{Constants.AboutMessage1}\n\n" +
-                                $"By default, I'll speak in {speakingChannel}, but you can change it with the **{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** command.");
+                                $"By default, I'll speak in {speakingChannel}, but you can change it with the **{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.ChannelCommand}** command.");
                             break;
 
                         case 1:
                             await channel.SendMessageAsync($"{Constants.AboutMessage2}\n\n" +
-                                $"I'll speak in {speakingChannel} by default, but it can be changed with the **{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** command.");
+                                $"I'll speak in {speakingChannel} by default, but it can be changed with the **{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.ChannelCommand}** command.");
                             break;
                     }
                 }
@@ -165,11 +165,8 @@ namespace NinjaCatDiscordBot
                 // Keeps track of where the command begins.
                 var pos = 0;
 
-                // Get current user.
-                var self = await client.GetCurrentUserAsync();
-
                 // Try to parse a command if only the bot is mentioned.
-                if (msg.MentionedUsers.SingleOrDefault(u => u.Id == self.Id) != null)
+                if (msg.MentionedUserIds.SingleOrDefault(u => u == client.CurrentUser.Id) == client.CurrentUser.Id)
                 {
                     var successResult = ParseResult.FromSuccess(new ReadOnlyCollection<TypeReaderResult>(new List<TypeReaderResult>()), new ReadOnlyCollection<TypeReaderResult>(new List<TypeReaderResult>()));
 
@@ -177,7 +174,7 @@ namespace NinjaCatDiscordBot
                     if (msg.Content.ToLowerInvariant().Contains(Constants.HelpCommandKeyword))
                     {
                         // Execute the help command and return.
-                        await commands.Commands.Single(c => c.Text == Constants.HelpCommand).Execute(msg, successResult);
+                        await commands.Commands.Single(c => c.Text == Constants.HelpCommand).Execute(new CommandContext(client, msg), successResult, commandMap);
                         return;
                     }
                     //else if (PingCommandKeywords.Any(s => command.Contains(s)))
@@ -185,27 +182,27 @@ namespace NinjaCatDiscordBot
                     else if (Constants.TrexCommandKeywords.Any(s => msg.Content.ToLowerInvariant().Contains(s)))
                     {
                         // Execute the trex command and return.
-                        await commands.Commands.Single(c => c.Text == Constants.TrexCommand).Execute(msg, successResult);
+                        await commands.Commands.Single(c => c.Text == Constants.TrexCommand).Execute(new CommandContext(client, msg), successResult, commandMap);
                         return;
                     }
                     else if (Constants.LatestBuildKeywords.Any(s => msg.Content.ToLowerInvariant().Contains(s)))
                     {
                         // Execute the latestbuild command and return.
-                        await commands.Commands.Single(c => c.Text == Constants.LatestBuildCommand).Execute(msg, successResult);
+                        await commands.Commands.Single(c => c.Text == Constants.LatestBuildCommand).Execute(new CommandContext(client, msg), successResult, commandMap);
                         return;
                     }
                     else if (msg.Content.ToLowerInvariant().Contains(Constants.TimeCommandKeyword))
                     {
                         // Execute the time command and return.
-                        await commands.Commands.Single(c => c.Text == Constants.TimeCommand).Execute(msg, successResult);
+                        await commands.Commands.Single(c => c.Text == Constants.TimeCommand).Execute(new CommandContext(client, msg), successResult, commandMap);
                         return;
                     }
                 }
 
                 // Attempt to parse a command.
-                if (msg.HasStringPrefix(Constants.CommandPrefix, ref pos))
+                if (msg.HasStringPrefixLower(Constants.CommandPrefix, ref pos))
                 {
-                    var result = await commands.Execute(msg, pos);
+                    var result = await commands.Execute(new CommandContext(client, msg), msg.Content.ToLowerInvariant().Substring(pos));
                     if (!result.IsSuccess)
                     {
                         // Bot is typing.
@@ -229,10 +226,10 @@ namespace NinjaCatDiscordBot
             await client.ConnectAsync();
 
             // Set username.
-            await (await client.GetCurrentUserAsync()).ModifyAsync(p => p.Username = Constants.UserName);
+            await client.CurrentUser.ModifyAsync(p => p.Username = Constants.UserName);
 
             // Set game.
-            await (await client.GetCurrentUserAsync()).ModifyStatusAsync(p => p.Game = new Game("on Windows 10"));
+            await client.SetGame("on Windows 10");
 
             // Log in to Twitter.
             Auth.SetUserCredentials(Credentials.TwitterConsumerKey, Credentials.TwitterConsumerSecret,
@@ -276,7 +273,7 @@ namespace NinjaCatDiscordBot
                     LogOutput($"TWEET: {tweet.FullText}");
 
                     // Announce in the specified channel of each guild.
-                    foreach (var guild in await client.GetGuildsAsync())
+                    foreach (var guild in client.Guilds)
                     {
                         // Get channel.
                         var channel = await client.GetSpeakingChannelForGuildAsync(guild);
@@ -381,7 +378,7 @@ namespace NinjaCatDiscordBot
                         platform = " for Mobile";
 
                     // Announce in the specified channel of each guild.
-                    foreach (var guild in await client.GetGuildsAsync())
+                    foreach (var guild in client.Guilds)
                     {
                         // Get channel.
                         var channel = await client.GetSpeakingChannelForGuildAsync(guild);
@@ -437,7 +434,7 @@ namespace NinjaCatDiscordBot
         private async Task TriggerTypingInAllGuilds()
         {
             // Go through each guild the bot is a part of.
-            foreach (var guild in await client.GetGuildsAsync())
+            foreach (var guild in client.Guilds)
             {
                 // Get channel.
                 var channel = await client.GetSpeakingChannelForGuildAsync(guild);

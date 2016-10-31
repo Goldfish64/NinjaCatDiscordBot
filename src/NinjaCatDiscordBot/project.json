@@ -5,8 +5,10 @@
   },
 
   "dependencies": {
-    "Discord.Net": "1.0.0-beta-00420",
-    "Discord.Net.Commands": "1.0.0-beta-00420",
+    "Discord.Net.Commands": "1.0.0-beta2-00451",
+    "Discord.Net.Core": "1.0.0-beta2-00451",
+    "Discord.Net.Rest": "1.0.0-beta2-00451",
+    "Discord.Net.WebSocket": "1.0.0-beta2-00451",
     "Microsoft.AspNet.WebApi.Client": "5.2.2",
     "Microsoft.NETCore.App": {
       "type": "platform",

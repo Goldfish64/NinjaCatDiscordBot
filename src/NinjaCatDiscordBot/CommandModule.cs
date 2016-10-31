@@ -36,50 +36,39 @@ namespace NinjaCatDiscordBot
     /// <summary>
     /// Contains commands for the bot.
     /// </summary>
-    [Module]
-    public sealed class CommandModule
+    public sealed class CommandModule : ModuleBase
     {
-        #region Private variables
-
-        private NinjaCatDiscordClient client;
-
-        #endregion
-
         #region Constructor
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CommandModule"/> class.
         /// </summary>
-        /// <param name="client">The <see cref="IDiscordClient"/> to use.</param>
-        public CommandModule(IDiscordClient client)
-        {
-            // Check to see if client is valid.
-            if (!(client is NinjaCatDiscordClient))
-                throw new ArgumentException($"This module requires a {nameof(NinjaCatDiscordClient)}.", nameof(client));
-
-            // Get client.
-            this.client = client as NinjaCatDiscordClient;
-        }
+        public CommandModule() { }
 
         #endregion
 
         #region Methods
 
         /// <summary>
-        /// Replies to the specified message with the about message.
+        /// Replies with the about message.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.AboutCommand)]
-        private async Task ReplyAboutAsync(IUserMessage message)
+        private async Task ReplyAboutAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Get client.
+            var client = Context.Client as NinjaCatDiscordClient;
 
             // Create variable for speaking channel mention.
             var speakingChannel = string.Empty;
 
             // Get guild. If null, ignore it.
-            var guild = (message.Channel as IGuildChannel)?.Guild;
+            var guild = (Context.Channel as IGuildChannel)?.Guild;
             if (guild != null)
             {
                 // Get speaking channel.
@@ -90,9 +79,6 @@ namespace NinjaCatDiscordBot
                     speakingChannel = channel.Mention;
             }
 
-            // Pause for realism.
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Dev began Oct 2. 2016.
             // Is a speaking channel set?
             if (!string.IsNullOrEmpty(speakingChannel))
@@ -101,13 +87,13 @@ namespace NinjaCatDiscordBot
                 switch (client.GetRandomNumber(2))
                 {
                     default:
-                        await message.Channel.SendMessageAsync($"{Constants.AboutMessage1}\n\n" +
-                            $"I'm currently speaking in {speakingChannel}, but you can change it with the **{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** command.");
+                        await ReplyAsync($"{Constants.AboutMessage1}\n\n" +
+                            $"I'm currently speaking in {speakingChannel}, but you can change it with the **{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.ChannelCommand}** command.");
                         break;
 
                     case 1:
-                        await message.Channel.SendMessageAsync($"{Constants.AboutMessage2}\n\n" +
-                            $"I'm currently speaking in {speakingChannel}, but it can be changed with the **{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** command.");
+                        await ReplyAsync($"{Constants.AboutMessage2}\n\n" +
+                            $"I'm currently speaking in {speakingChannel}, but it can be changed with the **{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.ChannelCommand}** command.");
                         break;
                 }
             }
@@ -117,34 +103,33 @@ namespace NinjaCatDiscordBot
                 switch (client.GetRandomNumber(2))
                 {
                     default:
-                        await message.Channel.SendMessageAsync(Constants.AboutMessage1);
+                        await ReplyAsync(Constants.AboutMessage1);
                         break;
 
                     case 1:
-                        await message.Channel.SendMessageAsync(Constants.AboutMessage2);
+                        await ReplyAsync(Constants.AboutMessage2);
                         break;
                 }
             }
         }
 
         /// <summary>
-        /// Replies to the specified message with help.
+        /// Replies with help.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.HelpCommand)]
-        private async Task ReplyHelpAsync(IUserMessage message)
+        private async Task ReplyHelpAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message.
-            switch (client.GetRandomNumber(2))
+            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(2))
             {
                 default:
-                    await message.Channel.SendMessageAsync($"So you need help huh? You've come to the right place. :cat::question:\n\n" +
+                    await ReplyAsync($"So you need help huh? You've come to the right place. :cat::question:\n\n" +
                         $"My set of commands include:\n" +
                         $"**{Constants.CommandPrefix}{Constants.AboutCommand}**: {Constants.AboutCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.HelpCommand}**: {Constants.HelpCommandDesc}.\n" +
@@ -159,16 +144,16 @@ namespace NinjaCatDiscordBot
                         $"**{Constants.CommandPrefix}{Constants.UptimeCommand}**: {Constants.UptimeCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.ServersCommand}**: {Constants.ServersCommandDesc}.\n\n" +
                         $"Settings commands:\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.GetGroup} {Constants.NicknameCommand}**: {Constants.GetNicknameCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.NicknameCommand}** *nickname*: {Constants.SetNicknameCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.GetGroup} {Constants.ChannelCommand}**: {Constants.GetChannelCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** *channel*: {Constants.SetChannelCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.DisableGroup} {Constants.ChannelCommand}**: {Constants.DisableChannelCommandDesc}.\n\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsGetModule} {Constants.NicknameCommand}**: {Constants.GetNicknameCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.NicknameCommand}** *nickname*: {Constants.SetNicknameCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsGetModule} {Constants.ChannelCommand}**: {Constants.GetChannelCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.ChannelCommand}** *channel*: {Constants.SetChannelCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsDisableModule} {Constants.ChannelCommand}**: {Constants.DisableChannelCommandDesc}.\n\n" +
                         $"If you mention me and include a command, I'll usually respond in some fashion.");
                     break;
 
                 case 1:
-                    await message.Channel.SendMessageAsync($"You need help? Why didn't you just say so? :cat::question:\n\n" +
+                    await ReplyAsync($"You need help? Why didn't you just say so? :cat::question:\n\n" +
                         $"My set of commands include:\n" +
                         $"**{Constants.CommandPrefix}{Constants.AboutCommand}**: {Constants.AboutCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.HelpCommand}**: {Constants.HelpCommandDesc}.\n" +
@@ -183,132 +168,127 @@ namespace NinjaCatDiscordBot
                         $"**{Constants.CommandPrefix}{Constants.UptimeCommand}**: {Constants.UptimeCommandDesc}.\n" +
                         $"**{Constants.CommandPrefix}{Constants.ServersCommand}**: {Constants.ServersCommandDesc}.\n\n" +
                         $"Settings commands:\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.GetGroup} {Constants.NicknameCommand}**: {Constants.GetNicknameCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.NicknameCommand}** *nickname*: {Constants.SetNicknameCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.GetGroup} {Constants.ChannelCommand}**: {Constants.GetChannelCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.SetGroup} {Constants.ChannelCommand}** *channel*: {Constants.SetChannelCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsModule} {Constants.DisableGroup} {Constants.ChannelCommand}**: {Constants.DisableChannelCommandDesc}.\n\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsGetModule} {Constants.NicknameCommand}**: {Constants.GetNicknameCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.NicknameCommand}** *nickname*: {Constants.SetNicknameCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsGetModule} {Constants.ChannelCommand}**: {Constants.GetChannelCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.ChannelCommand}** *channel*: {Constants.SetChannelCommandDesc}.\n" +
+                        $"**{Constants.CommandPrefix}{Constants.SettingsDisableModule} {Constants.ChannelCommand}**: {Constants.DisableChannelCommandDesc}.\n\n" +
                         $"If you mention me with a command, I might get back to you.");
                     break;
             }
         }
 
         /// <summary>
-        /// Replies to the specified message with the homepage URL.
+        /// Replies with the homepage URL.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.HomeCommand)]
         [Alias(Constants.HomeCommandAlias)]
-        private async Task ReplyHomeAsync(IUserMessage message)
+        private async Task ReplyHomeAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Send URL.
-            await message.Channel.SendMessageAsync(Constants.HomeCommandUrl);
+            await ReplyAsync(Constants.HomeCommandUrl);
         }
 
         /// <summary>
-        /// Replies to the specified message with the invite URL.
+        /// Replies with the invite URL.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.InviteCommand)]
-        private async Task ReplyInviteAsync(IUserMessage message)
+        private async Task ReplyInviteAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Send invite URL.
-            await message.Channel.SendMessageAsync(Constants.InviteCommandUrl);
+            await ReplyAsync(Constants.InviteCommandUrl);
         }
 
         /// <summary>
-        /// Replies to the specified message with a pong.
+        /// Replies with a pong.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.PingCommand)]
-        private async Task ReplyPingAsync(IUserMessage message)
+        private async Task ReplyPingAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message.
-            switch (client.GetRandomNumber(5))
+            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(5))
             {
                 default:
-                    await message.Channel.SendMessageAsync($"Pong {message.Author.Mention}! :ping_pong:");
+                    await ReplyAsync($"Pong {Context.Message.Author.Mention}! :ping_pong:");
                     break;
 
                 case 0:
-                    await message.Channel.SendMessageAsync($"I'm very good at ping pong {message.Author.Mention}. :ping_pong:");
+                    await ReplyAsync($"I'm very good at ping pong {Context.Message.Author.Mention}. :ping_pong:");
                     break;
 
                 case 1:
-                    await message.Channel.SendMessageAsync($"I know where you live {message.Author.Mention}. :smirk_cat: :house:");
+                    await ReplyAsync($"I know where you live {Context.Message.Author.Mention}. :smirk_cat: :house:");
                     break;
 
                 case 2:
-                    await message.Channel.SendMessageAsync($"You know, I can do other things besides play ping-pong {message.Author.Mention}. :ping_pong:");
+                    await ReplyAsync($"You know, I can do other things besides play ping-pong {Context.Message.Author.Mention}. :ping_pong:");
                     break;
 
                 case 3:
-                    await message.Channel.SendMessageAsync($"Why, {message.Author.Mention}. Are you lonely?");
+                    await ReplyAsync($"Why, {Context.Message.Author.Mention}. Are you lonely?");
                     break;
 
                 case 4:
-                    await message.Channel.SendMessageAsync($"Remember, {message.Author.Mention}, I am always here. :slight_smile:");
+                    await ReplyAsync($"Remember, {Context.Message.Author.Mention}, I am always here. :slight_smile:");
                     break;
             }
         }
 
         /// <summary>
-        /// Replies to the specified message with the T-Rex.
+        /// Replies with the T-Rex.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.TrexCommand)]
-        private async Task ReplyTrexAsync(IUserMessage message)
+        private async Task ReplyTrexAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message with link.
-            switch (client.GetRandomNumber(3))
+            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(3))
             {
                 default:
-                    await message.Channel.SendMessageAsync($"Here you go.\n{Constants.TrexCommandUrl}");
+                    await ReplyAsync($"Here you go.\n{Constants.TrexCommandUrl}");
                     break;
 
                 case 1:
-                    await message.Channel.SendMessageAsync($"ROAAAAR!\n{Constants.TrexCommandUrl}");
+                    await ReplyAsync($"ROAAAAR!\n{Constants.TrexCommandUrl}");
                     break;
 
                 case 2:
-                    await message.Channel.SendMessageAsync($"Here I am riding the T-Rex!\n{Constants.TrexCommandUrl}");
+                    await ReplyAsync($"Here I am riding the T-Rex!\n{Constants.TrexCommandUrl}");
                     break;
             }
         }
 
         /// <summary>
-        /// Replies to the specified message with the latest Insider build.
+        /// Replies with the latest Insider build.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.LatestBuildCommand)]
-        private async Task ReplyLatestBuildAsync(IUserMessage message)
+        private async Task ReplyLatestBuildAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Create the HttpClient.
             using (var httpClient = new HttpClient())
@@ -324,53 +304,51 @@ namespace NinjaCatDiscordBot
                 await Task.Delay(TimeSpan.FromSeconds(1));
 
                 // Select and send message.
-                switch (client.GetRandomNumber(4))
+                switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(4))
                 {
                     default:
-                        await message.Channel.SendMessageAsync($"I've got the latest public build for you. It is **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}**. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
+                        await ReplyAsync($"I've got the latest public build for you. It is **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}**. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
                         break;
 
                     case 1:
-                        await message.Channel.SendMessageAsync($"Ask and you shall receive. The latest public build is **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}**. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
+                        await ReplyAsync($"Ask and you shall receive. The latest public build is **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}**. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
                         break;
 
                     case 2:
-                        await message.Channel.SendMessageAsync($"Yes master. Right away master. **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** is the latest and greatest. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
+                        await ReplyAsync($"Yes master. Right away master. **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** is the latest and greatest. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
                         break;
 
                     case 3:
-                        await message.Channel.SendMessageAsync($"**{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** is the newest public build according to my sources. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
+                        await ReplyAsync($"**{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** is the newest public build according to my sources. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
                         break;
                 }
             }
         }
 
         /// <summary>
-        /// Replies to the specified message with the Insider program URL.
+        /// Replies with the Insider program URL.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.EnrollCommand)]
-        private async Task ReplyEnrollAsync(IUserMessage message)
+        private async Task ReplyEnrollAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Send URL.
-            await message.Channel.SendMessageAsync(Constants.EnrollCommandUrl);
+            await ReplyAsync(Constants.EnrollCommandUrl);
         }
 
         /// <summary>
-        /// Replies to the specified message with the local time.
+        /// Replies with the local time.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.TimeCommand)]
-        private async Task ReplyTimeAsync(IUserMessage message)
+        private async Task ReplyTimeAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Get current time and time zone.
             var time = DateTime.Now.ToLocalTime();
@@ -380,87 +358,85 @@ namespace NinjaCatDiscordBot
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message.
-            switch (client.GetRandomNumber(6))
+            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(6))
             {
                 default:
-                    await message.Channel.SendMessageAsync($"My watch says {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
+                    await ReplyAsync($"My watch says {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
                     break;
 
                 case 1:
-                    await message.Channel.SendMessageAsync($"I have no idea where you live, but my watch says {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
+                    await ReplyAsync($"I have no idea where you live, but my watch says {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
                     break;
 
                 case 2:
-                    await message.Channel.SendMessageAsync($"My current time is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
+                    await ReplyAsync($"My current time is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
                     break;
 
                 case 3:
-                    await message.Channel.SendMessageAsync($"My internal clock is telling me it is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
+                    await ReplyAsync($"My internal clock is telling me it is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
                     break;
 
                 case 4:
-                    await message.Channel.SendMessageAsync($"Just glanced at the Peanuts clock on the wall. It is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
+                    await ReplyAsync($"Just glanced at the Peanuts clock on the wall. It is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
                     break;
 
                 case 5:
-                    await message.Channel.SendMessageAsync($"Beep. Boop. The current local time is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
+                    await ReplyAsync($"Beep. Boop. The current local time is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
                     break;
             }
         }
 
         /// <summary>
-        /// Replies to the specified message with the bot's platform.
+        /// Replies with the bot's platform.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.PlatformCommand)]
-        private async Task ReplyPlatformAsync(IUserMessage message)
+        private async Task ReplyPlatformAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message.
-            switch (client.GetRandomNumber(5))
+            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(5))
             {
                 default:
-                    await message.Channel.SendMessageAsync($"I'm currently living on {RuntimeInformation.FrameworkDescription.Trim()} on {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()}. Now tell me where *you* live so that I may visit you.");
+                    await ReplyAsync($"I'm currently living on {RuntimeInformation.FrameworkDescription.Trim()} on {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()}. Now tell me where *you* live so that I may visit you.");
                     break;
 
                 case 1:
-                    await message.Channel.SendMessageAsync($"I call {RuntimeInformation.FrameworkDescription.Trim()} on {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} home. What's yours?");
+                    await ReplyAsync($"I call {RuntimeInformation.FrameworkDescription.Trim()} on {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} home. What's yours?");
                     break;
 
                 case 2:
-                    await message.Channel.SendMessageAsync($"For me, home is on {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} running {RuntimeInformation.FrameworkDescription.Trim()}. Where is yours?");
+                    await ReplyAsync($"For me, home is on {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} running {RuntimeInformation.FrameworkDescription.Trim()}. Where is yours?");
                     break;
 
                 case 3:
-                    await message.Channel.SendMessageAsync($"Questions, questions. My home is {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} running {RuntimeInformation.FrameworkDescription.Trim()}.");
+                    await ReplyAsync($"Questions, questions. My home is {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} running {RuntimeInformation.FrameworkDescription.Trim()}.");
                     break;
 
                 case 4:
-                    await message.Channel.SendMessageAsync($"I live in a box running {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} and {RuntimeInformation.FrameworkDescription.Trim()}. What's that? You live in one too?");
+                    await ReplyAsync($"I live in a box running {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} and {RuntimeInformation.FrameworkDescription.Trim()}. What's that? You live in one too?");
                     break;
             }
         }
 
         /// <summary>
-        /// Replies to the specified message with the bot's uptime.
+        /// Replies with the bot's uptime.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.UptimeCommand)]
-        private async Task ReplyUptimeAsync(IUserMessage message)
+        private async Task ReplyUptimeAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get passed time.
-            var time = DateTime.Now.ToLocalTime() - client.StartTime.ToLocalTime();
+            var time = DateTime.Now.ToLocalTime() - (Context.Client as NinjaCatDiscordClient).StartTime.ToLocalTime();
 
             // Create string.
             var values = (time.Days > 0 ? time.Days.ToString() + $" day{(time.Days > 1 ? "s" : "")}{(time.Hours > 0 ? ", " : "")}" : string.Empty) +
@@ -469,71 +445,75 @@ namespace NinjaCatDiscordBot
                 (time.Seconds > 0 ? time.Seconds.ToString() + $" second{(time.Seconds > 1 ? "s" : "")}" : string.Empty);
 
             // Select and send message.
-            switch (client.GetRandomNumber(3))
+            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(3))
             {
                 default:
-                    await message.Channel.SendMessageAsync($"I've been up for {values}.");
+                    await ReplyAsync($"I've been up for {values}.");
                     break;
 
                 case 0:
-                    await message.Channel.SendMessageAsync($"It's been {values} since I started.");
+                    await ReplyAsync($"It's been {values} since I started.");
                     break;
 
                 case 1:
-                    await message.Channel.SendMessageAsync($"I started {values} ago.");
+                    await ReplyAsync($"I started {values} ago.");
                     break;
             }
         }
 
         /// <summary>
-        /// Replies to the specified message with the bot's servers.
+        /// Replies with the bot's servers.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         [Command(Constants.ServersCommand)]
-        private async Task ReplyServersAsync(IUserMessage message)
+        private async Task ReplyServersAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
+            // Get client.
+            var client = Context.Client as NinjaCatDiscordClient;
+
             // Get guild count.
-            var count = (await client.GetGuildsAsync()).Count;
+            var count = client.Guilds.Count;
 
             // Select and send message.
             switch (client.GetRandomNumber(3))
             {
                 default:
-                    await message.Channel.SendMessageAsync($"I'm currently a member of {count} server{(count > 1 ? "s" : "")}.");
+                    await ReplyAsync($"I'm currently a member of {count} server{(count > 1 ? "s" : "")}.");
                     break;
 
                 case 1:
-                    await message.Channel.SendMessageAsync($"I'm part of {count} server{(count > 1 ? "s" : "")}.");
+                    await ReplyAsync($"I'm part of {count} server{(count > 1 ? "s" : "")}.");
                     break;
 
                 case 2:
-                    await message.Channel.SendMessageAsync($"I reside in {count} server{(count > 1 ? "s" : "")} currently.");
+                    await ReplyAsync($"I reside in {count} server{(count > 1 ? "s" : "")} currently.");
                     break;
             }
         }
 
         /// <summary>
-        /// Replies to the specified message with the bot's servers.
+        /// Replies with the bot's servers.
         /// </summary>
-        /// <param name="message">The message to reply to.</param>
         /// <returns></returns>
         [Command(Constants.ServerNamesCommand)]
-        public async Task ReplyServerNamesAsync(IUserMessage message)
+        public async Task ReplyServerNamesAsync()
         {
             // Bot is typing.
-            await message.Channel.TriggerTypingAsync();
+            await Context.Channel.TriggerTypingAsync();
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
+            // Get client.
+            var client = Context.Client as NinjaCatDiscordClient;
+
             // Get the user.
-            var user = message.Author as IUser;
+            var user = Context.Message.Author as IUser;
 
             // If the user is not master, show error.
             if (user?.Id != Constants.OwnerId)
@@ -542,29 +522,29 @@ namespace NinjaCatDiscordBot
                 switch (client.GetRandomNumber(4))
                 {
                     default:
-                        await message.Channel.SendMessageAsync($"Sorry, but only my master can list the servers I'm in.");
+                        await ReplyAsync($"Sorry, but only my master can list the servers I'm in.");
                         break;
 
                     case 1:
-                        await message.Channel.SendMessageAsync($"No can do. You aren't my owner.");
+                        await ReplyAsync($"No can do. You aren't my owner.");
                         break;
 
                     case 2:
-                        await message.Channel.SendMessageAsync($"I'm sorry {message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
+                        await ReplyAsync($"I'm sorry {Context.Message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
                         break;
 
                     case 3:
-                        await message.Channel.SendMessageAsync($"Not happening. Only my owner can list the servers I'm in.");
+                        await ReplyAsync($"Not happening. Only my owner can list the servers I'm in.");
                         break;
                 }
                 return;
             }
 
             // Get guilds.
-            var guilds = await client.GetGuildsAsync();
+            var guilds = client.Guilds;
 
             // Send message.
-            await message.Channel.SendMessageAsync($"I'm currently a member of {guilds.Count} server{(guilds.Count > 1 ? "s" : "")}:\n{string.Join(", ", guilds)}");
+            await ReplyAsync($"I'm currently a member of {guilds.Count} server{(guilds.Count > 1 ? "s" : "")}:\n{string.Join(", ", guilds)}");
         }
 
         #endregion

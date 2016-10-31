@@ -41,7 +41,7 @@ namespace NinjaCatDiscordBot
         public const ulong OwnerId = 191330317439598593;
         public const ulong BotsGuildId = 110373943822540800;
 
-        public const string CommandPrefix = "$nj-";
+        public const string CommandPrefix = "$njd-";
 
         public const string AboutCommand = "about";
         public const string AboutCommandDesc = "get to know me";
@@ -79,10 +79,9 @@ namespace NinjaCatDiscordBot
         public const string ServersCommandDesc = "shows the number of servers I'm part of";
         public const string ServerNamesCommand = "servernames"; // Only for bot owner.
 
-        public const string SettingsModule = "settings";
-        public const string GetGroup = "get";
-        public const string SetGroup = "set";
-        public const string DisableGroup = "disable";
+        public const string SettingsGetModule = "settings get";
+        public const string SettingsSetModule = "settings set";
+        public const string SettingsDisableModule = "settings disable";
         public const string NicknameCommand = "nickname";
         public const string GetNicknameCommandDesc = "gets my nickname";
         public const string SetNicknameCommandDesc = "sets my nickname";
