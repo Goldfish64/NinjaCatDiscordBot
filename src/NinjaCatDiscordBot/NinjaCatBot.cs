@@ -261,7 +261,7 @@ namespace NinjaCatDiscordBot
                     return;
 
                 // Is it a no-build tweet from Dona?
-                if (tweet.FullText.Contains("no build") || tweet.FullText.ToLowerInvariant().Contains("no new build") ||
+                if (tweet.FullText.ToLowerInvariant().Contains("no build") || tweet.FullText.ToLowerInvariant().Contains("no new build") ||
                     tweet.FullText.ToLowerInvariant().Contains("not releasing") || tweet.FullText.ToLowerInvariant().Contains("not flighting"))
                 {
                     // Bot is typing.
