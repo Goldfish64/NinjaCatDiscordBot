@@ -41,7 +41,11 @@ namespace NinjaCatDiscordBot
         public const ulong OwnerId = 191330317439598593;
         public const ulong BotsGuildId = 110373943822540800;
 
+#if DEBUG
         public const string CommandPrefix = "$njd-";
+#else
+        public const string CommandPrefix = "$nj-";
+#endif
 
         public const string AboutCommand = "about";
         public const string AboutCommandDesc = "get to know me";
@@ -99,6 +103,6 @@ namespace NinjaCatDiscordBot
             $"I was activated by <@191330317439598593> with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
             $"Your wish is my command, so type **{CommandPrefix}{HelpCommand}** for info on what I can do for you.";
 
-        #endregion
+#endregion
     }
 }
