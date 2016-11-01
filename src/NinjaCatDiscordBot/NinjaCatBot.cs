@@ -407,6 +407,9 @@ namespace NinjaCatDiscordBot
                 }
             };
 
+            // Listen for stop.
+            stream.StreamStopped += (s, e) => LogOutput($"STREAM STOPPED: {e.Exception}");
+
             // Start the stream.
             stream.StartStreamMatchingAllConditions();
 
