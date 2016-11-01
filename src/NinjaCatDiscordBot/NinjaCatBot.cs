@@ -408,7 +408,10 @@ namespace NinjaCatDiscordBot
             };
 
             // Start the stream.
-            await stream.StartStreamMatchingAllConditionsAsync();
+            stream.StartStreamMatchingAllConditions();
+
+            // Log stop.
+            LogOutput("Bot is stopping...");
         }
 
         /// <summary>
@@ -446,6 +449,6 @@ namespace NinjaCatDiscordBot
             }
         }
 
-#endregion
+        #endregion
     }
 }

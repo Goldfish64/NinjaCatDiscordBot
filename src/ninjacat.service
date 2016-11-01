@@ -1,0 +1,10 @@
+[Unit]
+Description=Ninja Cat Discord bot
+After=network.target
+
+[Service]
+Restart=on-always
+ExecStart=/usr/bin/dotnet /ninjacat/NinjaCatDiscordBot.dll
+
+[Install]
+WantedBy=multi-user.target
