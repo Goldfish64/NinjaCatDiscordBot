@@ -3,7 +3,7 @@ Description=Ninja Cat Discord bot
 After=network.target
 
 [Service]
-Restart=on-always
+Restart=always
 ExecStart=/usr/bin/dotnet /ninjacat/NinjaCatDiscordBot.dll
 
 [Install]
