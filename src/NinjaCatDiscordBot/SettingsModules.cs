@@ -270,7 +270,7 @@ namespace NinjaCatDiscordBot
         /// </summary>
         /// <param name="nickname">The new nickname.</param>
         [Command(Constants.NicknameCommand)]
-        public async Task SetNicknameAsync(string nickname)
+        public async Task SetNicknameAsync(string nickname = null)
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();

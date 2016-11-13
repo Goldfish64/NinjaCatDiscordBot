@@ -23,7 +23,6 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using Discord;
-using Discord.API.Rest;
 using Discord.Commands;
 using System;
 using System.Collections.Generic;
@@ -203,7 +202,7 @@ namespace NinjaCatDiscordBot
                 // Attempt to parse a command.
                 if (msg.HasStringPrefixLower(Constants.CommandPrefix, ref pos))
                 {
-                    var result = await commands.Execute(new CommandContext(client, msg), msg.Content.ToLowerInvariant().Substring(pos));
+                    var result = await commands.Execute(new CommandContext(client, msg), msg.Content.Substring(pos));
                     if (!result.IsSuccess)
                     {
                         // Bot is typing.
@@ -257,7 +256,7 @@ namespace NinjaCatDiscordBot
 #endif
 
                 // If the tweet is a reply or if it doesn't belong to a known user, ignore it.
-                if (!(tweet.CreatedBy.Id == donaUser.Id || tweet.CreatedBy.Id == insiderUser.Id || string.IsNullOrEmpty(tweet.InReplyToScreenName)))
+                if (!(tweet.CreatedBy.Id == donaUser.Id || tweet.CreatedBy.Id == insiderUser.Id) || !string.IsNullOrEmpty(tweet.InReplyToScreenName))
                     return;
 
                 // Is it a no-build tweet from Dona?
@@ -368,11 +367,11 @@ namespace NinjaCatDiscordBot
                         ring = " to the Slow ring";
 
                     // Check for PC or mobile, or both.
-                    if (tweet.FullText.ToLowerInvariant().Contains("pc") && tweet.FullText.ToLowerInvariant().Contains("mobile"))
+                    if (tweet.FullText.ToLowerInvariant().Contains("pc") && (tweet.FullText.ToLowerInvariant().Contains("mobile") || tweet.FullText.ToLowerInvariant().Contains("phone")))
                         platform = " for both PC and Mobile";
                     else if (tweet.FullText.ToLowerInvariant().Contains("pc"))
                         platform = " for PC";
-                    else if (tweet.FullText.ToLowerInvariant().Contains("mobile"))
+                    else if (tweet.FullText.ToLowerInvariant().Contains("mobile") || tweet.FullText.ToLowerInvariant().Contains("phone"))
                         platform = " for Mobile";
 
                     // Announce in the specified channel of each guild.
