@@ -28,6 +28,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot
@@ -55,7 +56,7 @@ namespace NinjaCatDiscordBot
 
             // Does the channels file exist? If so, seserialize JSON.
             if (File.Exists(Constants.ChannelsFileName))
-                channels = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.ChannelsFileName));
+                channels = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\" + Constants.ChannelsFileName));
 
             // Add each entry to the client.
             foreach (var entry in channels)
@@ -134,7 +135,7 @@ namespace NinjaCatDiscordBot
         public void SaveSettings()
         {
             // Serialize settings to JSON.
-            File.WriteAllText(Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
+            File.WriteAllText(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\" + Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
         }
 
         #endregion
