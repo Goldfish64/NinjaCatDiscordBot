@@ -24,6 +24,7 @@
 
 using Discord;
 using Discord.Commands;
+using Discord.Net;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -108,10 +109,10 @@ namespace NinjaCatDiscordBot
                 var speakingChannel = string.Empty;
 
                 // Get speaking channel.
-                var channel = await client.GetSpeakingChannelForGuildAsync(guild);
+                var channel = client.GetSpeakingChannelForGuild(guild);
 
                 // Get current user.
-                var user = await channel.Guild.GetCurrentUserAsync();
+                var user = channel.Guild.CurrentUser;
 
                 // Does the bot have permission to message? If not return.
                 if (!user.GetPermissions(channel).SendMessages)
@@ -260,44 +261,77 @@ namespace NinjaCatDiscordBot
                 if (tweet.CreatedBy.Id != donaUser.Id || !string.IsNullOrEmpty(tweet.InReplyToScreenName))
                     return;
 
+                // Log tweet.
+                LogOutput($"TWEET: {tweet.FullText}");
+
                 // Is it a no-build tweet from Dona?
                 if (tweet.FullText.ToLowerInvariant().Contains("no build") || tweet.FullText.ToLowerInvariant().Contains("no new build") ||
                     tweet.FullText.ToLowerInvariant().Contains("not releasing") || tweet.FullText.ToLowerInvariant().Contains("not flighting"))
                 {
-                    // Bot is typing.
-                    await TriggerTypingInAllGuilds();
-
                     // Log tweet.
-                    LogOutput($"TWEET: {tweet.FullText}");
+                    LogOutput($"TWEET CONFIRMED: NO BUILDS TODAY");
 
                     // Announce in the specified channel of each guild.
                     foreach (var guild in client.Guilds)
                     {
                         // Get channel.
-                        var channel = await client.GetSpeakingChannelForGuildAsync(guild);
+                        var channel = client.GetSpeakingChannelForGuild(guild);
 
                         // If the channel is null, continue on to the next guild.
                         if (channel == null)
-                            continue;
-
-                        // Pause for realism.
-                        await Task.Delay(TimeSpan.FromSeconds(1));
-
-                        // Select and send message.
-                        switch (client.GetRandomNumber(3))
                         {
-                            default:
-                                await channel.SendMessageAsync($"I've just received word that there won't be any builds today. Bummer. :crying_cat_face:");
-                                break;
-
-                            case 1:
-                                await channel.SendMessageAsync($"Aww. No builds today. :crying_cat_face:");
-                                break;
-
-                            case 2:
-                                await channel.SendMessageAsync($"There won't be any builds today. Maybe tomorrow.:crying_cat_face:");
-                                break;
+                            LogOutput($"ROLLING OVER SERVER (NO SPEAKING): {channel.Guild.Name}");
+                            continue;
                         }
+
+                        // Verify we have permission to speak.
+                        if (!channel.Guild.CurrentUser.GetPermissions(channel).SendMessages)
+                        {
+                            LogOutput($"ROLLING OVER SERVER (NO PERMS): {channel.Guild.Name}");
+                            continue;
+                        }
+
+                        // Retry up to three times.
+                        for (int i = 0; i < 3; i++)
+                        {
+                            try
+                            {
+                                // Wait 2 seconds.
+                                await Task.Delay(TimeSpan.FromSeconds(2));
+
+                                // Send typing message.
+                                await channel.TriggerTypingAsync();
+
+                                // Pause for realism.
+                                await Task.Delay(TimeSpan.FromSeconds(2));
+
+                                // Select and send message.
+                                switch (client.GetRandomNumber(3))
+                                {
+                                    default:
+                                        await channel.SendMessageAsync($"I've just received word that there won't be any builds today. Bummer. :crying_cat_face:");
+                                        break;
+
+                                    case 1:
+                                        await channel.SendMessageAsync($"Aww. No builds today. :crying_cat_face:");
+                                        break;
+
+                                    case 2:
+                                        await channel.SendMessageAsync($"There won't be any builds today. Maybe tomorrow.:crying_cat_face:");
+                                        break;
+                                }
+
+                                // Got here we are done so break.
+                                break;
+                            }
+                            catch (HttpException ex)
+                            {
+                                LogOutput($"FAILURE IN SPEAKING FOR {channel.Guild.Name}: {ex}, {i+1} of {3} times.");
+                            }
+                        }
+
+                        // Log server.
+                        LogOutput($"SPOKEN IN SERVER: {channel.Guild.Name}");
                     }
                 }
                 else
@@ -348,11 +382,8 @@ namespace NinjaCatDiscordBot
                     if (string.IsNullOrWhiteSpace(fullUrl))
                         return;
 
-                    // Bot is typing.
-                    await TriggerTypingInAllGuilds();
-
                     // Log tweet.
-                    LogOutput($"TWEET: {tweet.FullText}");
+                    LogOutput($"TWEET CONFIRMED: NEW BUILD");
 
                     // Create variables.
                     var ring = string.Empty;
@@ -378,30 +409,63 @@ namespace NinjaCatDiscordBot
                     foreach (var guild in client.Guilds)
                     {
                         // Get channel.
-                        var channel = await client.GetSpeakingChannelForGuildAsync(guild);
+                        var channel = client.GetSpeakingChannelForGuild(guild);
 
                         // If the channel is null, continue on to the next guild.
                         if (channel == null)
-                            continue;
-
-                        // Pause for realism.
-                        await Task.Delay(TimeSpan.FromSeconds(1));
-
-                        // Select and send message.
-                        switch (client.GetRandomNumber(3))
                         {
-                            default:
-                                await channel.SendMessageAsync($"Yay! Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
-                                break;
-
-                            case 1:
-                                await channel.SendMessageAsync($"Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! Yes! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
-                                break;
-
-                            case 2:
-                                await channel.SendMessageAsync($"Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
-                                break;
+                            LogOutput($"ROLLING OVER SERVER (NO SPEAKING): {channel.Guild.Name}");
+                            continue;
                         }
+
+                        // Verify we have permission to speak.
+                        if (!channel.Guild.CurrentUser.GetPermissions(channel).SendMessages)
+                        {
+                            LogOutput($"ROLLING OVER SERVER (NO PERMS): {channel.Guild.Name}");
+                            continue;
+                        }
+
+                        // Retry up to three times.
+                        for (int i = 0; i < 3; i++)
+                        {
+                            try
+                            {
+                                // Wait 2 seconds.
+                                await Task.Delay(TimeSpan.FromSeconds(2));
+
+                                // Send typing message.
+                                await channel.TriggerTypingAsync();
+
+                                // Pause for realism.
+                                await Task.Delay(TimeSpan.FromSeconds(2));
+
+                                // Select and send message.
+                                switch (client.GetRandomNumber(3))
+                                {
+                                    default:
+                                        await channel.SendMessageAsync($"Yay! Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
+                                        break;
+
+                                    case 1:
+                                        await channel.SendMessageAsync($"Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! Yes! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
+                                        break;
+
+                                    case 2:
+                                        await channel.SendMessageAsync($"Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
+                                        break;
+                                }
+
+                                // Got here we are done so break.
+                                break;
+                            }
+                            catch (HttpException ex)
+                            {
+                                LogOutput($"FAILURE IN SPEAKING FOR {channel.Guild.Name}: {ex}, {i + 1} of {3} times.");
+                            }
+                        }
+
+                        // Log server.
+                        LogOutput($"SPOKEN IN SERVER: {channel.Guild.Name}");
                     }
                 }
             };
@@ -409,8 +473,10 @@ namespace NinjaCatDiscordBot
             // Listen for stop.
             stream.StreamStopped += (s, e) => LogOutput($"STREAM STOPPED: {e.Exception}");
 
+#pragma warning disable 4014
             // Start the stream.
             stream.StartStreamMatchingAllConditionsAsync();
+#pragma warning restore 4014
         }
 
         /// <summary>
@@ -444,26 +510,6 @@ namespace NinjaCatDiscordBot
             Console.WriteLine($"{timeDate}: {info}");
             logStreamWriter.WriteLine($"{timeDate}: {info}");
             logStreamWriter.Flush();
-        }
-
-        /// <summary>
-        /// Triggers the typing message in all guilds.
-        /// </summary>
-        private async Task TriggerTypingInAllGuilds()
-        {
-            // Go through each guild the bot is a part of.
-            foreach (var guild in client.Guilds)
-            {
-                // Get channel.
-                var channel = await client.GetSpeakingChannelForGuildAsync(guild);
-
-                // If the channel is null, continue on to the next guild.
-                if (channel == null)
-                    continue;
-
-                // Send typing message.
-                await channel.TriggerTypingAsync();
-            }
         }
 
         #endregion

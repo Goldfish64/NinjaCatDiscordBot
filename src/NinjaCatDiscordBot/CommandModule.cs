@@ -24,6 +24,7 @@
 
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
@@ -68,11 +69,11 @@ namespace NinjaCatDiscordBot
             var speakingChannel = string.Empty;
 
             // Get guild. If null, ignore it.
-            var guild = (Context.Channel as IGuildChannel)?.Guild;
+            var guild = (Context.Channel as IGuildChannel)?.Guild as SocketGuild;
             if (guild != null)
             {
                 // Get speaking channel.
-                var channel = await client.GetSpeakingChannelForGuildAsync(guild);
+                var channel = client.GetSpeakingChannelForGuild(guild);
 
                 // Get the mention if speaking is enabled.
                 if (channel != null)

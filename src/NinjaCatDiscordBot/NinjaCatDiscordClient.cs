@@ -27,6 +27,7 @@ using Discord.WebSocket;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -96,16 +97,16 @@ namespace NinjaCatDiscordBot
         /// <summary>
         /// Gets the speaking channel for the specified guild.
         /// </summary>
-        /// <param name="guild">The <see cref="IGuild"/> to get the channel for.</param>
-        /// <returns>An <see cref="ITextChannel"/> that should be used.</returns>
-        public async Task<ITextChannel> GetSpeakingChannelForGuildAsync(IGuild guild)
+        /// <param name="guild">The <see cref="SocketGuild"/> to get the channel for.</param>
+        /// <returns>An <see cref="SocketTextChannel"/> that should be used.</returns>
+        public SocketTextChannel GetSpeakingChannelForGuild(SocketGuild guild)
         {
             // If the guild is the Bots server, never speak.
             if (guild.Id == Constants.BotsGuildId)
                 return null;
 
             // Create channel variable.
-            ITextChannel channel = null;
+            SocketTextChannel channel = null;
 
             // Try to get the saved channel.
             if (SpeakingChannels.ContainsKey(guild.Id))
@@ -114,14 +115,14 @@ namespace NinjaCatDiscordBot
                 if (SpeakingChannels[guild.Id] == 0)
                     return null;
                 else
-                    channel = await guild.GetTextChannelAsync(SpeakingChannels[guild.Id]);
+                    channel = guild.Channels.SingleOrDefault(g => g.Id == guild.DefaultChannelId) as SocketTextChannel;
             }
 
             // If the channel is null, delete the entry from the dictionary and use the default one.
             if (channel == null)
             {
                 SpeakingChannels.Remove(guild.Id);
-                channel = await guild.GetDefaultChannelAsync();
+                channel = guild.Channels.SingleOrDefault(g => g.Id == guild.DefaultChannelId) as SocketTextChannel;
                 SaveSettings();
             }
 
