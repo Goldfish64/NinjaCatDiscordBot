@@ -326,7 +326,7 @@ namespace NinjaCatDiscordBot
                             }
                             catch (HttpException ex)
                             {
-                                LogOutput($"FAILURE IN SPEAKING FOR {channel.Guild.Name}: {ex}, {i+1} of {3} times.");
+                                LogOutput($"FAILURE IN SPEAKING FOR {channel.Guild.Name}: {ex}, {i + 1} of {3} times.");
                             }
                         }
 
@@ -471,7 +471,19 @@ namespace NinjaCatDiscordBot
             };
 
             // Listen for stop.
-            stream.StreamStopped += (s, e) => LogOutput($"STREAM STOPPED: {e.Exception}");
+            stream.StreamStopped += async (s, e) =>
+            {
+                // Log error.
+                LogOutput($"TWEET STREAM STOPPED: {e.Exception}");
+
+                // Wait 5 seconds.
+                await Task.Delay(TimeSpan.FromSeconds(5));
+
+#pragma warning disable 4014
+                // Restart the stream.
+                stream.StartStreamMatchingAllConditionsAsync();
+#pragma warning restore 4014
+            };
 
 #pragma warning disable 4014
             // Start the stream.
