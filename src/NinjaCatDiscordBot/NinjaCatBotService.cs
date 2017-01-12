@@ -458,7 +458,7 @@ namespace NinjaCatDiscordBot
                                 // Got here we are done so break.
                                 break;
                             }
-                            catch (HttpException ex)
+                            catch (Exception ex) when (ex is NullReferenceException || ex is HttpException)
                             {
                                 LogOutput($"FAILURE IN SPEAKING FOR {channel.Guild.Name}: {ex}, {i + 1} of {3} times.");
                             }
