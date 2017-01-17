@@ -280,14 +280,14 @@ namespace NinjaCatDiscordBot
                         // If the channel is null, continue on to the next guild.
                         if (channel == null)
                         {
-                            LogOutput($"ROLLING OVER SERVER (NO SPEAKING): {channel.Guild.Name}");
+                            LogOutput($"ROLLING OVER SERVER (NO SPEAKING): {guild.Name}");
                             continue;
                         }
 
                         // Verify we have permission to speak.
-                        if (!channel.Guild.CurrentUser.GetPermissions(channel).SendMessages)
+                        if (!guild.CurrentUser.GetPermissions(channel).SendMessages)
                         {
-                            LogOutput($"ROLLING OVER SERVER (NO PERMS): {channel.Guild.Name}");
+                            LogOutput($"ROLLING OVER SERVER (NO PERMS): {guild.Name}");
                             continue;
                         }
 
@@ -326,12 +326,12 @@ namespace NinjaCatDiscordBot
                             }
                             catch (HttpException ex)
                             {
-                                LogOutput($"FAILURE IN SPEAKING FOR {channel.Guild.Name}: {ex}, {i + 1} of {3} times.");
+                                LogOutput($"FAILURE IN SPEAKING FOR {guild.Name}: {ex}, {i + 1} of {3} times.");
                             }
                         }
 
                         // Log server.
-                        LogOutput($"SPOKEN IN SERVER: {channel.Guild.Name}");
+                        LogOutput($"SPOKEN IN SERVER: {guild.Name}");
                     }
                 }
                 else
