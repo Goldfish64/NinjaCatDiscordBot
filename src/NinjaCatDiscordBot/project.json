@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "emitEntryPoint": true
+  },
+
+  "dependencies": {
+    "Discord.Net.Commands": "1.0.0-rc-00546",
+    "Discord.Net.Core": "1.0.0-rc-00546",
+    "Discord.Net.WebSocket": "1.0.0-rc-00546",
+    "Microsoft.AspNet.WebApi.Client": "5.2.3",
+    "Microsoft.NETCore.App": {
+      "type": "platform",
+      "version": "1.0.1"
+    },
+    "System.Collections.Concurrent": "4.4.0-beta-24701-01",
+    "System.Net.WebSockets.Client": "4.4.0-beta-24701-01",
+    "System.Runtime.Serialization.Xml": "4.1.1",
+    "TweetinviAPI": "1.2.0.1"
+  },
+
+  "frameworks": {
+    "netcoreapp1.0": {
+      "imports": [
+        "dnxcore50",
+        "netcore45"
+      ]
+    }
+  }
+}

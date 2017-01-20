@@ -183,7 +183,7 @@ namespace NinjaCatDiscordBot
         /// Replies with the homepage URL.
         /// </summary>
         [Command(Constants.HomeCommand)]
-        [Alias(Constants.HomeCommandAlias)]
+        [Alias(Constants.HomeCommandAlias, Constants.HomeCommandAlias2)]
         private async Task ReplyHomeAsync()
         {
             // Bot is typing.
@@ -192,8 +192,21 @@ namespace NinjaCatDiscordBot
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Send URL.
-            await ReplyAsync(Constants.HomeCommandUrl);
+            // Select and send message with URL.
+            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(3))
+            {
+                default:
+                    await ReplyAsync($"My source code is here:\n{Constants.HomeCommandUrl}");
+                    break;
+
+                case 1:
+                    await ReplyAsync($"Here are where my insides are stored:\n{Constants.HomeCommandUrl}");
+                    break;
+
+                case 2:
+                    await ReplyAsync($"My source:\n{Constants.HomeCommandUrl}");
+                    break;
+            }
         }
 
         /// <summary>
@@ -208,8 +221,21 @@ namespace NinjaCatDiscordBot
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Send invite URL.
-            await ReplyAsync(Constants.InviteCommandUrl);
+            // Select and send message with invite URL.
+            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(3))
+            {
+                default:
+                    await ReplyAsync($"This link will let me be on *your* server:\n{Constants.InviteCommandUrl}");
+                    break;
+
+                case 1:
+                    await ReplyAsync($"So you want me in *your* server huh? Use this link:\n{Constants.InviteCommandUrl}");
+                    break;
+
+                case 2:
+                    await ReplyAsync($"Use this link to add me to *your* server:\n{Constants.InviteCommandUrl}");
+                    break;
+            }
         }
 
         /// <summary>

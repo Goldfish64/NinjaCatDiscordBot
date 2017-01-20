@@ -55,7 +55,8 @@ namespace NinjaCatDiscordBot
         public const string HelpCommandKeyword = "help";
         public const string HomeCommand = "home";
         public const string HomeCommandDesc = "go to my homepage";
-        public const string HomeCommandAlias = "sourcecode";
+        public const string HomeCommandAlias = "source";
+        public const string HomeCommandAlias2 = "sourcecode";
         public const string HomeCommandUrl = AppUrl;
         public const string InviteCommand = "invite";
         public const string InviteCommandDesc = "invite me to your server";
