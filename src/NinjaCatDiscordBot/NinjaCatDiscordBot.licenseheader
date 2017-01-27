@@ -1,5 +1,6 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-* File: Extensions.cs
+﻿extensions: designer.cs generated.cs extensions: .cs .cpp .h
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* File: %FileName%
 * 
 * Copyright (c) 2016-2017 John Davis
 *
@@ -21,26 +22,3 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-using Discord;
-
-namespace NinjaCatDiscordBot
-{
-    internal static class Extensions
-    {
-        #region Methods
-
-        public static bool HasStringPrefixLower(this IUserMessage msg, string str, ref int argPos)
-        {
-            var text = msg.Content.ToLowerInvariant();
-            if (text.StartsWith(str))
-            {
-                argPos = str.Length;
-                return true;
-            }
-            return false;
-        }
-
-        #endregion
-    }
-}

@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-* File: SettingsModules.cs
+* File: AdminCommands.cs
 * 
-* Copyright (c) 2016 John Davis
+* Copyright (c) 2016-2017 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -24,30 +24,58 @@
 
 using Discord;
 using Discord.Commands;
+using Discord.Net;
 using System;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot
 {
     /// <summary>
-    /// Contains settings "get" commands.
+    /// Contains commands for the bot.
     /// </summary>
-    [Group(Constants.SettingsGetModule)]
-    public sealed class GetSettingsModule : ModuleBase
+    public sealed partial class CommandModule : ModuleBase
     {
-        #region Constructor
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="GetSettingsModule"/> class.
-        /// </summary>
-        public GetSettingsModule() { }
-
-        #endregion
-
         #region Methods
 
         /// <summary>
-        /// Replies with the bot's nickname.
+        /// Tests the permissions.
+        /// </summary>
+        /// <returns></returns>
+        [Command(Constants.TestPermsCommand)]
+        public async Task TestPermsAsync()
+        {
+            // Bot is typing.
+            await Context.Channel.TriggerTypingAsync();
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Get client.
+            var client = Context.Client as NinjaCatDiscordClient;
+
+            // Get channel.
+            var channel = await client.GetSpeakingChannelForIGuildAsync(Context.Guild);
+
+            // If the channel is null, return message saying that speaking is disabled.
+            if (channel == null)
+            {
+                await ReplyAsync($"I'm not currently speaking in any channels.");
+                return;
+            }
+
+            // Verify we have permission to speak.
+            if (!(await Context.Guild.GetCurrentUserAsync()).GetPermissions(channel).SendMessages)
+            {
+                await ReplyAsync($"I don't have permission to send messages in {channel.Mention}. Please give me that permission.");
+                return;
+            }
+
+            await ReplyAsync($"I'm all set to speak in {channel.Mention}!");
+            return;
+        }
+
+        /// <summary>
+        /// Gets with the bot's nickname.
         /// </summary>
         [Command(Constants.NicknameCommand)]
         public async Task GetNicknameAsync()
@@ -115,7 +143,7 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with the channel the bot will speak in.
+        /// Gets the channel the bot will speak in.
         /// </summary>
         [Command(Constants.ChannelCommand)]
         public async Task GetChannelAsync()
@@ -166,26 +194,8 @@ namespace NinjaCatDiscordBot
                 return;
             }
 
-            // Create channel variable.
-            ITextChannel channel = null;
-
-            // Try to get the saved channel.
-            if (client.SpeakingChannels.ContainsKey(guild.Id))
-            {
-                // If it is zero, that means announce is disabled.
-                if (client.SpeakingChannels[guild.Id] != 0)
-                    channel = await guild.GetTextChannelAsync(client.SpeakingChannels[guild.Id]);
-            }
-            else
-            {
-                // If the channel is null, delete the entry from the dictionary and use the default one.
-                if (channel == null)
-                {
-                    client.SpeakingChannels.Remove(guild.Id);
-                    channel = await guild.GetDefaultChannelAsync();
-                    client.SaveSettings();
-                }
-            }
+            // Get channel.
+            var channel = await client.GetSpeakingChannelForIGuildAsync(guild);
 
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
@@ -245,31 +255,11 @@ namespace NinjaCatDiscordBot
             }
         }
 
-        #endregion
-    }
-
-    /// <summary>
-    /// Contains settings "set" commands.
-    /// </summary>
-    [Group(Constants.SettingsSetModule)]
-    public sealed class SetSettingsModule : ModuleBase
-    {
-        #region Constructor
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="SetSettingsModule"/> class.
-        /// </summary>
-        public SetSettingsModule() { }
-
-        #endregion
-
-        #region Methods
-
-        /// <summary>
-        /// Replies with the bot's nickname after setting it.
+        /// Sets the bot's nickname.
         /// </summary>
         /// <param name="nickname">The new nickname.</param>
-        [Command(Constants.NicknameCommand)]
+        [Command(Constants.SetNicknameCommand)]
         public async Task SetNicknameAsync(string nickname = null)
         {
             // Bot is typing.
@@ -309,26 +299,26 @@ namespace NinjaCatDiscordBot
             // Get the user.
             var user = Context.User as IGuildUser;
 
-            // If the user is null, lacks the manage server permission, or is not master, show error.
-            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
+            // If the user is null, lacks the manage nicknames permission, or is not master, show error.
+            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageNicknames != true)
             {
                 // Select and send message.
                 switch (client.GetRandomNumber(4))
                 {
                     default:
-                        await ReplyAsync($"Sorry, but only those who have permission to manage this server can change my nickname.");
+                        await ReplyAsync($"Sorry, but only those who have permission to manage nicknames on this server can change my nickname.");
                         break;
 
                     case 1:
-                        await ReplyAsync($"No can do. You need to be able to manage this server to change my nickname.");
+                        await ReplyAsync($"No can do. You need to be able to manage nicknames on this server to change my nickname.");
                         break;
 
                     case 2:
-                        await ReplyAsync($"I'm sorry {Context.User.Mention}, I'm afraid I can't do that. You must have manage server permissions to change my nickname.");
+                        await ReplyAsync($"I'm sorry {Context.User.Mention}, I'm afraid I can't do that. You must have the manage nickname permission to change my nickname.");
                         break;
 
                     case 3:
-                        await ReplyAsync($"Not happening. To change my nickname you must be able to manage this server.");
+                        await ReplyAsync($"Not happening. To change my nickname you must be able to manage nicknames on this server.");
                         break;
                 }
                 return;
@@ -362,10 +352,10 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with the bot's speaking channel after setting it.
+        /// Sets the bot's speaking channel.
         /// </summary>
         /// <param name="channel">The new channel.</param>
-        [Command(Constants.ChannelCommand)]
+        [Command(Constants.SetChannelCommand)]
         public async Task SetChannelAsync(ITextChannel channel = null)
         {
             // Bot is typing.
@@ -470,31 +460,10 @@ namespace NinjaCatDiscordBot
             }
         }
 
-        #endregion
-    }
-
-    /// <summary>
-    /// Contains settings "disable" commands.
-    /// </summary>
-    [Group(Constants.SettingsDisableModule)]
-    public sealed class DisableSettingsModule : ModuleBase
-    {
-        #region Constructor
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="DisableSettingsModule"/> class.
+        /// Disables the bot's speaking channel.
         /// </summary>
-        public DisableSettingsModule() { }
-
-        #endregion
-
-        #region Methods
-
-        /// <summary>
-        /// Replies after disabling the channel.
-        /// </summary>
-        /// <param name="channel">The new channel.</param>
-        [Command(Constants.ChannelCommand)]
+        [Command(Constants.DisableChannelCommand)]
         public async Task DisableChannelAsync()
         {
             // Bot is typing.
@@ -596,6 +565,104 @@ namespace NinjaCatDiscordBot
                 case 4:
                     await ReplyAsync($"I'll no longer announce builds.");
                     break;
+            }
+        }
+
+
+        /// <summary>
+        /// Send an announcement.
+        /// </summary>
+        /// <returns></returns>
+        [Command(Constants.AnnouncementCommand)]
+        public async Task SendAnnouncementAsync(string message)
+        {
+            // Bot is typing.
+            await Context.Channel.TriggerTypingAsync();
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Get client.
+            var client = Context.Client as NinjaCatDiscordClient;
+
+            // Get the user.
+            var user = Context.Message.Author as IUser;
+
+            // If the user is not master, show error.
+            if (user?.Id != Constants.OwnerId)
+            {
+                // Select and send message.
+                switch (client.GetRandomNumber(4))
+                {
+                    default:
+                        await ReplyAsync($"Sorry, but only my master can send announcements.");
+                        break;
+
+                    case 1:
+                        await ReplyAsync($"No can do. You aren't my owner.");
+                        break;
+
+                    case 2:
+                        await ReplyAsync($"I'm sorry {Context.Message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
+                        break;
+
+                    case 3:
+                        await ReplyAsync($"Not happening. Only my owner can send announcements.");
+                        break;
+                }
+                return;
+            }
+
+            // Send message.
+            await ReplyAsync($"I'll announce the following message to all my servers:\n{message}");
+
+            // Log message.
+            client.LogOutput($"ANNOUNCING: {message}");
+
+            // Get guilds.
+            var guilds = client.Guilds;
+
+            // Announce in the specified channel of each guild.
+            foreach (var guild in client.Guilds)
+            {
+                // Get channel.
+                var channel = client.GetSpeakingChannelForSocketGuild(guild);
+
+                // If the channel is null, continue on to the next guild.
+                if (channel == null)
+                {
+                    client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING): {guild.Name}");
+                    continue;
+                }
+
+                // Verify we have permission to speak.
+                if (!guild.CurrentUser.GetPermissions(channel).SendMessages)
+                {
+                    client.LogOutput($"ROLLING OVER SERVER (NO PERMS): {guild.Name}");
+                    continue;
+                }
+
+                try
+                {
+                    // Wait 2 seconds.
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+
+                    // Send typing message.
+                    await channel.TriggerTypingAsync();
+
+                    // Pause for realism.
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+
+                    // Send message.
+                    await channel.SendMessageAsync($"Announcement from <@{Constants.OwnerId.ToString()}> (bot owner):\n{message}");
+                }
+                catch (HttpException ex)
+                {
+                    client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name}: {ex}");
+                }
+
+                // Log server.
+                client.LogOutput($"SPOKEN IN SERVER: {guild.Name}");
             }
         }
 

@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-* File: CommandModule.cs
+* File: BotCommands.cs
 * 
-* Copyright (c) 2016 John Davis
+* Copyright (c) 2016-2017 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -37,7 +37,7 @@ namespace NinjaCatDiscordBot
     /// <summary>
     /// Contains commands for the bot.
     /// </summary>
-    public sealed class CommandModule : ModuleBase
+    public sealed partial class CommandModule : ModuleBase
     {
         #region Constructor
 
@@ -73,7 +73,7 @@ namespace NinjaCatDiscordBot
             if (guild != null)
             {
                 // Get speaking channel.
-                var channel = client.GetSpeakingChannelForGuild(guild);
+                var channel = client.GetSpeakingChannelForSocketGuild(guild);
 
                 // Get the mention if speaking is enabled.
                 if (channel != null)
@@ -89,12 +89,12 @@ namespace NinjaCatDiscordBot
                 {
                     default:
                         await ReplyAsync($"{Constants.AboutMessage1}\n\n" +
-                            $"I'm currently speaking in {speakingChannel}, but you can change it with the **{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.ChannelCommand}** command.");
+                            $"I'm currently speaking in {speakingChannel}, but you can change it with the **{Constants.CommandPrefix}{Constants.SetChannelCommand}** command.");
                         break;
 
                     case 1:
                         await ReplyAsync($"{Constants.AboutMessage2}\n\n" +
-                            $"I'm currently speaking in {speakingChannel}, but it can be changed with the **{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.ChannelCommand}** command.");
+                            $"I'm currently speaking in {speakingChannel}, but it can be changed with the **{Constants.CommandPrefix}{Constants.SetChannelCommand}** command.");
                         break;
                 }
             }
@@ -132,49 +132,13 @@ namespace NinjaCatDiscordBot
                 default:
                     await ReplyAsync($"So you need help huh? You've come to the right place. :cat::question:\n\n" +
                         $"My set of commands include:\n" +
-                        $"**{Constants.CommandPrefix}{Constants.AboutCommand}**: {Constants.AboutCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.HelpCommand}**: {Constants.HelpCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.HomeCommand}** or **{Constants.CommandPrefix}{Constants.HomeCommandAlias}**: {Constants.HomeCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.InviteCommand}**: {Constants.InviteCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.PingCommand}**: {Constants.PingCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.TrexCommand}**: {Constants.TrexCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.LatestBuildCommand}**: {Constants.LatestBuildCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.EnrollCommand}**: {Constants.EnrollCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.TimeCommand}**: {Constants.TimeCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.PlatformCommand}**: {Constants.PlatformCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.UptimeCommand}**: {Constants.UptimeCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.ServersCommand}**: {Constants.ServersCommandDesc}.\n\n" +
-                        $"Settings commands:\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsGetModule} {Constants.NicknameCommand}**: {Constants.GetNicknameCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.NicknameCommand}** *nickname*: {Constants.SetNicknameCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsGetModule} {Constants.ChannelCommand}**: {Constants.GetChannelCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.ChannelCommand}** *channel*: {Constants.SetChannelCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsDisableModule} {Constants.ChannelCommand}**: {Constants.DisableChannelCommandDesc}.\n\n" +
-                        $"If you mention me and include a command, I'll usually respond in some fashion.");
+                        Constants.HelpBody);
                     break;
 
                 case 1:
                     await ReplyAsync($"You need help? Why didn't you just say so? :cat::question:\n\n" +
-                        $"My set of commands include:\n" +
-                        $"**{Constants.CommandPrefix}{Constants.AboutCommand}**: {Constants.AboutCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.HelpCommand}**: {Constants.HelpCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.HomeCommand}** or **{Constants.CommandPrefix}{Constants.HomeCommandAlias}**: {Constants.HomeCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.InviteCommand}**: {Constants.InviteCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.PingCommand}**: {Constants.PingCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.TrexCommand}**: {Constants.TrexCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.LatestBuildCommand}**: {Constants.LatestBuildCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.EnrollCommand}**: {Constants.EnrollCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.TimeCommand}**: {Constants.TimeCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.PlatformCommand}**: {Constants.PlatformCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.UptimeCommand}**: {Constants.UptimeCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.ServersCommand}**: {Constants.ServersCommandDesc}.\n\n" +
-                        $"Settings commands:\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsGetModule} {Constants.NicknameCommand}**: {Constants.GetNicknameCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.NicknameCommand}** *nickname*: {Constants.SetNicknameCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsGetModule} {Constants.ChannelCommand}**: {Constants.GetChannelCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsSetModule} {Constants.ChannelCommand}** *channel*: {Constants.SetChannelCommandDesc}.\n" +
-                        $"**{Constants.CommandPrefix}{Constants.SettingsDisableModule} {Constants.ChannelCommand}**: {Constants.DisableChannelCommandDesc}.\n\n" +
-                        $"If you mention me with a command, I might get back to you.");
+                        $"My set of commands are as follows:\n" +
+                        Constants.HelpBody);
                     break;
             }
         }

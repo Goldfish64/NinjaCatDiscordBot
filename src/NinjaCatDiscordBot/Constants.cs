@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: Constants.cs
 * 
-* Copyright (c) 2016 John Davis
+* Copyright (c) 2016-2017 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -84,27 +84,49 @@ namespace NinjaCatDiscordBot
         public const string ServersCommand = "servers";
         public const string ServersCommandDesc = "shows the number of servers I'm part of";
         public const string ServerNamesCommand = "servernames"; // Only for bot owner.
+        public const string TestPermsCommand = "testperms";
+        public const string AnnouncementCommand = "announce";
 
-        public const string SettingsGetModule = "settings get";
-        public const string SettingsSetModule = "settings set";
-        public const string SettingsDisableModule = "settings disable";
         public const string NicknameCommand = "nickname";
-        public const string GetNicknameCommandDesc = "gets my nickname";
+        public const string NicknameCommandDesc = "gets my nickname";
+        public const string SetNicknameCommand = "setnickname";
         public const string SetNicknameCommandDesc = "sets my nickname";
         public const string ChannelCommand = "channel";
-        public const string GetChannelCommandDesc = "gets the channel I speak in";
+        public const string ChannelCommandDesc = "gets the channel I speak in";
+        public const string SetChannelCommand = "setchannel";
         public const string SetChannelCommandDesc = "sets the channel I speak in";
+        public const string DisableChannelCommand = "offchannel";
         public const string DisableChannelCommandDesc = "disables announcements";
 
-        public static readonly string AboutMessage1 = 
+        public static readonly string AboutMessage1 =
             $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
-            $"I was created by <@191330317439598593> with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
+            $"I was created by <@{OwnerId.ToString()}> with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
             $"For help on what I can do, type **{CommandPrefix}{HelpCommand}**.";
         public static readonly string AboutMessage2 =
             $"Greetings! I am the {UserName}, a bot built using the Discord.Net and Tweetinvi libraries!\n" +
-            $"I was activated by <@191330317439598593> with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
+            $"I was activated by <@{OwnerId.ToString()}> with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
             $"Your wish is my command, so type **{CommandPrefix}{HelpCommand}** for info on what I can do for you.";
 
-#endregion
+        public static readonly string HelpBody =
+            $"**{CommandPrefix}{AboutCommand}**: {AboutCommandDesc}.\n" +
+            $"**{CommandPrefix}{HelpCommand}**: {HelpCommandDesc}.\n" +
+            $"**{CommandPrefix}{HomeCommand}** or **{CommandPrefix}{HomeCommandAlias}**: {HomeCommandDesc}.\n" +
+            $"**{CommandPrefix}{InviteCommand}**: {InviteCommandDesc}.\n" +
+            $"**{CommandPrefix}{PingCommand}**: {PingCommandDesc}.\n" +
+            $"**{CommandPrefix}{TrexCommand}**: {TrexCommandDesc}.\n" +
+            $"**{CommandPrefix}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
+            $"**{CommandPrefix}{EnrollCommand}**: {EnrollCommandDesc}.\n" +
+            $"**{CommandPrefix}{TimeCommand}**: {TimeCommandDesc}.\n" +
+            $"**{CommandPrefix}{PlatformCommand}**: {PlatformCommandDesc}.\n" +
+            $"**{CommandPrefix}{UptimeCommand}**: {UptimeCommandDesc}.\n" +
+            $"**{CommandPrefix}{ServersCommand}**: {ServersCommandDesc}.\n\n" +
+            $"Admin commands:\n" +
+            $"**{CommandPrefix}{NicknameCommand}**: {NicknameCommandDesc}.\n" +
+            $"**{CommandPrefix}{SetNicknameCommand}** *nickname*: {SetNicknameCommandDesc}.\n" +
+            $"**{CommandPrefix}{ChannelCommand}**: {ChannelCommandDesc}.\n" +
+            $"**{CommandPrefix}{SetChannelCommand}** *channel*: {SetChannelCommandDesc}.\n" +
+            $"**{CommandPrefix}{DisableChannelCommand}**: {DisableChannelCommandDesc}.\n\n";
+
+        #endregion
     }
 }
