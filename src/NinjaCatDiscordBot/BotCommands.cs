@@ -385,7 +385,7 @@ namespace NinjaCatDiscordBot
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
-
+            
             // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 

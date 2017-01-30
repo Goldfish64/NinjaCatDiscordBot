@@ -35,6 +35,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Tweetinvi;
 
@@ -442,6 +443,31 @@ namespace NinjaCatDiscordBot
                 // Log error.
                 client.LogOutput($"TWEET STREAM STOPPED: {e.Exception}");
             };
+
+            // Create timer for POSTing server count.
+            var serverCountTimer = new Timer(
+                async (e) => {
+                    try
+                    {
+                        var httpWebRequest = (HttpWebRequest)WebRequest.Create($"https://bots.discord.pw/api/bots/{client.CurrentUser.Id}/stats");
+                        httpWebRequest.ContentType = "application/json";
+                        httpWebRequest.Method = "POST";
+                        httpWebRequest.Headers["Authorization"] = Credentials.BotApiToken;
+
+                        using (var streamWriter = new StreamWriter(await httpWebRequest.GetRequestStreamAsync()))
+                        {
+                            streamWriter.Write($"{{\"server_count\":{client.Guilds.Count}}}");
+                            streamWriter.Flush();
+                        }
+
+                        await httpWebRequest.GetResponseAsync();
+                    }
+                    catch (WebException ex)
+                    {
+                        // Log error.
+                        client.LogOutput($"FAILED UPDATING SERVER COUNT: {ex}");
+                    }
+                }, null, TimeSpan.FromMilliseconds(0), TimeSpan.FromMinutes(10));
 
             // Start the stream.
             stream.StartStreamMatchingAllConditions();

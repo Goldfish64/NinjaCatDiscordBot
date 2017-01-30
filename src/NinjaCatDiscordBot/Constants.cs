@@ -41,10 +41,10 @@ namespace NinjaCatDiscordBot
         public const ulong BotsGuildId = 110373943822540800;
 
 #if DEBUG
-        public const string InviteUrl = "https://discordapp.com/oauth2/authorize?permissions=0&client_id=238475402937499648&scope=bot";
+        public const string InviteUrl = "https://discordapp.com/oauth2/authorize?permissions=19456&client_id=238475402937499648&scope=bot";
         public const string CommandPrefix = "$njd-";
 #else
-        public const string InviteUrl = "https://discordapp.com/oauth2/authorize?permissions=0&client_id=232369430456172545&scope=bot";
+        public const string InviteUrl = "https://discordapp.com/oauth2/authorize?permissions=19456&client_id=232369430456172545&scope=bot";
         public const string CommandPrefix = "$nj-";
 #endif
 
