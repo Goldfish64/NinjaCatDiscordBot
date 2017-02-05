@@ -29,7 +29,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot
@@ -317,22 +316,6 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with the Insider program URL.
-        /// </summary>
-        [Command(Constants.EnrollCommand)]
-        private async Task ReplyEnrollAsync()
-        {
-            // Bot is typing.
-            await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Send URL.
-            await ReplyAsync(Constants.EnrollCommandUrl);
-        }
-
-        /// <summary>
         /// Replies with the local time.
         /// </summary>
         [Command(Constants.TimeCommand)]
@@ -378,85 +361,10 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with the bot's platform.
+        /// Replies with the bot's info.
         /// </summary>
-        [Command(Constants.PlatformCommand)]
-        private async Task ReplyPlatformAsync()
-        {
-            // Bot is typing.
-            await Context.Channel.TriggerTypingAsync();
-            
-            // Pause for realism.
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Select and send message.
-            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(5))
-            {
-                default:
-                    await ReplyAsync($"I'm currently living on {RuntimeInformation.FrameworkDescription.Trim()} on {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()}. Now tell me where *you* live so that I may visit you.");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"I call {RuntimeInformation.FrameworkDescription.Trim()} on {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} home. What's yours?");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"For me, home is on {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} running {RuntimeInformation.FrameworkDescription.Trim()}. Where is yours?");
-                    break;
-
-                case 3:
-                    await ReplyAsync($"Questions, questions. My home is {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} running {RuntimeInformation.FrameworkDescription.Trim()}.");
-                    break;
-
-                case 4:
-                    await ReplyAsync($"I live in a box running {RuntimeInformation.OSDescription.Trim()} {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()} and {RuntimeInformation.FrameworkDescription.Trim()}. What's that? You live in one too?");
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Replies with the bot's uptime.
-        /// </summary>
-        [Command(Constants.UptimeCommand)]
-        private async Task ReplyUptimeAsync()
-        {
-            // Bot is typing.
-            await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Get passed time.
-            var time = DateTime.Now.ToLocalTime() - (Context.Client as NinjaCatDiscordClient).StartTime.ToLocalTime();
-
-            // Create string.
-            var values = (time.Days > 0 ? time.Days.ToString() + $" day{(time.Days > 1 ? "s" : "")}{(time.Hours > 0 ? ", " : "")}" : string.Empty) +
-                (time.Hours > 0 ? time.Hours.ToString() + $" hour{(time.Hours > 1 ? "s" : "")}{(time.Minutes > 0 ? ", " : "")}" : string.Empty) +
-                (time.Minutes > 0 ? time.Minutes.ToString() + $" minute{(time.Minutes > 1 ? "s" : "")}{(time.Seconds > 0 ? ", " : "")}" : string.Empty) +
-                (time.Seconds > 0 ? time.Seconds.ToString() + $" second{(time.Seconds > 1 ? "s" : "")}" : string.Empty);
-
-            // Select and send message.
-            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(3))
-            {
-                default:
-                    await ReplyAsync($"I've been up for {values}.");
-                    break;
-
-                case 0:
-                    await ReplyAsync($"It's been {values} since I started.");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"I started {values} ago.");
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Replies with the bot's servers.
-        /// </summary>
-        [Command(Constants.ServersCommand)]
-        private async Task ReplyServersAsync()
+        [Command(Constants.BotInfoCommand)]
+        private async Task GetBotInfoAsync()
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
@@ -470,19 +378,56 @@ namespace NinjaCatDiscordBot
             // Get guild count.
             var count = client.Guilds.Count;
 
-            // Select and send message.
+            // Get passed time.
+            var timeSpan = DateTime.Now.ToLocalTime() - client.StartTime.ToLocalTime();
+
+            // Create string. From http://stackoverflow.com/questions/1138723/timespan-to-friendly-string-library-c.
+            var parts = new[]
+                {
+                    Tuple.Create("day", timeSpan.Days),
+                    Tuple.Create("hour", timeSpan.Hours),
+                    Tuple.Create("minute", timeSpan.Minutes),
+                    Tuple.Create("second", timeSpan.Seconds)
+                }.SkipWhile(i => i.Item2 <= 0);
+
+            var timeString = string.Join(", ", parts.Select(p => string.Format("{0} {1}{2}", p.Item2, p.Item1, p.Item2 > 1 ? "s" : string.Empty)));
+
+            // Get current user.
+            var user = await Context.Guild.GetCurrentUserAsync();
+
+            // Get highest role.
+            var highestrole = Context.Guild.EveryoneRole;
+            foreach (var role in user.RoleIds)
+            {
+                var newRole = Context.Guild.GetRole(role);
+                if (newRole.Position > highestrole.Position)
+                    highestrole = newRole;
+            }
+
+            // Build embed.
+            var embed = new EmbedBuilder();
+            embed.Author = new EmbedAuthorBuilder();
+            embed.Author.IconUrl = user.AvatarUrl;
+            embed.Author.Name = user.Nickname ?? user.Username;
+            embed.Color = highestrole.Color;
+            embed.AddField((e) => { e.Name = "Join date"; e.Value = user.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
+            embed.AddField((e) => { e.Name = "Creation date"; e.Value = user.CreatedAt.ToLocalTime().ToString("d"); e.IsInline = true; });
+            embed.AddField((e) => { e.Name = "Servers"; e.Value = count.ToString(); e.IsInline = true; });
+            embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
+
+            // Select and send message with embed.
             switch (client.GetRandomNumber(3))
             {
                 default:
-                    await ReplyAsync($"I'm currently a member of {count} server{(count > 1 ? "s" : "")}.");
+                    await ReplyAsync("Here are my stats:", embed: embed);
                     break;
 
                 case 1:
-                    await ReplyAsync($"I'm part of {count} server{(count > 1 ? "s" : "")}.");
+                    await ReplyAsync("Here you go:", embed: embed);
                     break;
 
                 case 2:
-                    await ReplyAsync($"I reside in {count} server{(count > 1 ? "s" : "")} currently.");
+                    await ReplyAsync("My information awaits:", embed: embed);
                     break;
             }
         }

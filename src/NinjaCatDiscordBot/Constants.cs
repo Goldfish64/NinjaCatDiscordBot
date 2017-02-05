@@ -52,7 +52,6 @@ namespace NinjaCatDiscordBot
         public const string AboutCommandDesc = "get to know me";
         public const string HelpCommand = "help";
         public const string HelpCommandDesc = "get help";
-        public const string HelpCommandKeyword = "help";
         public const string HomeCommand = "home";
         public const string HomeCommandDesc = "go to my homepage";
         public const string HomeCommandAlias = "source";
@@ -63,26 +62,15 @@ namespace NinjaCatDiscordBot
         public const string InviteCommandUrl = InviteUrl;
         public const string PingCommand = "ping";
         public const string PingCommandDesc = "pong";
-        public static readonly string[] PingCommandKeywords = { "ping", "pong", "ping-pong" };
         public const string TrexCommand = "trex";
         public const string TrexCommandDesc = "shows the Windows 10 Skype emoticon";
         public const string TrexCommandUrl = "http://static.skaip.su/img/emoticons/180x180/f6fcff/win10.gif";
-        public static readonly string[] TrexCommandKeywords = { "trex", "t-rex" };
         public const string LatestBuildCommand = "latestbuild";
         public const string LatestBuildCommandDesc = "gets the latest Insider build";
-        public static readonly string[] LatestBuildKeywords = { "latest build", "latest insider build", "latest windows 10 build", "latest windows build", "latest insider preview build" };
-        public const string EnrollCommand = "enrollinsider";
-        public const string EnrollCommandDesc = "enroll in the Insider program";
-        public const string EnrollCommandUrl = "https://insider.windows.com/";
         public const string TimeCommand = "time";
         public const string TimeCommandDesc = "shows the current time";
-        public const string TimeCommandKeyword = "time";
-        public const string PlatformCommand = "platform";
-        public const string PlatformCommandDesc = "shows where I live";
-        public const string UptimeCommand = "uptime";
-        public const string UptimeCommandDesc = "shows my uptime";
-        public const string ServersCommand = "servers";
-        public const string ServersCommandDesc = "shows the number of servers I'm part of";
+        public const string BotInfoCommand = "info";
+        public const string BotInfoCommandDesc = "shows my info";
         public const string ServerNamesCommand = "servernames"; // Only for bot owner.
         public const string TestPermsCommand = "testperms";
         public const string AnnouncementCommand = "announce";
@@ -110,16 +98,13 @@ namespace NinjaCatDiscordBot
         public static readonly string HelpBody =
             $"**{CommandPrefix}{AboutCommand}**: {AboutCommandDesc}.\n" +
             $"**{CommandPrefix}{HelpCommand}**: {HelpCommandDesc}.\n" +
+            $"**{CommandPrefix}{BotInfoCommand}**: {BotInfoCommandDesc}.\n" +
             $"**{CommandPrefix}{HomeCommand}** or **{CommandPrefix}{HomeCommandAlias}**: {HomeCommandDesc}.\n" +
             $"**{CommandPrefix}{InviteCommand}**: {InviteCommandDesc}.\n" +
             $"**{CommandPrefix}{PingCommand}**: {PingCommandDesc}.\n" +
             $"**{CommandPrefix}{TrexCommand}**: {TrexCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
-            $"**{CommandPrefix}{EnrollCommand}**: {EnrollCommandDesc}.\n" +
-            $"**{CommandPrefix}{TimeCommand}**: {TimeCommandDesc}.\n" +
-            $"**{CommandPrefix}{PlatformCommand}**: {PlatformCommandDesc}.\n" +
-            $"**{CommandPrefix}{UptimeCommand}**: {UptimeCommandDesc}.\n" +
-            $"**{CommandPrefix}{ServersCommand}**: {ServersCommandDesc}.\n\n" +
+            $"**{CommandPrefix}{TimeCommand}**: {TimeCommandDesc}.\n\n" +
             $"Admin commands:\n" +
             $"**{CommandPrefix}{NicknameCommand}**: {NicknameCommandDesc}.\n" +
             $"**{CommandPrefix}{SetNicknameCommand}** *nickname*: {SetNicknameCommandDesc}.\n" +

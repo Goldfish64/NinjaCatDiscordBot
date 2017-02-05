@@ -25,9 +25,8 @@
 using Discord;
 using Discord.Commands;
 using Discord.Net;
+using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -83,6 +82,9 @@ namespace NinjaCatDiscordBot
             // Certain things are to be done when the bot joins a guild.
             client.JoinedGuild += async (guild) =>
             {
+                // Update server count.
+                await UpdateSiteServerCount();
+
                 // Pause for 5 seconds.
                 await Task.Delay(TimeSpan.FromSeconds(5));
 
@@ -143,6 +145,9 @@ namespace NinjaCatDiscordBot
                 }
             };
 
+            // Update count on guild leave.
+            client.LeftGuild += async (guild) => await UpdateSiteServerCount();
+
             // Listen for messages.
             client.MessageReceived += async (message) =>
             {
@@ -154,57 +159,22 @@ namespace NinjaCatDiscordBot
                 // Keeps track of where the command begins.
                 var pos = 0;
 
-                // Try to parse a command if only the bot is mentioned.
-                if (msg.MentionedUserIds.SingleOrDefault(u => u == client.CurrentUser.Id) == client.CurrentUser.Id)
-                {
-                    var successResult = ParseResult.FromSuccess(new ReadOnlyCollection<TypeReaderResult>(new List<TypeReaderResult>()), new ReadOnlyCollection<TypeReaderResult>(new List<TypeReaderResult>()));
-
-                    // LINQ stuff from http://stackoverflow.com/a/2912483.
-                    if (msg.Content.ToLowerInvariant().Contains(Constants.HelpCommandKeyword))
-                    {
-                        // Execute the help command and return.
-                        await commands.Commands.Single(c => c.Name == Constants.HelpCommand).ExecuteAsync(new CommandContext(client, msg), successResult, commandMap);
-                        return;
-                    }
-                    //else if (PingCommandKeywords.Any(s => command.Contains(s)))
-                    //    await SendPing(user, channel);
-                    else if (Constants.TrexCommandKeywords.Any(s => msg.Content.ToLowerInvariant().Contains(s)))
-                    {
-                        // Execute the trex command and return.
-                        await commands.Commands.Single(c => c.Name == Constants.TrexCommand).ExecuteAsync(new CommandContext(client, msg), successResult, commandMap);
-                        return;
-                    }
-                    else if (Constants.LatestBuildKeywords.Any(s => msg.Content.ToLowerInvariant().Contains(s)))
-                    {
-                        // Execute the latestbuild command and return.
-                        await commands.Commands.Single(c => c.Name == Constants.LatestBuildCommand).ExecuteAsync(new CommandContext(client, msg), successResult, commandMap);
-                        return;
-                    }
-                    else if (msg.Content.ToLowerInvariant().Contains(Constants.TimeCommandKeyword))
-                    {
-                        // Execute the time command and return.
-                        await commands.Commands.Single(c => c.Name == Constants.TimeCommand).ExecuteAsync(new CommandContext(client, msg), successResult, commandMap);
-                        return;
-                    }
-                }
-
                 // Attempt to parse a command.
                 if (msg.HasStringPrefixLower(Constants.CommandPrefix, ref pos))
                 {
                     var result = await commands.ExecuteAsync(new CommandContext(client, msg), msg.Content.Substring(pos));
                     if (!result.IsSuccess)
                     {
+                        // Is the command just unknown? If so, return.
+                        if (result.Error == CommandError.UnknownCommand)
+                            return;
+
                         // Bot is typing.
                         await msg.Channel.TriggerTypingAsync();
 
-                        // Pause for realism.
+                        // Pause for realism and send message.
                         await Task.Delay(TimeSpan.FromSeconds(0.75));
-
-                        // Is the command just unknown?
-                        if (result.Error == CommandError.UnknownCommand)
-                            await msg.Channel.SendMessageAsync($"I'm sorry, but I don't know what that means. Type **{Constants.CommandPrefix}{Constants.HelpCommand}** for help.");
-                        else
-                            await msg.Channel.SendMessageAsync($"I'm sorry, but something happened. Error: {result.ErrorReason}");
+                        await msg.Channel.SendMessageAsync($"I'm sorry, but something happened. Error: {result.ErrorReason}");
                     }
                     return;
                 }
@@ -215,7 +185,7 @@ namespace NinjaCatDiscordBot
             await client.ConnectAsync();
 
             // Set game.
-            await client.SetGameAsync("on Windows 10");
+            await client.SetGameAsync("starting up...");
 
             // Log in to Twitter.
             Auth.SetUserCredentials(Credentials.TwitterConsumerKey, Credentials.TwitterConsumerSecret,
@@ -445,32 +415,71 @@ namespace NinjaCatDiscordBot
             };
 
             // Create timer for POSTing server count.
-            var serverCountTimer = new Timer(
-                async (e) => {
+            var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCount(), null, TimeSpan.FromMilliseconds(0), TimeSpan.FromHours(1));
+
+            // Create timer for game play status of builds.
+            var buildPlayTimer = new Timer(
+                async (e) =>
+                {
                     try
                     {
-                        var httpWebRequest = (HttpWebRequest)WebRequest.Create($"https://bots.discord.pw/api/bots/{client.CurrentUser.Id}/stats");
-                        httpWebRequest.ContentType = "application/json";
-                        httpWebRequest.Method = "POST";
-                        httpWebRequest.Headers["Authorization"] = Credentials.BotApiToken;
-
-                        using (var streamWriter = new StreamWriter(await httpWebRequest.GetRequestStreamAsync()))
+                        // Create the HttpClient.
+                        using (var httpClient = new HttpClient())
                         {
-                            streamWriter.Write($"{{\"server_count\":{client.Guilds.Count}}}");
-                            streamWriter.Flush();
-                        }
+                            // Get the latest build list containing the newest 50 builds from BuildFeed.
+                            var response = await httpClient.GetStringAsync("https://buildfeed.net/api/GetBuilds?limit=50");
 
-                        await httpWebRequest.GetResponseAsync();
+                            // Parse JSON and get the latest public build.
+                            var builds = JArray.Parse(response).ToList();
+                            var newestBuild = builds.First(b => (int)b["SourceType"] == 0);
+
+                            // Create string.
+                            var game = $"on {newestBuild["Number"]} | {Constants.CommandPrefix}{Constants.HelpCommand}";
+
+                            // Update game if it needs to be updated.
+                            if (client.CurrentUser.Game?.Name != game)
+                                await client.SetGameAsync(game);
+                        }
                     }
-                    catch (WebException ex)
+                    catch (Exception ex)
                     {
-                        // Log error.
-                        client.LogOutput($"FAILED UPDATING SERVER COUNT: {ex}");
+                        // Log failure.
+                        client.LogOutput($"FAILURE IN GAME: {ex}");
+
+                        // Reset game.
+                        await client.SetGameAsync("on Windows 10");
                     }
-                }, null, TimeSpan.FromMilliseconds(0), TimeSpan.FromMinutes(10));
+                }, null, TimeSpan.FromMilliseconds(0), TimeSpan.FromMinutes(30));
 
             // Start the stream.
             stream.StartStreamMatchingAllConditions();
+        }
+
+        /// <summary>
+        /// Updates the site server count.
+        /// </summary>
+        private async Task UpdateSiteServerCount()
+        {
+            try
+            {
+                var httpWebRequest = (HttpWebRequest)WebRequest.Create($"https://bots.discord.pw/api/bots/{client.CurrentUser.Id}/stats");
+                httpWebRequest.ContentType = "application/json";
+                httpWebRequest.Method = "POST";
+                httpWebRequest.Headers["Authorization"] = Credentials.BotApiToken;
+
+                using (var streamWriter = new StreamWriter(await httpWebRequest.GetRequestStreamAsync()))
+                {
+                    streamWriter.Write($"{{\"server_count\":{client.Guilds.Count}}}");
+                    streamWriter.Flush();
+                }
+
+                await httpWebRequest.GetResponseAsync();
+            }
+            catch (WebException ex)
+            {
+                // Log error.
+                client.LogOutput($"FAILED UPDATING SERVER COUNT: {ex}");
+            }
         }
 
         #endregion

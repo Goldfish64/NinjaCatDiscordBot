@@ -260,7 +260,7 @@ namespace NinjaCatDiscordBot
         /// </summary>
         /// <param name="nickname">The new nickname.</param>
         [Command(Constants.SetNicknameCommand)]
-        public async Task SetNicknameAsync(string nickname = null)
+        public async Task SetNicknameAsync(params string[] nickname)
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
@@ -328,7 +328,7 @@ namespace NinjaCatDiscordBot
             var self = await Context.Guild.GetCurrentUserAsync();
 
             // Change nickname.
-            await self.ModifyAsync(u => u.Nickname = nickname);
+            await self.ModifyAsync(u => u.Nickname = string.Join(" ", nickname));
 
             // Select and send message.
             switch (client.GetRandomNumber(4))
