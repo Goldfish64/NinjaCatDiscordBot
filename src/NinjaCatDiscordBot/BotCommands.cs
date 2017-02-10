@@ -27,8 +27,9 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot
@@ -50,10 +51,10 @@ namespace NinjaCatDiscordBot
         #region Methods
 
         /// <summary>
-        /// Replies with the about message.
+        /// Gets the about message.
         /// </summary>
         [Command(Constants.AboutCommand)]
-        private async Task ReplyAboutAsync()
+        private async Task GetAboutAsync()
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
@@ -114,10 +115,10 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with help.
+        /// Gets help.
         /// </summary>
         [Command(Constants.HelpCommand)]
-        private async Task ReplyHelpAsync()
+        private async Task GetHelpAsync()
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
@@ -143,11 +144,11 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with the homepage URL.
+        /// Gets the homepage URL.
         /// </summary>
         [Command(Constants.HomeCommand)]
         [Alias(Constants.HomeCommandAlias, Constants.HomeCommandAlias2)]
-        private async Task ReplyHomeAsync()
+        private async Task GetHomeAsync()
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
@@ -173,10 +174,10 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with the invite URL.
+        /// Gets the invite URL.
         /// </summary>
         [Command(Constants.InviteCommand)]
-        private async Task ReplyInviteAsync()
+        private async Task GetInviteAsync()
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
@@ -202,10 +203,10 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with a pong.
+        /// Gets a pong.
         /// </summary>
         [Command(Constants.PingCommand)]
-        private async Task ReplyPingAsync()
+        private async Task GetPingAsync()
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
@@ -243,10 +244,10 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with the T-Rex.
+        /// Gets the T-Rex.
         /// </summary>
         [Command(Constants.TrexCommand)]
-        private async Task ReplyTrexAsync()
+        private async Task GetTrexAsync()
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
@@ -272,54 +273,74 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with the latest Insider build.
+        /// Gets the latest Insider PC build.
         /// </summary>
         [Command(Constants.LatestBuildCommand)]
-        private async Task ReplyLatestBuildAsync()
+        private async Task GetLatestBuildAsync()
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
 
-            // Create the HttpClient.
-            using (var httpClient = new HttpClient())
-            {
-                // Get the latest build list containing the newest 50 builds from BuildFeed.
-                var response = await httpClient.GetStringAsync("https://buildfeed.net/api/GetBuilds?limit=50");
+            // Create process for JSON fetching.
+            var process = new Process();
+            process.StartInfo.FileName = "WindowsBlogsJsonGetterApp.exe";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
 
-                // Parse JSON and get the latest public build.
-                var builds = JArray.Parse(response).ToList();
-                var newestBuild = builds.First(b => (int)b["SourceType"] == 0);
+            // Run process and get result.
+            process.Start();
+            var result = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
 
-                // Pause for realism.
-                await Task.Delay(TimeSpan.FromSeconds(1));
+            // Parse JSON and get the latest PC post.
+            var posts = JArray.Parse(result).ToList();
+            var newestBuild = posts.First(b => b["title"].ToString().ToLowerInvariant().Contains("pc"));
 
-                // Select and send message.
-                switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"I've got the latest public build for you. It is **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}**. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
-                        break;
+            // Get build number and link.
+            var build = Regex.Match(newestBuild["title"].ToString(), @"\d{5,}").Value;
+            var link = newestBuild["link"].ToString();
 
-                    case 1:
-                        await ReplyAsync($"Ask and you shall receive. The latest public build is **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}**. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"Yes master. Right away master. **{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** is the latest and greatest. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"**{newestBuild["MajorVersion"]}.{newestBuild["MinorVersion"]}.{newestBuild["Number"]}.{newestBuild["Revision"]}** is the newest public build according to my sources. :cat:\nhttps://buildfeed.net/build/{newestBuild["Id"]}");
-                        break;
-                }
-            }
+            // Send.
+            await ReplyAsync($"The latest Windows 10 build for PCs is **{build}**. :cat: :computer:\n{link}");
         }
 
         /// <summary>
-        /// Replies with the local time.
+        /// Gets the latest Insider mobile build.
+        /// </summary>
+        [Command(Constants.LatestMobileBuildCommand)]
+        private async Task GetLatestMobileBuildAsync()
+        {
+            // Bot is typing.
+            await Context.Channel.TriggerTypingAsync();
+
+            // Create process for JSON fetching.
+            var process = new Process();
+            process.StartInfo.FileName = "WindowsBlogsJsonGetterApp.exe";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+
+            // Run process and get result.
+            process.Start();
+            var result = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
+
+            // Parse JSON and get the latest mobile post.
+            var posts = JArray.Parse(result).ToList();
+            var newestBuild = posts.First(b => b["title"].ToString().ToLowerInvariant().Contains("mobile"));
+
+            // Get build number and link.
+            var build = Regex.Match(newestBuild["title"].ToString(), @"\d{5,}").Value;
+            var link = newestBuild["link"].ToString();
+
+            // Send.
+            await ReplyAsync($"The latest Windows 10 Mobile build is **{build}**. :cat: :telephone:\n{link}");
+        }
+
+        /// <summary>
+        /// Gets the local time.
         /// </summary>
         [Command(Constants.TimeCommand)]
-        private async Task ReplyTimeAsync()
+        private async Task GetTimeAsync()
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
@@ -433,11 +454,11 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Replies with the bot's servers.
+        /// Gets the bot's servers.
         /// </summary>
         /// <returns></returns>
-        [Command(Constants.ServerNamesCommand)]
-        public async Task ReplyServerNamesAsync()
+        [Command(Constants.ServersCommand)]
+        public async Task GetServersAsync()
         {
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
@@ -447,34 +468,6 @@ namespace NinjaCatDiscordBot
 
             // Get client.
             var client = Context.Client as NinjaCatDiscordClient;
-
-            // Get the user.
-            var user = Context.Message.Author as IUser;
-
-            // If the user is not master, show error.
-            if (user?.Id != Constants.OwnerId)
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"Sorry, but only my master can list the servers I'm in.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You aren't my owner.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.Message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. Only my owner can list the servers I'm in.");
-                        break;
-                }
-                return;
-            }
 
             // Get guilds.
             var guilds = client.Guilds;

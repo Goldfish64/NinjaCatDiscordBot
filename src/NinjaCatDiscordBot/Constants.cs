@@ -66,14 +66,18 @@ namespace NinjaCatDiscordBot
         public const string TrexCommandDesc = "shows the Windows 10 Skype emoticon";
         public const string TrexCommandUrl = "http://static.skaip.su/img/emoticons/180x180/f6fcff/win10.gif";
         public const string LatestBuildCommand = "latestbuild";
-        public const string LatestBuildCommandDesc = "gets the latest Insider build";
+        public const string LatestBuildCommandDesc = "gets the latest Insider PC build";
+        public const string LatestMobileBuildCommand = "latestmobilebuild";
+        public const string LatestMobileBuildCommandDesc = "gets the latest Insider Mobile build";
         public const string TimeCommand = "time";
         public const string TimeCommandDesc = "shows the current time";
         public const string BotInfoCommand = "info";
         public const string BotInfoCommandDesc = "shows my info";
-        public const string ServerNamesCommand = "servernames"; // Only for bot owner.
+        public const string ServersCommand = "servers";
+        public const string ServersCommandDesc = "lists the servers I'm in";
         public const string TestPermsCommand = "testperms";
-        public const string AnnouncementCommand = "announce";
+        public const string TestPermsCommandDesc = "tests my speaking channel permissions";
+        public const string AnnouncementCommand = "announce"; // Bot owner only.
 
         public const string NicknameCommand = "nickname";
         public const string NicknameCommandDesc = "gets my nickname";
@@ -99,18 +103,21 @@ namespace NinjaCatDiscordBot
             $"**{CommandPrefix}{AboutCommand}**: {AboutCommandDesc}.\n" +
             $"**{CommandPrefix}{HelpCommand}**: {HelpCommandDesc}.\n" +
             $"**{CommandPrefix}{BotInfoCommand}**: {BotInfoCommandDesc}.\n" +
+            $"**{CommandPrefix}{ServersCommand}**: {ServersCommandDesc}.\n" +
             $"**{CommandPrefix}{HomeCommand}** or **{CommandPrefix}{HomeCommandAlias}**: {HomeCommandDesc}.\n" +
             $"**{CommandPrefix}{InviteCommand}**: {InviteCommandDesc}.\n" +
             $"**{CommandPrefix}{PingCommand}**: {PingCommandDesc}.\n" +
+            $"**{CommandPrefix}{TimeCommand}**: {TimeCommandDesc}.\n" +
             $"**{CommandPrefix}{TrexCommand}**: {TrexCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
-            $"**{CommandPrefix}{TimeCommand}**: {TimeCommandDesc}.\n\n" +
+            $"**{CommandPrefix}{LatestMobileBuildCommand}**: {LatestMobileBuildCommandDesc}.\n\n" +
             $"Admin commands:\n" +
             $"**{CommandPrefix}{NicknameCommand}**: {NicknameCommandDesc}.\n" +
             $"**{CommandPrefix}{SetNicknameCommand}** *nickname*: {SetNicknameCommandDesc}.\n" +
             $"**{CommandPrefix}{ChannelCommand}**: {ChannelCommandDesc}.\n" +
             $"**{CommandPrefix}{SetChannelCommand}** *channel*: {SetChannelCommandDesc}.\n" +
-            $"**{CommandPrefix}{DisableChannelCommand}**: {DisableChannelCommandDesc}.\n\n";
+            $"**{CommandPrefix}{DisableChannelCommand}**: {DisableChannelCommandDesc}.\n" +
+            $"**{CommandPrefix}{TestPermsCommand}**: {TestPermsCommandDesc}.";
 
         #endregion
     }

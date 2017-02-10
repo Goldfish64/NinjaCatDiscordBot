@@ -27,6 +27,7 @@ using Discord.Commands;
 using Discord.Net;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -83,7 +84,7 @@ namespace NinjaCatDiscordBot
             client.JoinedGuild += async (guild) =>
             {
                 // Update server count.
-                await UpdateSiteServerCount();
+                await UpdateSiteServerCountAsync();
 
                 // Pause for 5 seconds.
                 await Task.Delay(TimeSpan.FromSeconds(5));
@@ -146,7 +147,7 @@ namespace NinjaCatDiscordBot
             };
 
             // Update count on guild leave.
-            client.LeftGuild += async (guild) => await UpdateSiteServerCount();
+            client.LeftGuild += async (guild) => await UpdateSiteServerCountAsync();
 
             // Listen for messages.
             client.MessageReceived += async (message) =>
@@ -225,25 +226,25 @@ namespace NinjaCatDiscordBot
                     // Announce in the specified channel of each guild.
                     foreach (var guild in client.Guilds)
                     {
-                        // Get channel.
-                        var channel = client.GetSpeakingChannelForSocketGuild(guild);
-
-                        // If the channel is null, continue on to the next guild.
-                        if (channel == null)
-                        {
-                            client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING): {guild.Name}");
-                            continue;
-                        }
-
-                        // Verify we have permission to speak.
-                        if (!guild.CurrentUser.GetPermissions(channel).SendMessages)
-                        {
-                            client.LogOutput($"ROLLING OVER SERVER (NO PERMS): {guild.Name}");
-                            continue;
-                        }
-
                         try
                         {
+                            // Get channel.
+                            var channel = client.GetSpeakingChannelForSocketGuild(guild);
+
+                            // If the channel is null, continue on to the next guild.
+                            if (channel == null)
+                            {
+                                client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING): {guild.Name}");
+                                continue;
+                            }
+
+                            // Verify we have permission to speak.
+                            if (!guild.CurrentUser.GetPermissions(channel).SendMessages)
+                            {
+                                client.LogOutput($"ROLLING OVER SERVER (NO PERMS): {guild.Name}");
+                                continue;
+                            }
+
                             // Wait 2 seconds.
                             await Task.Delay(TimeSpan.FromSeconds(2));
 
@@ -268,14 +269,14 @@ namespace NinjaCatDiscordBot
                                     await channel.SendMessageAsync($"There won't be any builds today. Maybe tomorrow.:crying_cat_face:");
                                     break;
                             }
+
+                            // Log server.
+                            client.LogOutput($"SPOKEN IN SERVER: {guild.Name}");
                         }
-                        catch (HttpException ex)
+                        catch (Exception ex)
                         {
                             client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name}: {ex}");
                         }
-
-                        // Log server.
-                        client.LogOutput($"SPOKEN IN SERVER: {guild.Name}");
                     }
                 }
                 else
@@ -296,7 +297,6 @@ namespace NinjaCatDiscordBot
                         using (var httpClient = new HttpClient())
                         {
                             // Configure the HttpClient to use https://lengthenurl.info/.
-                            httpClient.BaseAddress = new Uri("https://lengthenurl.info/");
                             httpClient.DefaultRequestHeaders.Accept.Clear();
                             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -304,11 +304,18 @@ namespace NinjaCatDiscordBot
                             for (int i = 0; i < 3; i++)
                             {
                                 // Send the request with the short URL and get the response back containing the long URL.
-                                var response = await httpClient.GetAsync($"api/longurl/shorturl/?inputURL={tempUrl}");
+                                var response = await httpClient.GetAsync($"https://lengthenurl.info/api/longurl/shorturl/?inputURL={tempUrl}");
 
                                 // Did the request succeed? If it did, get the URL. Otherwise, log the error and retry.
                                 if (response.IsSuccessStatusCode)
-                                    fullUrl = (await response.Content.ReadAsAsync<ServicedUrl>()).LongURL.ToLowerInvariant();
+                                {
+                                    // Get string and parse JSON.
+                                    var responseString = await response.Content.ReadAsStringAsync();
+                                    var result = JObject.Parse(responseString);
+
+                                    // Get long URL.
+                                    fullUrl = result["LongURL"].ToString().ToLowerInvariant();
+                                }
                                 else
                                     client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
                             }
@@ -342,11 +349,11 @@ namespace NinjaCatDiscordBot
                         ring = " to the Slow ring";
 
                     // Check for PC or mobile, or both.
-                    if (tweet.FullText.ToLowerInvariant().Contains("pc") && (tweet.FullText.ToLowerInvariant().Contains("mobile") || tweet.FullText.ToLowerInvariant().Contains("phone")))
+                    if ((tweet.FullText.ToLowerInvariant().Contains("pc") || fullUrl.ToLowerInvariant().Contains("pc")) && ((tweet.FullText.ToLowerInvariant().Contains("mobile") || tweet.FullText.ToLowerInvariant().Contains("phone")) || fullUrl.ToLowerInvariant().Contains("mobile")))
                         platform = " for both PC and Mobile";
-                    else if (tweet.FullText.ToLowerInvariant().Contains("pc"))
+                    else if (tweet.FullText.ToLowerInvariant().Contains("pc") || fullUrl.ToLowerInvariant().Contains("pc"))
                         platform = " for PC";
-                    else if (tweet.FullText.ToLowerInvariant().Contains("mobile") || tweet.FullText.ToLowerInvariant().Contains("phone"))
+                    else if (tweet.FullText.ToLowerInvariant().Contains("mobile") || tweet.FullText.ToLowerInvariant().Contains("phone") || fullUrl.ToLowerInvariant().Contains("mobile"))
                         platform = " for Mobile";
 
                     // Announce in the specified channel of each guild.
@@ -414,42 +421,14 @@ namespace NinjaCatDiscordBot
                 client.LogOutput($"TWEET STREAM STOPPED: {e.Exception}");
             };
 
+            // Update game.
+            await UpdateGameAsync();
+
             // Create timer for POSTing server count.
-            var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCount(), null, TimeSpan.FromMilliseconds(0), TimeSpan.FromHours(1));
+            var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCountAsync(), null, TimeSpan.FromMilliseconds(0), TimeSpan.FromHours(1));
 
             // Create timer for game play status of builds.
-            var buildPlayTimer = new Timer(
-                async (e) =>
-                {
-                    try
-                    {
-                        // Create the HttpClient.
-                        using (var httpClient = new HttpClient())
-                        {
-                            // Get the latest build list containing the newest 50 builds from BuildFeed.
-                            var response = await httpClient.GetStringAsync("https://buildfeed.net/api/GetBuilds?limit=50");
-
-                            // Parse JSON and get the latest public build.
-                            var builds = JArray.Parse(response).ToList();
-                            var newestBuild = builds.First(b => (int)b["SourceType"] == 0);
-
-                            // Create string.
-                            var game = $"on {newestBuild["Number"]} | {Constants.CommandPrefix}{Constants.HelpCommand}";
-
-                            // Update game if it needs to be updated.
-                            if (client.CurrentUser.Game?.Name != game)
-                                await client.SetGameAsync(game);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log failure.
-                        client.LogOutput($"FAILURE IN GAME: {ex}");
-
-                        // Reset game.
-                        await client.SetGameAsync("on Windows 10");
-                    }
-                }, null, TimeSpan.FromMilliseconds(0), TimeSpan.FromMinutes(30));
+            var buildPlayTimer = new Timer(async (e) => await UpdateGameAsync(), null, TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(30));
 
             // Start the stream.
             stream.StartStreamMatchingAllConditions();
@@ -458,7 +437,7 @@ namespace NinjaCatDiscordBot
         /// <summary>
         /// Updates the site server count.
         /// </summary>
-        private async Task UpdateSiteServerCount()
+        private async Task UpdateSiteServerCountAsync()
         {
             try
             {
@@ -479,6 +458,49 @@ namespace NinjaCatDiscordBot
             {
                 // Log error.
                 client.LogOutput($"FAILED UPDATING SERVER COUNT: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// Updates the game.
+        /// </summary>
+        /// <returns></returns>
+        private async Task UpdateGameAsync()
+        {
+            try
+            {
+                // Create process for JSON fetching.
+                var process = new Process();
+                process.StartInfo.FileName = "WindowsBlogsJsonGetterApp.exe";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+
+                // Run process and get result.
+                process.Start();
+                var result = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                // Parse JSON and get the latest PC post.
+                var posts = JArray.Parse(result).ToList();
+                var newestBuild = posts.First(b => b["title"].ToString().ToLowerInvariant().Contains("pc"));
+
+                // Get build number.
+                var build = Regex.Match(newestBuild["title"].ToString(), @"\d{5,}").Value;
+
+                // Create string.
+                var game = $"on {build} | {Constants.CommandPrefix}{Constants.HelpCommand}";
+
+                // Update game if it needs to be updated.
+                if (client.CurrentUser.Game?.Name != game)
+                    await client.SetGameAsync(game);
+            }
+            catch (Exception ex)
+            {
+                // Log failure.
+                client.LogOutput($"FAILURE IN GAME: {ex}");
+
+                // Reset game.
+                await client.SetGameAsync("on Windows 10");
             }
         }
 

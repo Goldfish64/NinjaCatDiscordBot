@@ -137,7 +137,7 @@ namespace NinjaCatDiscordBot
             if (channel == null)
             {
                 SpeakingChannels.Remove(guild.Id);
-                channel = guild.Channels.SingleOrDefault(g => g.Id == guild.DefaultChannelId) as SocketTextChannel;
+                channel = guild.DefaultChannel;
                 SaveSettings();
             }
 
