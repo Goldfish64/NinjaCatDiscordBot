@@ -656,7 +656,7 @@ namespace NinjaCatDiscordBot
                     // Send message.
                     await channel.SendMessageAsync($"Announcement from <@{Constants.OwnerId.ToString()}> (bot owner):\n{message}");
                 }
-                catch (HttpException ex)
+                catch (Exception ex)
                 {
                     client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name}: {ex}");
                 }

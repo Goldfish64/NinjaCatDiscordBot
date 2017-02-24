@@ -252,7 +252,7 @@ namespace NinjaCatDiscordBot
                             await channel.TriggerTypingAsync();
 
                             // Pause for realism.
-                            await Task.Delay(TimeSpan.FromSeconds(2));
+                            await Task.Delay(TimeSpan.FromSeconds(1));
 
                             // Select and send message.
                             switch (client.GetRandomNumber(3))
@@ -370,7 +370,7 @@ namespace NinjaCatDiscordBot
                         }
 
                         // Verify we have permission to speak.
-                        if (!guild.CurrentUser.GetPermissions(channel).SendMessages)
+                        if (guild.CurrentUser?.GetPermissions(channel).SendMessages != true)
                         {
                             client.LogOutput($"ROLLING OVER SERVER (NO PERMS): {guild.Name}");
                             continue;
@@ -378,14 +378,14 @@ namespace NinjaCatDiscordBot
 
                         try
                         {
-                            // Wait 2 seconds.
+                            // Wait a second.
                             await Task.Delay(TimeSpan.FromSeconds(2));
 
                             // Send typing message.
                             await channel.TriggerTypingAsync();
 
                             // Pause for realism.
-                            await Task.Delay(TimeSpan.FromSeconds(2));
+                            await Task.Delay(TimeSpan.FromSeconds(1));
 
                             // Select and send message.
                             switch (client.GetRandomNumber(3))
@@ -403,7 +403,7 @@ namespace NinjaCatDiscordBot
                                     break;
                             }
                         }
-                        catch (HttpException ex)
+                        catch (Exception ex)
                         {
                             client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name}: {ex}");
                         }
