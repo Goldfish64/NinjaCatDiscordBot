@@ -31,9 +31,9 @@ namespace NinjaCatDiscordBot
     {
         #region Constants
 
-        public const string LogFileName = "nj-logfile.log";
+        //public const string LogFileName = "nj-logfile.log";
         public const string ChannelsFileName = "nj-channels.json";
-
+        public const string RolesFileName = "nj-roles.json";
 
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
         public const string UserName = "Ninja Cat";
@@ -91,6 +91,12 @@ namespace NinjaCatDiscordBot
         public const string SetChannelCommandDesc = "sets the channel I speak in";
         public const string DisableChannelCommand = "offchannel";
         public const string DisableChannelCommandDesc = "disables announcements";
+        public const string RoleCommand = "role";
+        public const string RoleCommandDesc = "gets the role I ping when new builds are released";
+        public const string SetRoleCommand = "setrole";
+        public const string SetRoleCommandDesc = "sets the role I ping when new builds are released";
+        public const string DisableRoleCommand = "offrole";
+        public const string DisableRoleCommandDesc = "disables the announcement role";
 
         public static readonly string AboutMessage1 =
             $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
@@ -119,6 +125,9 @@ namespace NinjaCatDiscordBot
             $"**{CommandPrefix}{ChannelCommand}**: {ChannelCommandDesc}.\n" +
             $"**{CommandPrefix}{SetChannelCommand}** *channel*: {SetChannelCommandDesc}.\n" +
             $"**{CommandPrefix}{DisableChannelCommand}**: {DisableChannelCommandDesc}.\n" +
+            $"**{CommandPrefix}{RoleCommand}**: {RoleCommandDesc}.\n" +
+            $"**{CommandPrefix}{SetRoleCommand}** *channel*: {SetRoleCommandDesc}.\n" +
+            $"**{CommandPrefix}{DisableRoleCommand}**: {DisableRoleCommandDesc}.\n" +
             $"**{CommandPrefix}{TestPermsCommand}**: {TestPermsCommandDesc}.";
 
         #endregion

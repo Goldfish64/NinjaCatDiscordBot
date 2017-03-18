@@ -315,10 +315,10 @@ namespace NinjaCatDiscordBot
             };      
 
             // Create timer for POSTing server count.
-            var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCountAsync(), null, TimeSpan.Zero, TimeSpan.FromHours(1));
+            var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCountAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromHours(1));
 
             // Create timer for game play status of builds.
-            var buildPlayTimer = new Timer(async (e) => await client.UpdateGameAsync(), null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            var buildPlayTimer = new Timer(async (e) => await client.UpdateGameAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
             
             // Start the stream.
             stream.StartStreamMatchingAllConditions();
@@ -350,7 +350,7 @@ namespace NinjaCatDiscordBot
 
                 await httpWebRequest.GetResponseAsync();
             }
-            catch (WebException ex)
+            catch (Exception ex)
             {
                 // Log error.
                 client.LogOutput($"FAILED UPDATING SERVER COUNT: {ex}");
@@ -438,6 +438,14 @@ namespace NinjaCatDiscordBot
                     continue;
                 }
 
+                // Get ping role.
+                var role = client.GetSpeakingRoleForIGuild(guild);
+                var roleText = string.Empty;
+
+                // Does the role exist?
+                if (role != null)
+                    roleText = $"{role.Mention} ";
+
                 try
                 {
                     // Wait a second.
@@ -453,15 +461,15 @@ namespace NinjaCatDiscordBot
                     switch (client.GetRandomNumber(3))
                     {
                         default:
-                            await channel.SendMessageAsync($"Yay! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            await channel.SendMessageAsync($"{roleText}Yay! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
                             break;
 
                         case 1:
-                            await channel.SendMessageAsync($"Windows 10 Insider Preview Build {build} has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
                             break;
 
                         case 2:
-                            await channel.SendMessageAsync($"Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
                             break;
                     }
                 }

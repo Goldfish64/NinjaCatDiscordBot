@@ -82,6 +82,17 @@ namespace NinjaCatDiscordBot
             // Add each entry to the client.
             foreach (var entry in channels)
                 SpeakingChannels[entry.Key] = entry.Value;
+
+            // Create temporary dictionary.
+            var roles = new Dictionary<ulong, ulong>();
+
+            // Does the roles file exist? If so, deserialize JSON.
+            if (File.Exists(Constants.RolesFileName))
+                roles = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.RolesFileName));
+
+            // Add each entry to the client.
+            foreach (var entry in roles)
+                SpeakingRoles[entry.Key] = entry.Value;
         }
 
         #endregion
@@ -93,6 +104,12 @@ namespace NinjaCatDiscordBot
         /// </summary>
         /// <remarks>Guild is the key, channel is the value.</remarks>
         public ConcurrentDictionary<ulong, ulong> SpeakingChannels { get; } = new ConcurrentDictionary<ulong, ulong>();
+
+        /// <summary>
+        /// Gets the list of speaking roles.
+        /// </summary>
+        /// <remarks>Guild is the key, role is the value.</remarks>
+        public ConcurrentDictionary<ulong, ulong> SpeakingRoles { get; } = new ConcurrentDictionary<ulong, ulong>();
 
         /// <summary>
         /// Gets the time the client started.
@@ -189,6 +206,42 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
+        /// Gets the speaking role for the specified guild.
+        /// </summary>
+        /// <param name="guild">The <see cref="IGuild"/> to get the role for.</param>
+        /// <returns>An <see cref="SocketTextRole"/> that should be used.</returns>
+        public IRole GetSpeakingRoleForIGuild(IGuild guild)
+        {
+            // If the guild is the Bots server, never speak.
+            if (guild.Id == Constants.BotsGuildId)
+                return null;
+
+            // Create role variable.
+            IRole role = null;
+
+            // Try to get the saved role.
+            if (SpeakingRoles.ContainsKey(guild.Id))
+            {
+                // If it is zero, return null to not speak.
+                if (SpeakingRoles[guild.Id] == 0)
+                    return null;
+                else
+                    role = guild.Roles.SingleOrDefault(g => g.Id == SpeakingRoles[guild.Id]) as IRole;
+            }
+
+            // If the role is null, delete the entry from the dictionary and use the default one.
+            if (role == null)
+            {
+                ulong outVar;
+                SpeakingRoles.TryRemove(guild.Id, out outVar);
+                SaveSettings();
+            }
+
+            // Return the role.
+            return role;
+        }
+
+        /// <summary>
         /// Saves the settings.
         /// </summary>
         public void SaveSettings()
@@ -197,6 +250,7 @@ namespace NinjaCatDiscordBot
             {
                 // Serialize settings to JSON.
                 File.WriteAllText(Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
+                File.WriteAllText(Constants.RolesFileName, JsonConvert.SerializeObject(SpeakingRoles));
             }
         }
 
@@ -248,9 +302,9 @@ namespace NinjaCatDiscordBot
                 foreach (var shard in Shards)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(5));
-                    await shard.SetGameAsync(game);
+                    await shard?.SetGameAsync(game);
                     await Task.Delay(TimeSpan.FromSeconds(5));
-                    await shard.SetGameAsync(game);
+                    await shard?.SetGameAsync(game);
                 }
             }
             catch (Exception ex)
@@ -260,7 +314,7 @@ namespace NinjaCatDiscordBot
 
                 // Reset game.
                 foreach (var shard in Shards)
-                    await shard.SetGameAsync("on Windows 10");
+                    await shard?.SetGameAsync("on Windows 10");
             }
         }
 

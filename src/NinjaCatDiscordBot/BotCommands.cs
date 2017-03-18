@@ -67,6 +67,7 @@ namespace NinjaCatDiscordBot
 
             // Create variable for speaking channel mention.
             var speakingChannel = string.Empty;
+            var speakingRole = string.Empty;
 
             // Get guild. If null, ignore it.
             var guild = (Context.Channel as IGuildChannel)?.Guild as SocketGuild;
@@ -78,39 +79,37 @@ namespace NinjaCatDiscordBot
                 // Get the mention if speaking is enabled.
                 if (channel != null)
                     speakingChannel = channel.Mention;
+
+                // Get ping role.
+                var role = client.GetSpeakingRoleForIGuild(guild);
+
+                // Get name of role if enabled.
+                if (role != null)
+                    speakingRole = role.Name;
             }
 
             // Dev began Oct 2. 2016.
-            // Is a speaking channel set?
+
+            // Create speaking channel string.
+            var channelText = string.Empty;
             if (!string.IsNullOrEmpty(speakingChannel))
+                channelText = $"\n\nI'm currently speaking in {speakingChannel}, but that can be changed with the **{Constants.CommandPrefix}{Constants.SetChannelCommand}** command.";
+
+            // Create role string.
+            var roleText = string.Empty;
+            if (!string.IsNullOrEmpty(speakingRole))
+                roleText = $"\n\nWhen a new build releases, I will ping the **{speakingRole}** role, but that can be changed with the **{Constants.CommandPrefix}{Constants.SetRoleCommand}** command.";
+
+            // Select and send message.
+            switch (client.GetRandomNumber(2))
             {
-                // Select and send message.
-                switch (client.GetRandomNumber(2))
-                {
-                    default:
-                        await ReplyAsync($"{Constants.AboutMessage1}\n\n" +
-                            $"I'm currently speaking in {speakingChannel}, but you can change it with the **{Constants.CommandPrefix}{Constants.SetChannelCommand}** command.");
+                default:
+                    await ReplyAsync($"{Constants.AboutMessage1}" + channelText + roleText);
                         break;
 
-                    case 1:
-                        await ReplyAsync($"{Constants.AboutMessage2}\n\n" +
-                            $"I'm currently speaking in {speakingChannel}, but it can be changed with the **{Constants.CommandPrefix}{Constants.SetChannelCommand}** command.");
-                        break;
-                }
-            }
-            else
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(2))
-                {
-                    default:
-                        await ReplyAsync(Constants.AboutMessage1);
-                        break;
-
-                    case 1:
-                        await ReplyAsync(Constants.AboutMessage2);
-                        break;
-                }
+                case 1:
+                    await ReplyAsync($"{Constants.AboutMessage2}" + channelText + roleText);
+                    break;
             }
         }
 
