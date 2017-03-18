@@ -126,7 +126,7 @@ namespace NinjaCatDiscordBot
             $"**{CommandPrefix}{SetChannelCommand}** *channel*: {SetChannelCommandDesc}.\n" +
             $"**{CommandPrefix}{DisableChannelCommand}**: {DisableChannelCommandDesc}.\n" +
             $"**{CommandPrefix}{RoleCommand}**: {RoleCommandDesc}.\n" +
-            $"**{CommandPrefix}{SetRoleCommand}** *channel*: {SetRoleCommandDesc}.\n" +
+            $"**{CommandPrefix}{SetRoleCommand}** *role*: {SetRoleCommandDesc}.\n" +
             $"**{CommandPrefix}{DisableRoleCommand}**: {DisableRoleCommandDesc}.\n" +
             $"**{CommandPrefix}{TestPermsCommand}**: {TestPermsCommandDesc}.";
 
