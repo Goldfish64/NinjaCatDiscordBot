@@ -396,9 +396,6 @@ namespace NinjaCatDiscordBot
             // Get client.
             var client = Context.Client as NinjaCatDiscordClient;
 
-            // Get guild count.
-            var count = client.Guilds.Count;
-
             // Get passed time.
             var timeSpan = DateTime.Now.ToLocalTime() - client.StartTime.ToLocalTime();
 
@@ -428,12 +425,12 @@ namespace NinjaCatDiscordBot
             // Build embed.
             var embed = new EmbedBuilder();
             embed.Author = new EmbedAuthorBuilder();
-            embed.Author.IconUrl = user.AvatarUrl;
+            embed.Author.IconUrl = user.GetAvatarUrl();
             embed.Author.Name = user.Nickname ?? user.Username;
             embed.Color = highestrole.Color;
             embed.AddField((e) => { e.Name = "Join date"; e.Value = user.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Creation date"; e.Value = user.CreatedAt.ToLocalTime().ToString("d"); e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Servers"; e.Value = count.ToString(); e.IsInline = true; });
+            embed.AddField((e) => { e.Name = "Servers"; e.Value = client.Guilds.Count.ToString(); e.IsInline = true; });
+            embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{(client.GetShardIdFor(Context.Guild) + 1).ToString()}/{client.Shards.Count.ToString()}"; e.IsInline = true; });
             embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
 
             // Select and send message with embed.

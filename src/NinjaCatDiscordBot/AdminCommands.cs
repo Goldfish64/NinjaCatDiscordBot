@@ -25,6 +25,7 @@
 using Discord;
 using Discord.Commands;
 using Discord.Net;
+using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
 
@@ -619,11 +620,15 @@ namespace NinjaCatDiscordBot
             // Log message.
             client.LogOutput($"ANNOUNCING: {message}");
 
-            // Get guilds.
-            var guilds = client.Guilds;
+            // Send message to shards.
+            foreach (var shard in client.Shards)
+                SendMessageShardAsync(client, shard, message);
+        }
 
+        private async void SendMessageShardAsync(NinjaCatDiscordClient client, DiscordSocketClient shard, string message)
+        {
             // Announce in the specified channel of each guild.
-            foreach (var guild in client.Guilds)
+            foreach (var guild in shard.Guilds)
             {
                 // Get channel.
                 var channel = client.GetSpeakingChannelForSocketGuild(guild);

@@ -34,16 +34,18 @@ namespace NinjaCatDiscordBot
         public const string LogFileName = "nj-logfile.log";
         public const string ChannelsFileName = "nj-channels.json";
 
-        public const string AppName = "Ninja Cat";
+
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
         public const string UserName = "Ninja Cat";
         public const ulong OwnerId = 191330317439598593;
         public const ulong BotsGuildId = 110373943822540800;
 
 #if DEBUG
+        public const string AppName = "Ninja Cat beta (DEBUG)";
         public const string InviteUrl = "https://discordapp.com/oauth2/authorize?permissions=19456&client_id=238475402937499648&scope=bot";
         public const string CommandPrefix = "$njd-";
 #else
+        public const string AppName = "Ninja Cat";
         public const string InviteUrl = "https://discordapp.com/oauth2/authorize?permissions=19456&client_id=232369430456172545&scope=bot";
         public const string CommandPrefix = "$nj-";
 #endif

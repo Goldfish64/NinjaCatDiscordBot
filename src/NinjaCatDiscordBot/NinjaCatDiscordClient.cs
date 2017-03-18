@@ -25,10 +25,14 @@
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot
@@ -36,12 +40,13 @@ namespace NinjaCatDiscordBot
     /// <summary>
     /// Represents a <see cref="DiscordSocketClient"/> with additional properties.
     /// </summary>
-    public sealed class NinjaCatDiscordClient : DiscordSocketClient
+    public sealed class NinjaCatDiscordClient : DiscordShardedClient
     {
         #region Private variables
 
-        private StreamWriter logStreamWriter;
+       // private StreamWriter logStreamWriter;
         private Random random = new Random();
+        private object lockObject = new object();
 
         #endregion
 
@@ -50,10 +55,10 @@ namespace NinjaCatDiscordBot
         /// <summary>
         /// Initializes a new instance of the <see cref="NinjaCatDiscordClient"/> class.
         /// </summary>
-        public NinjaCatDiscordClient()
+        public NinjaCatDiscordClient() : base(new DiscordSocketConfig() { TotalShards = 6 })
         {
             // Open log file.
-            logStreamWriter = File.AppendText(Constants.LogFileName);
+            //logStreamWriter = File.AppendText(Constants.LogFileName);
 
             // Write startup messages.
             LogOutput($"{Constants.AppName} has started.");
@@ -76,7 +81,7 @@ namespace NinjaCatDiscordBot
 
             // Add each entry to the client.
             foreach (var entry in channels)
-                SpeakingChannels.Add(entry.Key, entry.Value);
+                SpeakingChannels[entry.Key] = entry.Value;
         }
 
         #endregion
@@ -87,7 +92,7 @@ namespace NinjaCatDiscordBot
         /// Gets the list of speaking channels.
         /// </summary>
         /// <remarks>Guild is the key, channel is the value.</remarks>
-        public Dictionary<ulong, ulong> SpeakingChannels { get; } = new Dictionary<ulong, ulong>();
+        public ConcurrentDictionary<ulong, ulong> SpeakingChannels { get; } = new ConcurrentDictionary<ulong, ulong>();
 
         /// <summary>
         /// Gets the time the client started.
@@ -136,7 +141,8 @@ namespace NinjaCatDiscordBot
             // If the channel is null, delete the entry from the dictionary and use the default one.
             if (channel == null)
             {
-                SpeakingChannels.Remove(guild.Id);
+                ulong outVar;
+                SpeakingChannels.TryRemove(guild.Id, out outVar);
                 channel = guild.DefaultChannel;
                 SaveSettings();
             }
@@ -172,7 +178,8 @@ namespace NinjaCatDiscordBot
             // If the channel is null, delete the entry from the dictionary and use the default one.
             if (channel == null)
             {
-                SpeakingChannels.Remove(guild.Id);
+                ulong outVar;
+                SpeakingChannels.TryRemove(guild.Id, out outVar);
                 channel = (await guild.GetChannelsAsync()).SingleOrDefault(g => g.Id == guild.DefaultChannelId) as ITextChannel;
                 SaveSettings();
             }
@@ -186,8 +193,11 @@ namespace NinjaCatDiscordBot
         /// </summary>
         public void SaveSettings()
         {
-            // Serialize settings to JSON.
-            File.WriteAllText(Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
+            lock (lockObject)
+            {
+                // Serialize settings to JSON.
+                File.WriteAllText(Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
+            }
         }
 
         /// <summary>
@@ -201,8 +211,57 @@ namespace NinjaCatDiscordBot
 
             // Write to console and logfile.
             Console.WriteLine($"{timeDate}: {info}");
-            logStreamWriter.WriteLine($"{timeDate}: {info}");
-            logStreamWriter.Flush();
+          //  logStreamWriter.WriteLine($"{timeDate}: {info}");
+          //  logStreamWriter.Flush();
+        }
+
+        /// <summary>
+        /// Updates the game.
+        /// </summary>
+        /// <returns></returns>
+        public async Task UpdateGameAsync()
+        {
+            try
+            {
+                // Create process for JSON fetching.
+                var process = new Process();
+                process.StartInfo.FileName = "WindowsBlogsJsonGetterApp.exe";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+
+                // Run process and get result.
+                process.Start();
+                var result = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                // Parse JSON and get the latest PC post.
+                var posts = JArray.Parse(result).ToList();
+                var newestBuild = posts.First(b => b["title"].ToString().ToLowerInvariant().Contains("pc"));
+
+                // Get build number.
+                var build = Regex.Match(newestBuild["title"].ToString(), @"\d{5,}").Value;
+
+                // Create string.
+                var game = $"on {build} | {Constants.CommandPrefix}{Constants.HelpCommand}";
+
+                // Update game.
+                foreach (var shard in Shards)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await shard.SetGameAsync(game);
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await shard.SetGameAsync(game);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log failure.
+                LogOutput($"FAILURE IN GAME: {ex}");
+
+                // Reset game.
+                foreach (var shard in Shards)
+                    await shard.SetGameAsync("on Windows 10");
+            }
         }
 
         #endregion

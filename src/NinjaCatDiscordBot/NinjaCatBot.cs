@@ -24,7 +24,7 @@
 
 using Discord;
 using Discord.Commands;
-using Discord.Net;
+using Discord.WebSocket;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
@@ -183,10 +183,7 @@ namespace NinjaCatDiscordBot
 
             // Log in to Discord. Token is stored in the Credentials class.
             await client.LoginAsync(TokenType.Bot, Credentials.DiscordToken);
-            await client.ConnectAsync();
-
-            // Set game.
-            await client.SetGameAsync("starting up...");
+            await client.StartAsync();
 
             // Log in to Twitter.
             Auth.SetUserCredentials(Credentials.TwitterConsumerKey, Credentials.TwitterConsumerSecret,
@@ -223,61 +220,9 @@ namespace NinjaCatDiscordBot
                     // Log tweet.
                     client.LogOutput($"TWEET CONFIRMED: NO BUILDS TODAY");
 
-                    // Announce in the specified channel of each guild.
-                    foreach (var guild in client.Guilds)
-                    {
-                        try
-                        {
-                            // Get channel.
-                            var channel = client.GetSpeakingChannelForSocketGuild(guild);
-
-                            // If the channel is null, continue on to the next guild.
-                            if (channel == null)
-                            {
-                                client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING): {guild.Name}");
-                                continue;
-                            }
-
-                            // Verify we have permission to speak.
-                            if (!guild.CurrentUser.GetPermissions(channel).SendMessages)
-                            {
-                                client.LogOutput($"ROLLING OVER SERVER (NO PERMS): {guild.Name}");
-                                continue;
-                            }
-
-                            // Wait 2 seconds.
-                            await Task.Delay(TimeSpan.FromSeconds(2));
-
-                            // Send typing message.
-                            await channel.TriggerTypingAsync();
-
-                            // Pause for realism.
-                            await Task.Delay(TimeSpan.FromSeconds(1));
-
-                            // Select and send message.
-                            switch (client.GetRandomNumber(3))
-                            {
-                                default:
-                                    await channel.SendMessageAsync($"I've just received word that there won't be any builds today. Bummer. :crying_cat_face:");
-                                    break;
-
-                                case 1:
-                                    await channel.SendMessageAsync($"Aww. No builds today. :crying_cat_face:");
-                                    break;
-
-                                case 2:
-                                    await channel.SendMessageAsync($"There won't be any builds today. Maybe tomorrow.:crying_cat_face:");
-                                    break;
-                            }
-
-                            // Log server.
-                            client.LogOutput($"SPOKEN IN SERVER: {guild.Name}");
-                        }
-                        catch (Exception ex)
-                        {
-                            client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name}: {ex}");
-                        }
-                    }
+                    // Send message to guilds.
+                    foreach (var shard in client.Shards)
+                        SendNoBuildsToShard(shard);
                 }
                 else
                 {
@@ -349,68 +294,16 @@ namespace NinjaCatDiscordBot
                         ring = " to the Slow ring";
 
                     // Check for PC or mobile, or both.
-                    if ((tweet.FullText.ToLowerInvariant().Contains("pc") || fullUrl.ToLowerInvariant().Contains("pc")) && ((tweet.FullText.ToLowerInvariant().Contains("mobile") || tweet.FullText.ToLowerInvariant().Contains("phone")) || fullUrl.ToLowerInvariant().Contains("mobile")))
+                    if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile"))
                         platform = " for both PC and Mobile";
-                    else if (tweet.FullText.ToLowerInvariant().Contains("pc") || fullUrl.ToLowerInvariant().Contains("pc"))
+                    else if (fullUrl.ToLowerInvariant().Contains("pc"))
                         platform = " for PC";
-                    else if (tweet.FullText.ToLowerInvariant().Contains("mobile") || tweet.FullText.ToLowerInvariant().Contains("phone") || fullUrl.ToLowerInvariant().Contains("mobile"))
+                    else if (fullUrl.ToLowerInvariant().Contains("mobile"))
                         platform = " for Mobile";
 
-                    // Announce in the specified channel of each guild.
-                    foreach (var guild in client.Guilds)
-                    {
-                        // Get channel.
-                        var channel = client.GetSpeakingChannelForSocketGuild(guild);
-
-                        // If the channel is null, continue on to the next guild.
-                        if (channel == null)
-                        {
-                            client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING): {guild.Name}");
-                            continue;
-                        }
-
-                        // Verify we have permission to speak.
-                        if (guild.CurrentUser?.GetPermissions(channel).SendMessages != true)
-                        {
-                            client.LogOutput($"ROLLING OVER SERVER (NO PERMS): {guild.Name}");
-                            continue;
-                        }
-
-                        try
-                        {
-                            // Wait a second.
-                            await Task.Delay(TimeSpan.FromSeconds(2));
-
-                            // Send typing message.
-                            await channel.TriggerTypingAsync();
-
-                            // Pause for realism.
-                            await Task.Delay(TimeSpan.FromSeconds(1));
-
-                            // Select and send message.
-                            switch (client.GetRandomNumber(3))
-                            {
-                                default:
-                                    await channel.SendMessageAsync($"Yay! Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
-                                    break;
-
-                                case 1:
-                                    await channel.SendMessageAsync($"Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! Yes! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
-                                    break;
-
-                                case 2:
-                                    await channel.SendMessageAsync($"Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{ring}{platform}! :mailbox_with_mail: :smiley_cat:\n{fullUrl}");
-                                    break;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name}: {ex}");
-                        }
-
-                        // Log server.
-                        client.LogOutput($"SPOKEN IN SERVER: {guild.Name}");
-                    }
+                    // Send build to guilds.
+                    foreach (var shard in client.Shards)
+                        SendNewBuildToShard(shard, build, ring + platform, fullUrl);
                 }
             };
 
@@ -419,17 +312,14 @@ namespace NinjaCatDiscordBot
             {
                 // Log error.
                 client.LogOutput($"TWEET STREAM STOPPED: {e.Exception}");
-            };
-
-            // Update game.
-            await UpdateGameAsync();
+            };      
 
             // Create timer for POSTing server count.
-            var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCountAsync(), null, TimeSpan.FromMilliseconds(0), TimeSpan.FromHours(1));
+            var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCountAsync(), null, TimeSpan.Zero, TimeSpan.FromHours(1));
 
             // Create timer for game play status of builds.
-            var buildPlayTimer = new Timer(async (e) => await UpdateGameAsync(), null, TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(30));
-
+            var buildPlayTimer = new Timer(async (e) => await client.UpdateGameAsync(), null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            
             // Start the stream.
             stream.StartStreamMatchingAllConditions();
         }
@@ -441,7 +331,13 @@ namespace NinjaCatDiscordBot
         {
             try
             {
-                var httpWebRequest = (HttpWebRequest)WebRequest.Create($"https://bots.discord.pw/api/bots/{client.CurrentUser.Id}/stats");
+                // Get current user.
+                var user = client.Shards?.FirstOrDefault()?.CurrentUser;
+                if (user == null)
+                    return;
+
+                // Create request.
+                var httpWebRequest = (HttpWebRequest)WebRequest.Create($"https://bots.discord.pw/api/bots/{user.Id}/stats");
                 httpWebRequest.ContentType = "application/json";
                 httpWebRequest.Method = "POST";
                 httpWebRequest.Headers["Authorization"] = Credentials.BotApiToken;
@@ -461,46 +357,121 @@ namespace NinjaCatDiscordBot
             }
         }
 
-        /// <summary>
-        /// Updates the game.
-        /// </summary>
-        /// <returns></returns>
-        private async Task UpdateGameAsync()
+        private async void SendNoBuildsToShard(DiscordSocketClient shard)
         {
-            try
+            // Announce in the specified channel of each guild.
+            foreach (var guild in shard.Guilds)
             {
-                // Create process for JSON fetching.
-                var process = new Process();
-                process.StartInfo.FileName = "WindowsBlogsJsonGetterApp.exe";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
+                try
+                {
+                    // Get channel.
+                    var channel = client.GetSpeakingChannelForSocketGuild(guild);
 
-                // Run process and get result.
-                process.Start();
-                var result = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
+                    // If the channel is null, continue on to the next guild.
+                    if (channel == null)
+                    {
+                        client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
+                        continue;
+                    }
 
-                // Parse JSON and get the latest PC post.
-                var posts = JArray.Parse(result).ToList();
-                var newestBuild = posts.First(b => b["title"].ToString().ToLowerInvariant().Contains("pc"));
+                    // Verify we have permission to speak.
+                    if (!guild.CurrentUser.GetPermissions(channel).SendMessages)
+                    {
+                        client.LogOutput($"ROLLING OVER SERVER (NO PERMS) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
+                        continue;
+                    }
 
-                // Get build number.
-                var build = Regex.Match(newestBuild["title"].ToString(), @"\d{5,}").Value;
+                    // Wait a second.
+                    await Task.Delay(TimeSpan.FromSeconds(1));
 
-                // Create string.
-                var game = $"on {build} | {Constants.CommandPrefix}{Constants.HelpCommand}";
+                    // Send typing message.
+                    await channel.TriggerTypingAsync();
 
-                // Update game if it needs to be updated.
-                if (client.CurrentUser.Game?.Name != game)
-                    await client.SetGameAsync(game);
+                    // Pause for realism.
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+
+                    // Select and send message.
+                    switch (client.GetRandomNumber(3))
+                    {
+                        default:
+                            await channel.SendMessageAsync($"I've just received word that there won't be any builds today. Bummer. :crying_cat_face:");
+                            break;
+
+                        case 1:
+                            await channel.SendMessageAsync($"Aww. No builds today. :crying_cat_face:");
+                            break;
+
+                        case 2:
+                            await channel.SendMessageAsync($"There won't be any builds today. Maybe tomorrow.:crying_cat_face:");
+                            break;
+                    }
+
+                    // Log server.
+                    client.LogOutput($"SPOKEN IN SERVER ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
+                }
+                catch (Exception ex)
+                {
+                    client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1}): {ex}");
+                }
             }
-            catch (Exception ex)
-            {
-                // Log failure.
-                client.LogOutput($"FAILURE IN GAME: {ex}");
+        }
 
-                // Reset game.
-                await client.SetGameAsync("on Windows 10");
+        private async void SendNewBuildToShard(DiscordSocketClient shard, string build, string type, string url)
+        {
+            // Announce in the specified channel of each guild.
+            foreach (var guild in shard.Guilds)
+            {
+                // Get channel.
+                var channel = client.GetSpeakingChannelForSocketGuild(guild);
+
+                // If the channel is null, continue on to the next guild.
+                if (channel == null)
+                {
+                    client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
+                    continue;
+                }
+
+                // Verify we have permission to speak.
+                if (guild.CurrentUser?.GetPermissions(channel).SendMessages != true)
+                {
+                    client.LogOutput($"ROLLING OVER SERVER (NO PERMS) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
+                    continue;
+                }
+
+                try
+                {
+                    // Wait a second.
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+
+                    // Send typing message.
+                    await channel.TriggerTypingAsync();
+
+                    // Pause for realism.
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+
+                    // Select and send message.
+                    switch (client.GetRandomNumber(3))
+                    {
+                        default:
+                            await channel.SendMessageAsync($"Yay! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            break;
+
+                        case 1:
+                            await channel.SendMessageAsync($"Windows 10 Insider Preview Build {build} has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            break;
+
+                        case 2:
+                            await channel.SendMessageAsync($"Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1}): {ex}");
+                }
+
+                // Log server.
+                client.LogOutput($"SPOKEN IN SERVER: {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1})");
             }
         }
 
