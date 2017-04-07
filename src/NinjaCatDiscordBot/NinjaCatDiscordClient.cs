@@ -300,12 +300,7 @@ namespace NinjaCatDiscordBot
 
                 // Update game.
                 foreach (var shard in Shards)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(5));
                     await shard?.SetGameAsync(game);
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-                    await shard?.SetGameAsync(game);
-                }
             }
             catch (Exception ex)
             {

@@ -318,7 +318,7 @@ namespace NinjaCatDiscordBot
             var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCountAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromHours(1));
 
             // Create timer for game play status of builds.
-            var buildPlayTimer = new Timer(async (e) => await client.UpdateGameAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+            var buildPlayTimer = new Timer(async (e) => await client.UpdateGameAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(30));
             
             // Start the stream.
             stream.StartStreamMatchingAllConditions();

@@ -80,6 +80,7 @@ namespace NinjaCatDiscordBot
         public const string TestPermsCommand = "testperms";
         public const string TestPermsCommandDesc = "tests my speaking channel permissions";
         public const string AnnouncementCommand = "announce"; // Bot owner only.
+        public const string UpdateGameCommand = "updategame"; // Bot owner only.
 
         public const string NicknameCommand = "nickname";
         public const string NicknameCommandDesc = "gets my nickname";
