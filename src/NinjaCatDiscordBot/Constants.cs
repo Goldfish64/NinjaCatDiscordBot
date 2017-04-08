@@ -112,7 +112,7 @@ namespace NinjaCatDiscordBot
             $"**{CommandPrefix}{AboutCommand}**: {AboutCommandDesc}.\n" +
             $"**{CommandPrefix}{HelpCommand}**: {HelpCommandDesc}.\n" +
             $"**{CommandPrefix}{BotInfoCommand}**: {BotInfoCommandDesc}.\n" +
-            $"**{CommandPrefix}{ServersCommand}**: {ServersCommandDesc}.\n" +
+         //   $"**{CommandPrefix}{ServersCommand}**: {ServersCommandDesc}.\n" +
             $"**{CommandPrefix}{HomeCommand}** or **{CommandPrefix}{HomeCommandAlias}**: {HomeCommandDesc}.\n" +
             $"**{CommandPrefix}{InviteCommand}**: {InviteCommandDesc}.\n" +
             $"**{CommandPrefix}{PingCommand}**: {PingCommandDesc}.\n" +

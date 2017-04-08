@@ -453,24 +453,27 @@ namespace NinjaCatDiscordBot
         /// Gets the bot's servers.
         /// </summary>
         /// <returns></returns>
-        [Command(Constants.ServersCommand)]
-        public async Task GetServersAsync()
-        {
-            // Bot is typing.
-            await Context.Channel.TriggerTypingAsync();
+        //[Command(Constants.ServersCommand)]
+        //public async Task GetServersAsync()
+        //{
+        //    // Bot is typing.
+        //    await Context.Channel.TriggerTypingAsync();
 
-            // Pause for realism.
-            await Task.Delay(TimeSpan.FromSeconds(1));
+        //    // Pause for realism.
+        //    await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+        //    // Get client and guilds.
+        //    var client = Context.Client as NinjaCatDiscordClient;
+            
 
-            // Get guilds.
-            var guilds = client.Guilds;
+        //    // Create big message. After 2000 chars, send another.
+        //    var message = $"I'm currently a member of {guilds.Count} server{(guilds.Count > 1 ? "s" : "")}:\n{string.Join(", ", guilds)}";
+        //    var chunks = Enumerable.Range(0, message.Length / 2000).Select(i => message.Substring(i * 2000, 2000));
 
-            // Send message.
-            await ReplyAsync($"I'm currently a member of {guilds.Count} server{(guilds.Count > 1 ? "s" : "")}:\n{string.Join(", ", guilds)}");
-        }
+        //    // Send message one chunk at a time.
+        //    foreach (var chunk in chunks)
+        //        await ReplyAsync(chunk);
+        //}
 
         #endregion
     }
