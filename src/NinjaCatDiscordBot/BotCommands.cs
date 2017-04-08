@@ -406,30 +406,46 @@ namespace NinjaCatDiscordBot
                     Tuple.Create("minute", timeSpan.Minutes),
                     Tuple.Create("second", timeSpan.Seconds)
                 }.SkipWhile(i => i.Item2 <= 0);
-
             var timeString = string.Join(", ", parts.Select(p => string.Format("{0} {1}{2}", p.Item2, p.Item1, p.Item2 > 1 ? "s" : string.Empty)));
 
-            // Get current user.
-            var user = await Context.Guild.GetCurrentUserAsync();
-
-            // Get highest role.
-            var highestrole = Context.Guild.EveryoneRole;
-            foreach (var role in user.RoleIds)
-            {
-                var newRole = Context.Guild.GetRole(role);
-                if (newRole.Position > highestrole.Position)
-                    highestrole = newRole;
-            }
+            // Get user.
+            var user = Context.Client.CurrentUser;
 
             // Build embed.
             var embed = new EmbedBuilder();
             embed.Author = new EmbedAuthorBuilder();
             embed.Author.IconUrl = user.GetAvatarUrl();
-            embed.Author.Name = user.Nickname ?? user.Username;
-            embed.Color = highestrole.Color;
-            embed.AddField((e) => { e.Name = "Join date"; e.Value = user.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
+
+            // If in a guild, make color.
+            if (Context.Guild != null)
+            {
+                // Get current user.
+                var guildUser = await Context.Guild.GetCurrentUserAsync();
+
+                // Get highest role.
+                var highestrole = Context.Guild.EveryoneRole;
+                foreach (var role in guildUser.RoleIds)
+                {
+                    var newRole = Context.Guild.GetRole(role);
+                    if (newRole.Position > highestrole.Position)
+                        highestrole = newRole;
+                }
+
+                // Set color, username, and join date.
+                embed.Color = highestrole.Color;
+                embed.Author.Name = guildUser.Nickname ?? guildUser.Username;
+                embed.AddField((e) => { e.Name = "Join date"; e.Value = guildUser.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
+            }
+            else
+            {
+                // Set username.
+                embed.Author.Name = user.Username;
+            }
+
+            // Add final fields.
+            var shardId = Context.Guild != null ? (client.GetShardIdFor(Context.Guild) + 1) : 0;
             embed.AddField((e) => { e.Name = "Servers"; e.Value = client.Guilds.Count.ToString(); e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{(client.GetShardIdFor(Context.Guild) + 1).ToString()}/{client.Shards.Count.ToString()}"; e.IsInline = true; });
+            embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{shardId.ToString()}/{client.Shards.Count.ToString()}"; e.IsInline = true; });
             embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
 
             // Select and send message with embed.
