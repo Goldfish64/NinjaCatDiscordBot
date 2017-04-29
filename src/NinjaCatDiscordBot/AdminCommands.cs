@@ -1000,6 +1000,54 @@ namespace NinjaCatDiscordBot
             await client.UpdateGameAsync();
         }
 
+        /// <summary>
+        /// Ping jaska.
+        /// </summary>
+        /// <returns></returns>
+        [Command(Constants.PingJaskaCommand)]
+        public async Task PingJaskaAsync()
+        {
+            // Bot is typing.
+            await Context.Channel.TriggerTypingAsync();
+
+            // Pause for realism.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Get client.
+            var client = Context.Client as NinjaCatDiscordClient;
+
+            // Get the user.
+            var user = Context.Message.Author as IUser;
+
+            // If the user is not master, show error.
+            if (user?.Id != Constants.OwnerId)
+            {
+                // Select and send message.
+                switch (client.GetRandomNumber(4))
+                {
+                    default:
+                        await ReplyAsync($"Sorry, but only my master can do this.");
+                        break;
+
+                    case 1:
+                        await ReplyAsync($"No can do. You aren't my owner.");
+                        break;
+
+                    case 2:
+                        await ReplyAsync($"I'm sorry {Context.Message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
+                        break;
+
+                    case 3:
+                        await ReplyAsync($"Not happening. Only my owner can do this.");
+                        break;
+                }
+                return;
+            }
+
+            // Send message.
+            await ReplyAsync($"<@71270107371802624>");
+        }
+
         private async void SendMessageShardAsync(NinjaCatDiscordClient client, DiscordSocketClient shard, string message)
         {
             // Announce in the specified channel of each guild.
