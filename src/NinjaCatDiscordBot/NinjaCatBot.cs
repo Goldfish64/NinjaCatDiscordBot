@@ -25,14 +25,12 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -74,10 +72,9 @@ namespace NinjaCatDiscordBot
 
             // Create command service and map.
             var commands = new CommandService();
-            var commandMap = new DependencyMap();
+            var commandMap = new ServiceCollection();
 
-            // Add client to map and load commands from assembly.
-            commandMap.Add<IDiscordClient>(client);
+            // Load commands from assembly.
             await commands.AddModulesAsync(Assembly.GetEntryAssembly());
 
             // Certain things are to be done when the bot joins a guild.
@@ -235,32 +232,29 @@ namespace NinjaCatDiscordBot
                     var fullUrl = string.Empty;
                     foreach (var url in tweet.Urls)
                     {
-                        // Encode URL for transport.
-                        var tempUrl = WebUtility.UrlEncode(url.ExpandedURL);
-
                         // Create the HttpClient.
                         using (var httpClient = new HttpClient())
                         {
-                            // Configure the HttpClient to use https://lengthenurl.info/.
-                            httpClient.DefaultRequestHeaders.Accept.Clear();
-                            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
                             // Retry up to three times.
                             for (int i = 0; i < 3; i++)
                             {
-                                // Send the request with the short URL and get the response back containing the long URL.
-                                var response = await httpClient.GetAsync($"https://lengthenurl.info/api/longurl/shorturl/?inputURL={tempUrl}");
+                                // Get full URL.
+                                var tempUrl = url.ExpandedURL;
+                                var response = await httpClient.GetAsync(tempUrl);
+
+                                // If the response was a redirect, try again up to 10 times.
+                                var count = 10;
+                                while ((response.StatusCode == HttpStatusCode.Redirect || response.StatusCode == HttpStatusCode.MovedPermanently || response.StatusCode == HttpStatusCode.Moved) ||
+                                    count < 10)
+                                {
+                                    tempUrl = response.Headers.Location.ToString();
+                                    response = await httpClient.GetAsync(tempUrl);
+                                    count++;
+                                }
 
                                 // Did the request succeed? If it did, get the URL. Otherwise, log the error and retry.
                                 if (response.IsSuccessStatusCode)
-                                {
-                                    // Get string and parse JSON.
-                                    var responseString = await response.Content.ReadAsStringAsync();
-                                    var result = JObject.Parse(responseString);
-
-                                    // Get long URL.
-                                    fullUrl = result["LongURL"].ToString().ToLowerInvariant();
-                                }
+                                    fullUrl = tempUrl;
                                 else
                                     client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
                             }
@@ -312,14 +306,14 @@ namespace NinjaCatDiscordBot
             {
                 // Log error.
                 client.LogOutput($"TWEET STREAM STOPPED: {e.Exception}");
-            };      
+            };
 
             // Create timer for POSTing server count.
             var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCountAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromHours(1));
 
             // Create timer for game play status of builds.
             var buildPlayTimer = new Timer(async (e) => await client.UpdateGameAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(30));
-            
+
             // Start the stream.
             stream.StartStreamMatchingAllConditions();
         }
