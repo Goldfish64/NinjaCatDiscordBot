@@ -102,11 +102,11 @@ namespace NinjaCatDiscordBot
 
         public static readonly string AboutMessage1 =
             $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
-            $"I was created by <@{OwnerId.ToString()}> with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
+            "I was created by **{0}** with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
             $"For help on what I can do, type **{CommandPrefix}{HelpCommand}**.";
         public static readonly string AboutMessage2 =
             $"Greetings! I am the {UserName}, a bot built using the Discord.Net and Tweetinvi libraries!\n" +
-            $"I was activated by <@{OwnerId.ToString()}> with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
+            "I was activated by **{0}** with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
             $"Your wish is my command, so type **{CommandPrefix}{HelpCommand}** for info on what I can do for you.";
 
         public static readonly string HelpBody =

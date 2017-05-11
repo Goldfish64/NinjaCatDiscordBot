@@ -65,6 +65,9 @@ namespace NinjaCatDiscordBot
             // Get client.
             var client = Context.Client as NinjaCatDiscordClient;
 
+            // Get owner of bot.
+            var owner = client.GetUser(Constants.OwnerId);
+
             // Create variable for speaking channel mention.
             var speakingChannel = string.Empty;
             var speakingRole = string.Empty;
@@ -104,11 +107,11 @@ namespace NinjaCatDiscordBot
             switch (client.GetRandomNumber(2))
             {
                 default:
-                    await ReplyAsync($"{Constants.AboutMessage1}" + channelText + roleText);
+                    await ReplyAsync($"{string.Format(Constants.AboutMessage1, owner.Username + "#" + owner.Discriminator)}" + channelText + roleText);
                         break;
 
                 case 1:
-                    await ReplyAsync($"{Constants.AboutMessage2}" + channelText + roleText);
+                    await ReplyAsync($"{string.Format(Constants.AboutMessage2,owner.Username + "#" + owner.Discriminator)}" + channelText + roleText);
                     break;
             }
         }
