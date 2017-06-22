@@ -1050,9 +1050,6 @@ namespace NinjaCatDiscordBot
 
         private async void SendMessageShardAsync(NinjaCatDiscordClient client, DiscordSocketClient shard, string message)
         {
-            // Get owner of bot.
-            var owner = client.GetUser(Constants.OwnerId);
-
             // Announce in the specified channel of each guild.
             foreach (var guild in shard.Guilds)
             {
@@ -1085,7 +1082,7 @@ namespace NinjaCatDiscordBot
                     await Task.Delay(TimeSpan.FromSeconds(2));
 
                     // Send message.
-                    await channel.SendMessageAsync($"Announcement from **{owner.Username}#{owner.Discriminator}** (bot owner):\n{message}");
+                    await channel.SendMessageAsync($"Announcement from **{Constants.OwnerName}** (bot owner):\n{message}");
                 }
                 catch (Exception ex)
                 {

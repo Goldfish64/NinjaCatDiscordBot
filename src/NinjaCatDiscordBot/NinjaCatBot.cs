@@ -187,7 +187,7 @@ namespace NinjaCatDiscordBot
                 Credentials.TwitterAccessToken, Credentials.TwitterAccessSecret);
 
             // Create Twitter stream to follow @donasarkar.
-            var donaUser = User.GetUserFromScreenName("donasarkar");
+            var donaUser = User.GetUserFromScreenName("windowsinsider");
             var stream = Tweetinvi.Stream.CreateFilteredStream();
             stream.AddFollow(donaUser);
 
@@ -223,44 +223,61 @@ namespace NinjaCatDiscordBot
                 }
                 else
                 {
-                    // Get build number. If empty, ignore the tweet.
-                    var build = Regex.Match(tweet.FullText, @"\d{5,}").Value;
-                    if (string.IsNullOrWhiteSpace(build))
-                        return;
-
                     // Try to get a blogs URL.
                     var fullUrl = string.Empty;
                     foreach (var url in tweet.Urls)
                     {
-                        // Create the HttpClient.
-                        using (var httpClient = new HttpClient())
+                        for (int t = 0; t < 3; t++)
                         {
-                            // Retry up to three times.
-                            for (int i = 0; i < 3; i++)
+                            // Create the HttpClient.
+                            using (var httpClient = new HttpClient())
                             {
-                                // Get full URL.
-                                var tempUrl = url.ExpandedURL;
-                                var response = await httpClient.GetAsync(tempUrl);
-
-                                // If the response was a redirect, try again up to 10 times.
-                                var count = 10;
-                                while ((response.StatusCode == HttpStatusCode.Redirect || response.StatusCode == HttpStatusCode.MovedPermanently || response.StatusCode == HttpStatusCode.Moved) ||
-                                    count < 10)
+                                // Retry up to three times.
+                                for (int i = 0; i < 3; i++)
                                 {
-                                    tempUrl = response.Headers.Location.ToString();
-                                    response = await httpClient.GetAsync(tempUrl);
-                                    count++;
-                                }
+                                    // Get full URL.
+                                    var tempUrl = url.ExpandedURL;
+                                    var response = await httpClient.GetAsync(tempUrl);
 
-                                // Did the request succeed? If it did, get the URL. Otherwise, log the error and retry.
-                                if (response.IsSuccessStatusCode)
-                                    fullUrl = tempUrl;
-                                else
-                                    client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
+                                    // If the response was a redirect, try again up to 10 times.
+                                    var count = 10;
+                                    while ((response.StatusCode == HttpStatusCode.Redirect || response.StatusCode == HttpStatusCode.MovedPermanently || response.StatusCode == HttpStatusCode.Moved) ||
+                                        count < 10)
+                                    {
+                                        tempUrl = response.Headers.Location.ToString();
+                                        response = await httpClient.GetAsync(tempUrl);
+                                        count++;
+                                    }
+
+                                    // Check to see if the full URL was gotten.
+                                    if (response.RequestMessage.RequestUri.ToString().Contains("blogs.windows.com/windowsexperience") && response.RequestMessage.RequestUri.ToString().Contains("insider-preview-build"))
+                                    {
+                                        fullUrl = response.RequestMessage.RequestUri.ToString();
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        client.LogOutput($"URLFETCH ERROR: URL wasn't right.");
+                                    }
+
+                                    // Did the request fail? Log the error and retry.
+                                    if (!response.IsSuccessStatusCode)
+                                        client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
+                                }
                             }
+
+                            // Check to see if URL has what it takes. If not, retry in 5 minutes.
+                            if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
+                                break;
+
+                            // Clear URL.
+                            fullUrl = string.Empty;
+
+                            // Wait 10 minutes.
+                            await Task.Delay(TimeSpan.FromMinutes(10));
                         }
 
-                        // Check to see if URL has what it takes.
+                        // Check to see if URL has what it takes. If not, retry in 5 minutes.
                         if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
                             break;
 
@@ -270,6 +287,12 @@ namespace NinjaCatDiscordBot
 
                     // If URL is invalid, return.
                     if (string.IsNullOrWhiteSpace(fullUrl))
+                        return;
+
+                    // Get build numbers. If empty, ignore the tweet.
+                    var build = Regex.Match(fullUrl, @"\d{5,}").Value;
+                    var buildM = Regex.Match(fullUrl, @"\d{5,}", RegexOptions.RightToLeft).Value;
+                    if (string.IsNullOrWhiteSpace(build))
                         return;
 
                     // Log tweet.
@@ -297,7 +320,7 @@ namespace NinjaCatDiscordBot
 
                     // Send build to guilds.
                     foreach (var shard in client.Shards)
-                        SendNewBuildToShard(shard, build, ring + platform, fullUrl);
+                        SendNewBuildToShard(shard, build, buildM, ring + platform, fullUrl);
                 }
             };
 
@@ -412,7 +435,7 @@ namespace NinjaCatDiscordBot
             }
         }
 
-        private async void SendNewBuildToShard(DiscordSocketClient shard, string build, string type, string url)
+        private async void SendNewBuildToShard(DiscordSocketClient shard, string build, string buildM, string type, string url)
         {
             // Announce in the specified channel of each guild.
             foreach (var guild in shard.Guilds)
@@ -454,19 +477,39 @@ namespace NinjaCatDiscordBot
                     await Task.Delay(TimeSpan.FromSeconds(1));
 
                     // Select and send message.
-                    switch (client.GetRandomNumber(3))
+                    if (build != buildM)
                     {
-                        default:
-                            await channel.SendMessageAsync($"{roleText}Yay! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
-                            break;
+                        switch (client.GetRandomNumber(3))
+                        {
+                            default:
+                                await channel.SendMessageAsync($"{roleText}Yay! Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                                break;
 
-                        case 1:
-                            await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
-                            break;
+                            case 1:
+                                await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
+                                break;
 
-                        case 2:
-                            await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
-                            break;
+                            case 2:
+                                await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        switch (client.GetRandomNumber(3))
+                        {
+                            default:
+                                await channel.SendMessageAsync($"{roleText}Yay! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                                break;
+
+                            case 1:
+                                await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
+                                break;
+
+                            case 2:
+                                await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                                break;
+                        }
                     }
                 }
                 catch (Exception ex)

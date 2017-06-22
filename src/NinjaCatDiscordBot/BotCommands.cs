@@ -66,7 +66,7 @@ namespace NinjaCatDiscordBot
             var client = Context.Client as NinjaCatDiscordClient;
 
             // Get owner of bot.
-            var owner = client.GetUser(Constants.OwnerId);
+            //var owner = client.GetUser(Constants.OwnerId);
 
             // Create variable for speaking channel mention.
             var speakingChannel = string.Empty;
@@ -107,11 +107,11 @@ namespace NinjaCatDiscordBot
             switch (client.GetRandomNumber(2))
             {
                 default:
-                    await ReplyAsync($"{string.Format(Constants.AboutMessage1, owner.Username + "#" + owner.Discriminator)}" + channelText + roleText);
+                    await ReplyAsync($"{Constants.AboutMessage1}" + channelText + roleText);
                         break;
 
                 case 1:
-                    await ReplyAsync($"{string.Format(Constants.AboutMessage2,owner.Username + "#" + owner.Discriminator)}" + channelText + roleText);
+                    await ReplyAsync($"{Constants.AboutMessage2}" + channelText + roleText);
                     break;
             }
         }
@@ -274,15 +274,8 @@ namespace NinjaCatDiscordBot
             }
         }
 
-        /// <summary>
-        /// Gets the latest Insider PC build.
-        /// </summary>
-        [Command(Constants.LatestBuildCommand)]
-        private async Task GetLatestBuildAsync()
+        private async Task<Tuple<string, string>> GetLatestBuildNumberAsync(bool mobile = false)
         {
-            // Bot is typing.
-            await Context.Channel.TriggerTypingAsync();
-
             // Create process for JSON fetching.
             var process = new Process();
             process.StartInfo.FileName = "WindowsBlogsJsonGetterApp.exe";
@@ -296,14 +289,30 @@ namespace NinjaCatDiscordBot
 
             // Parse JSON and get the latest PC post.
             var posts = JArray.Parse(result).ToList();
-            var newestBuild = posts.First(b => b["title"].ToString().ToLowerInvariant().Contains("pc"));
+            var newestBuild = posts.First(b => b["title"].ToString().ToLowerInvariant().Contains(mobile ? "mobile" : "pc"));
 
             // Get build number and link.
-            var build = Regex.Match(newestBuild["title"].ToString(), @"\d{5,}").Value;
+            var build = Regex.Match(newestBuild["title"].ToString(), @"\d{5,}", mobile ? RegexOptions.RightToLeft : RegexOptions.None).Value;
             var link = newestBuild["link"].ToString();
 
+            // Return info.
+            return new Tuple<string, string>(build, link);
+        }
+
+        /// <summary>
+        /// Gets the latest Insider PC build.
+        /// </summary>
+        [Command(Constants.LatestBuildCommand)]
+        private async Task GetLatestBuildAsync()
+        {
+            // Bot is typing.
+            await Context.Channel.TriggerTypingAsync();
+
+            // Get build.
+            var data = await GetLatestBuildNumberAsync();
+
             // Send.
-            await ReplyAsync($"The latest Windows 10 build for PCs is **{build}**. :cat: :computer:\n{link}");
+            await ReplyAsync($"The latest Windows 10 build for PCs is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
         }
 
         /// <summary>
@@ -315,27 +324,11 @@ namespace NinjaCatDiscordBot
             // Bot is typing.
             await Context.Channel.TriggerTypingAsync();
 
-            // Create process for JSON fetching.
-            var process = new Process();
-            process.StartInfo.FileName = "WindowsBlogsJsonGetterApp.exe";
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-
-            // Run process and get result.
-            process.Start();
-            var result = await process.StandardOutput.ReadToEndAsync();
-            await process.WaitForExitAsync();
-
-            // Parse JSON and get the latest mobile post.
-            var posts = JArray.Parse(result).ToList();
-            var newestBuild = posts.First(b => b["title"].ToString().ToLowerInvariant().Contains("mobile"));
-
-            // Get build number and link.
-            var build = Regex.Match(newestBuild["title"].ToString(), @"\d{5,}").Value;
-            var link = newestBuild["link"].ToString();
+            // Get build.
+            var data = await GetLatestBuildNumberAsync(true);
 
             // Send.
-            await ReplyAsync($"The latest Windows 10 Mobile build is **{build}**. :cat: :telephone:\n{link}");
+            await ReplyAsync($"The latest Windows 10 Mobile build is **{data.Item1}**. :cat: :telephone:\n{data.Item2}");
         }
 
         /// <summary>
