@@ -25,12 +25,12 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace NinjaCatDiscordBot
 {
@@ -108,7 +108,7 @@ namespace NinjaCatDiscordBot
             {
                 default:
                     await ReplyAsync($"{Constants.AboutMessage1}" + channelText + roleText);
-                        break;
+                    break;
 
                 case 1:
                     await ReplyAsync($"{Constants.AboutMessage2}" + channelText + roleText);
@@ -274,29 +274,33 @@ namespace NinjaCatDiscordBot
             }
         }
 
-        private async Task<Tuple<string, string>> GetLatestBuildNumberAsync(bool mobile = false)
+        private async Task<Tuple<string, string>> GetLatestBuildNumberAsync(string type = "pc")
         {
-            // Create process for JSON fetching.
-            var process = new Process();
-            process.StartInfo.FileName = "WindowsBlogsJsonGetterApp.exe";
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
+            // Create HTTP client.
+            var client = new HttpClient();
 
-            // Run process and get result.
-            process.Start();
-            var result = await process.StandardOutput.ReadToEndAsync();
-            await process.WaitForExitAsync();
+            // Get blog entries.
+            var doc = XDocument.Parse(await client.GetStringAsync("https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/"));
+            var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                          select new BlogEntry()
+                          { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
+            var list = entries.ToList();
 
-            // Parse JSON and get the latest PC post.
-            var posts = JArray.Parse(result).ToList();
-            var newestBuild = posts.First(b => b["title"].ToString().ToLowerInvariant().Contains(mobile ? "mobile" : "pc"));
+            // Get second page.
+            doc = XDocument.Parse(await client.GetStringAsync("https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged=2"));
+            entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                      select new BlogEntry()
+                      { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
+            list.AddRange(entries.ToList());
 
-            // Get build number and link.
-            var build = Regex.Match(newestBuild["title"].ToString(), @"\d{5,}", mobile ? RegexOptions.RightToLeft : RegexOptions.None).Value;
-            var link = newestBuild["link"].ToString();
+            // Get most recent build post.
+            var post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains(type)).FirstOrDefault();
+
+            // Get build number.
+            var build = Regex.Match(post.Title, @"\d{5,}", type == "mobile" ? RegexOptions.RightToLeft : RegexOptions.None).Value;
 
             // Return info.
-            return new Tuple<string, string>(build, link);
+            return new Tuple<string, string>(build, post.Link);
         }
 
         /// <summary>
@@ -325,10 +329,26 @@ namespace NinjaCatDiscordBot
             await Context.Channel.TriggerTypingAsync();
 
             // Get build.
-            var data = await GetLatestBuildNumberAsync(true);
+            var data = await GetLatestBuildNumberAsync("mobile");
 
             // Send.
             await ReplyAsync($"The latest Windows 10 Mobile build is **{data.Item1}**. :cat: :telephone:\n{data.Item2}");
+        }
+
+        /// <summary>
+        /// Gets the latest Insider server build.
+        /// </summary>
+        [Command(Constants.LatestServerBuildCommand)]
+        private async Task GetLatestServerBuildAsync()
+        {
+            // Bot is typing.
+            await Context.Channel.TriggerTypingAsync();
+
+            // Get build.
+            var data = await GetLatestBuildNumberAsync("server");
+
+            // Send.
+            await ReplyAsync($"The latest Windows Server build is **{data.Item1}**. :cat: :desktop:\n{data.Item2}");
         }
 
         /// <summary>
@@ -476,7 +496,7 @@ namespace NinjaCatDiscordBot
 
         //    // Get client and guilds.
         //    var client = Context.Client as NinjaCatDiscordClient;
-            
+
 
         //    // Create big message. After 2000 chars, send another.
         //    var message = $"I'm currently a member of {guilds.Count} server{(guilds.Count > 1 ? "s" : "")}:\n{string.Join(", ", guilds)}";

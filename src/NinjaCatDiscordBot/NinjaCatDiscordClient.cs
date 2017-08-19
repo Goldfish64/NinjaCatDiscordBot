@@ -25,15 +25,15 @@
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace NinjaCatDiscordBot
 {
@@ -44,7 +44,7 @@ namespace NinjaCatDiscordBot
     {
         #region Private variables
 
-       // private StreamWriter logStreamWriter;
+        // private StreamWriter logStreamWriter;
         private Random random = new Random();
         private object lockObject = new object();
 
@@ -265,8 +265,8 @@ namespace NinjaCatDiscordBot
 
             // Write to console and logfile.
             Console.WriteLine($"{timeDate}: {info}");
-          //  logStreamWriter.WriteLine($"{timeDate}: {info}");
-          //  logStreamWriter.Flush();
+            //  logStreamWriter.WriteLine($"{timeDate}: {info}");
+            //  logStreamWriter.Flush();
         }
 
         /// <summary>
@@ -277,23 +277,28 @@ namespace NinjaCatDiscordBot
         {
             try
             {
-                // Create process for JSON fetching.
-                var process = new Process();
-                process.StartInfo.FileName = "WindowsBlogsJsonGetterApp.exe";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
+                // Create HTTP client.
+                var client = new HttpClient();
 
-                // Run process and get result.
-                process.Start();
-                var result = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
+                // Get blog entries.
+                var doc = XDocument.Parse(await client.GetStringAsync("https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/"));
+                var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                              select new BlogEntry()
+                              { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
+                var list = entries.ToList();
 
-                // Parse JSON and get the latest PC post.
-                var posts = JArray.Parse(result).ToList();
-                var newestBuild = posts.First(b => b["title"].ToString().ToLowerInvariant().Contains("pc"));
+                // Get second page.
+                doc = XDocument.Parse(await client.GetStringAsync("https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged=2"));
+                entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                          select new BlogEntry()
+                          { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
+                list.AddRange(entries.ToList());
+
+                // Get most recent build post.
+                var post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("pc")).FirstOrDefault();
 
                 // Get build number.
-                var build = Regex.Match(newestBuild["title"].ToString(), @"\d{5,}").Value;
+                var build = Regex.Match(post.Title, @"\d{5,}", RegexOptions.None).Value;
 
                 // Create string.
                 var game = $"on {build} | {Constants.CommandPrefix}{Constants.HelpCommand}";
