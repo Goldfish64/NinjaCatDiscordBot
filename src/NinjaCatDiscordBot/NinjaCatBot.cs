@@ -311,15 +311,23 @@ namespace NinjaCatDiscordBot
                         ring = " to the Slow ring";
 
                     // Check for PC or mobile, or both.
-                    if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile"))
+                    if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile") && fullUrl.ToLowerInvariant().Contains("server"))
+                        platform = " for PC, Server, and Mobile";
+                    else if(fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile"))
                         platform = " for both PC and Mobile";
+                    else if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("server"))
+                        platform = " for both PC and Server";
+                    else if (fullUrl.ToLowerInvariant().Contains("mobile") && fullUrl.ToLowerInvariant().Contains("server"))
+                        platform = " for both Server and Mobile";
                     else if (fullUrl.ToLowerInvariant().Contains("pc"))
                         platform = " for PC";
                     else if (fullUrl.ToLowerInvariant().Contains("mobile"))
                         platform = " for Mobile";
+                    else if (fullUrl.ToLowerInvariant().Contains("server"))
+                        platform = " for Server";
 
                     // Send build to guilds.
-                    foreach (var shard in client.Shards)
+                        foreach (var shard in client.Shards)
                         SendNewBuildToShard(shard, build, buildM, ring + platform, fullUrl);
                 }
             };
@@ -459,8 +467,8 @@ namespace NinjaCatDiscordBot
                 var role = client.GetSpeakingRoleForIGuild(guild);
                 var roleText = string.Empty;
 
-                // Does the role exist?
-                if (role != null)
+                // Does the role exist, and should we ping?
+                if (role != null && !type.ToLowerInvariant().Contains("server"))
                     roleText = $"{role.Mention} ";
 
                 try
