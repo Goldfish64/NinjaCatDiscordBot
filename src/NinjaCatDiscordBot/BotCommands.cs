@@ -26,6 +26,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -427,6 +428,32 @@ namespace NinjaCatDiscordBot
             // Get user.
             var user = Context.Client.CurrentUser;
 
+            // Get biggest server.
+            SocketGuild biggestServer = null;
+            foreach (var shard in client.Shards)
+            {
+                foreach (var guild in shard.Guilds)
+                {
+                    // Omit Discord Bots from results.
+                    if (guild.Id == Constants.BotsGuildId)
+                        continue;
+
+                    if (biggestServer == null || guild.MemberCount > biggestServer.MemberCount)
+                        biggestServer = guild;
+                }
+            }
+
+            // Get smallest server.
+            SocketGuild smallestServer = null;
+            foreach (var shard in client.Shards)
+            {
+                foreach (var guild in shard.Guilds)
+                {
+                    if (smallestServer == null || guild.MemberCount < smallestServer.MemberCount)
+                        smallestServer = guild;
+                }
+            }
+
             // Build embed.
             var embed = new EmbedBuilder();
             embed.Author = new EmbedAuthorBuilder();
@@ -462,6 +489,10 @@ namespace NinjaCatDiscordBot
             var shardId = Context.Guild != null ? (client.GetShardIdFor(Context.Guild) + 1) : 0;
             embed.AddField((e) => { e.Name = "Servers"; e.Value = client.Guilds.Count.ToString(); e.IsInline = true; });
             embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{shardId.ToString()}/{client.Shards.Count.ToString()}"; e.IsInline = true; });
+
+            embed.AddField((e) => { e.Name = "Largest server"; e.Value = $"{biggestServer.Name} ({biggestServer.MemberCount})"; e.IsInline = true; });
+            embed.AddField((e) => { e.Name = "Smallest server"; e.Value = $"{smallestServer.Name} ({smallestServer.MemberCount})"; e.IsInline = true; });
+
             embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
 
             // Select and send message with embed.
@@ -479,6 +510,36 @@ namespace NinjaCatDiscordBot
                     await ReplyAsync("My information awaits:", embed: embed);
                     break;
             }
+        }
+
+        /// <summary>
+        /// Gets the latest Insider mobile build.
+        /// </summary>
+        [Command(Constants.ServerCountBotsCommand)]
+        private async Task GetServerCountBots()
+        {
+            // Bot is typing.
+            await Context.Channel.TriggerTypingAsync();
+
+            // Get client.
+            var client = Context.Client as NinjaCatDiscordClient;
+
+            // Get servers with >70% bots.
+            var servers = new List<SocketGuild>();
+
+            foreach (var shard in client.Shards)
+            {
+                foreach (var guild in shard.Guilds)
+                {
+                    await guild.DownloadUsersAsync();
+                    var bots = guild.Users.Count(u => u.IsBot);
+                    if (bots / (double)guild.Users.Count > 0.9)
+                        servers.Add(guild);
+                }
+                //servers.AddRange(shard.Guilds.Where(g => ((double)g.Users.Count(u => u.IsBot) / (double)g.Users.Count) >= 0.7).ToList());
+            }
+
+            await ReplyAsync($"I am on {servers.Count()} bot servers (>90% bots).");
         }
 
         /// <summary>

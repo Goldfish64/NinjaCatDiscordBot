@@ -80,6 +80,8 @@ namespace NinjaCatDiscordBot
         public const string BotInfoCommandDesc = "shows my info";
         public const string ServersCommand = "servers";
         public const string ServersCommandDesc = "lists the servers I'm in";
+        public const string ServerCountBotsCommand = "botservers";
+       // public const string LargestServerCommand = "largestserver";
         public const string TestPermsCommand = "testperms";
         public const string TestPermsCommandDesc = "tests my speaking channel permissions";
         public const string AnnouncementCommand = "announce"; // Bot owner only.
