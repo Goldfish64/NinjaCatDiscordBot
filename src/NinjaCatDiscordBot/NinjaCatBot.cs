@@ -80,17 +80,21 @@ namespace NinjaCatDiscordBot
             // Certain things are to be done when the bot joins a guild.
             client.JoinedGuild += async (guild) =>
             {
-                // Update server count.
-                await UpdateSiteServerCountAsync();
-
                 // Pause for 5 seconds.
                 await Task.Delay(TimeSpan.FromSeconds(5));
+
+                // Check to see if this is a bot farm.
+                if (await CheckBotGuild(guild))
+                    return;
 
                 // Create variable for speaking channel mention.
                 var speakingChannel = string.Empty;
 
                 // Get speaking channel.
                 var channel = client.GetSpeakingChannelForSocketGuild(guild);
+
+                // Update server count.
+                await UpdateSiteServerCountAsync();
 
                 // Get current user.
                 var user = channel.Guild.CurrentUser;
@@ -181,6 +185,16 @@ namespace NinjaCatDiscordBot
             // Log in to Discord. Token is stored in the Credentials class.
             await client.LoginAsync(TokenType.Bot, Credentials.DiscordToken);
             await client.StartAsync();
+
+            // Check for bot guilds.
+            foreach (var shard in client.Shards)
+            {
+                shard.Connected += async () =>
+                {
+                    foreach (var guild in shard.Guilds)
+                        await CheckBotGuild(guild);
+                };
+            }
 
             // Log in to Twitter.
             Auth.SetUserCredentials(Credentials.TwitterConsumerKey, Credentials.TwitterConsumerSecret,
@@ -313,7 +327,7 @@ namespace NinjaCatDiscordBot
                     // Check for PC or mobile, or both.
                     if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile") && fullUrl.ToLowerInvariant().Contains("server"))
                         platform = " for PC, Server, and Mobile";
-                    else if(fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile"))
+                    else if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile"))
                         platform = " for both PC and Mobile";
                     else if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("server"))
                         platform = " for both PC and Server";
@@ -327,7 +341,7 @@ namespace NinjaCatDiscordBot
                         platform = " for Server";
 
                     // Send build to guilds.
-                        foreach (var shard in client.Shards)
+                    foreach (var shard in client.Shards)
                         SendNewBuildToShard(shard, build, buildM, ring + platform, fullUrl);
                 }
             };
@@ -526,6 +540,40 @@ namespace NinjaCatDiscordBot
                 // Log server.
                 client.LogOutput($"SPOKEN IN SERVER: {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1})");
             }
+        }
+
+        private async Task<bool> CheckBotGuild(SocketGuild guild)
+        {
+            // Ensure guild is updated.
+            if (guild.Users.Count != guild.MemberCount)
+                await guild.DownloadUsersAsync();
+
+            // Is this a bot guild?
+            if (guild.MemberCount >= 100 && (guild.Users.Count(u => u.IsBot) / (double)guild.MemberCount) >= 0.9)
+            {
+                try
+                {
+                    // Bot is typing in default channel.
+                    await guild.DefaultChannel.TriggerTypingAsync();
+
+                    // Pause for realism.
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+
+                    // Send notice.
+                    await guild.DefaultChannel.SendMessageAsync($"It looks like this server is a bot farm, so I'll show myself out. If this is a legitimate server, contact *{Constants.OwnerName}*.");
+                }
+                catch { }
+
+                // Wait 2 seconds, then leave.
+                await Task.Delay(TimeSpan.FromSeconds(2));
+                await guild.LeaveAsync();
+
+                // This was a bot server.
+                return true;
+            }
+
+            // This is not a bot server.
+            return false;
         }
 
         #endregion

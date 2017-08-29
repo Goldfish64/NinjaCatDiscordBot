@@ -512,62 +512,6 @@ namespace NinjaCatDiscordBot
             }
         }
 
-        /// <summary>
-        /// Gets the latest Insider mobile build.
-        /// </summary>
-        [Command(Constants.ServerCountBotsCommand)]
-        private async Task GetServerCountBots()
-        {
-            // Bot is typing.
-            await Context.Channel.TriggerTypingAsync();
-
-            // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
-
-            // Get servers with >70% bots.
-            var servers = new List<SocketGuild>();
-
-            foreach (var shard in client.Shards)
-            {
-                foreach (var guild in shard.Guilds)
-                {
-                    await guild.DownloadUsersAsync();
-                    var bots = guild.Users.Count(u => u.IsBot);
-                    if (bots / (double)guild.Users.Count > 0.9)
-                        servers.Add(guild);
-                }
-                //servers.AddRange(shard.Guilds.Where(g => ((double)g.Users.Count(u => u.IsBot) / (double)g.Users.Count) >= 0.7).ToList());
-            }
-
-            await ReplyAsync($"I am on {servers.Count()} bot servers (>90% bots).");
-        }
-
-        /// <summary>
-        /// Gets the bot's servers.
-        /// </summary>
-        /// <returns></returns>
-        //[Command(Constants.ServersCommand)]
-        //public async Task GetServersAsync()
-        //{
-        //    // Bot is typing.
-        //    await Context.Channel.TriggerTypingAsync();
-
-        //    // Pause for realism.
-        //    await Task.Delay(TimeSpan.FromSeconds(1));
-
-        //    // Get client and guilds.
-        //    var client = Context.Client as NinjaCatDiscordClient;
-
-
-        //    // Create big message. After 2000 chars, send another.
-        //    var message = $"I'm currently a member of {guilds.Count} server{(guilds.Count > 1 ? "s" : "")}:\n{string.Join(", ", guilds)}";
-        //    var chunks = Enumerable.Range(0, message.Length / 2000).Select(i => message.Substring(i * 2000, 2000));
-
-        //    // Send message one chunk at a time.
-        //    foreach (var chunk in chunks)
-        //        await ReplyAsync(chunk);
-        //}
-
         #endregion
     }
 }
