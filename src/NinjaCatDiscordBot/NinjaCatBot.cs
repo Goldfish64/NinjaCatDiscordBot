@@ -189,11 +189,14 @@ namespace NinjaCatDiscordBot
             // Check for bot guilds.
             foreach (var shard in client.Shards)
             {
+#pragma warning disable 4014
                 shard.Connected += async () =>
                 {
                     foreach (var guild in shard.Guilds)
-                        await CheckBotGuild(guild);
+                        CheckBotGuild(guild);
+                    await Task.CompletedTask;
                 };
+#pragma warning restore 4014
             }
 
             // Log in to Twitter.
@@ -544,12 +547,16 @@ namespace NinjaCatDiscordBot
 
         private async Task<bool> CheckBotGuild(SocketGuild guild)
         {
+            // If the server is the Discord bots server, ignore.
+            if (guild.Id == Constants.BotsGuildId)
+                return false;
+
             // Ensure guild is updated.
             if (guild.Users.Count != guild.MemberCount)
                 await guild.DownloadUsersAsync();
 
             // Is this a bot guild?
-            if (guild.MemberCount >= 100 && (guild.Users.Count(u => u.IsBot) / (double)guild.MemberCount) >= 0.9)
+            if (guild.MemberCount >= 50 && (guild.Users.Count(u => u.IsBot) / (double)guild.MemberCount) >= 0.9)
             {
                 try
                 {
