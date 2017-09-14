@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AssemblyName>NinjaCatDiscordBot</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>NinjaCatDiscordBot</PackageId>
+    <RuntimeFrameworkVersion>2.0</RuntimeFrameworkVersion>
+    <PackageTargetFallback>$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Discord.Net.Commands" Version="1.0.2" />
+    <PackageReference Include="Discord.Net.Core" Version="1.0.2" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="1.0.2" />
+    <PackageReference Include="TweetinviAPI" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.NETCore.App" Version="1.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
+  </ItemGroup>
+
+</Project>

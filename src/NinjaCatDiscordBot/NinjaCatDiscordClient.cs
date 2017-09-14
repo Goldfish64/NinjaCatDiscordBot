@@ -31,6 +31,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -57,11 +58,8 @@ namespace NinjaCatDiscordBot
         /// </summary>
         public NinjaCatDiscordClient() : base(new DiscordSocketConfig() { TotalShards = 6 })
         {
-            // Open log file.
-            //logStreamWriter = File.AppendText(Constants.LogFileName);
-
             // Write startup messages.
-            LogOutput($"{Constants.AppName} has started.");
+            LogOutput($"{Constants.AppName} on {RuntimeInformation.FrameworkDescription} has started.");
             LogOutput($"===============================================================");
 
             // Listen for events.
