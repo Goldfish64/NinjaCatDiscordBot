@@ -228,8 +228,8 @@ namespace NinjaCatDiscordBot
                 client.LogOutput($"TWEET: {tweet.FullText}");
 
                 // Is it a no-build tweet from Dona?
-                if (tweet.FullText.ToLowerInvariant().Contains("no build") || tweet.FullText.ToLowerInvariant().Contains("no new build") ||
-                    tweet.FullText.ToLowerInvariant().Contains("not releasing") || tweet.FullText.ToLowerInvariant().Contains("not flighting"))
+                if ((tweet.FullText.ToLowerInvariant().Contains("no build") || tweet.FullText.ToLowerInvariant().Contains("no new build") ||
+                    tweet.FullText.ToLowerInvariant().Contains("not releasing") || tweet.FullText.ToLowerInvariant().Contains("not flighting")) && tweet.Urls.Count == 0)
                 {
                     // Log tweet.
                     client.LogOutput($"TWEET CONFIRMED: NO BUILDS TODAY");
@@ -323,7 +323,7 @@ namespace NinjaCatDiscordBot
                     if (tweet.FullText.ToLowerInvariant().Contains("fast") && tweet.FullText.ToLowerInvariant().Contains("slow"))
                         ring = " to both the Fast and Slow rings";
                     else if (tweet.FullText.ToLowerInvariant().Contains("fast"))
-                        ring = " to the Fast ring";
+                        ring = " to the Fast ring" + (fullUrl.ToLowerInvariant().Contains("skip-ahead") ? " (Skip Ahead)" : "");
                     else if (tweet.FullText.ToLowerInvariant().Contains("slow"))
                         ring = " to the Slow ring";
 
