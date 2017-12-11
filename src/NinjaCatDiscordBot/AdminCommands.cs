@@ -45,16 +45,12 @@ namespace NinjaCatDiscordBot
         [Command(Constants.TestPermsCommand)]
         public async Task TestPermsAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Get client.
+            // Get client and channel.
             var client = Context.Client as NinjaCatDiscordClient;
-
-            // Get channel.
             var channel = await client.GetSpeakingChannelForIGuildAsync(Context.Guild);
 
             // If the channel is null, return message saying that speaking is disabled.
@@ -81,8 +77,9 @@ namespace NinjaCatDiscordBot
         [Command(Constants.NicknameCommand)]
         public async Task GetNicknameAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
+            await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
             var client = Context.Client as NinjaCatDiscordClient;
@@ -91,9 +88,6 @@ namespace NinjaCatDiscordBot
             var guild = (Context.Channel as IGuildChannel)?.Guild;
             if (guild == null)
             {
-                // Pause for realism.
-                await Task.Delay(TimeSpan.FromSeconds(1));
-
                 // Select and send message.
                 switch (client.GetRandomNumber(4))
                 {
@@ -118,9 +112,6 @@ namespace NinjaCatDiscordBot
 
             // Get self.
             var self = await guild?.GetCurrentUserAsync();
-
-            // Pause for realism.
-            await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message.
             switch (client.GetRandomNumber(4))
@@ -149,8 +140,9 @@ namespace NinjaCatDiscordBot
         [Command(Constants.ChannelCommand)]
         public async Task GetChannelAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
+            await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
             var client = Context.Client as NinjaCatDiscordClient;
@@ -159,9 +151,6 @@ namespace NinjaCatDiscordBot
             var guild = (Context.Channel as IGuildChannel)?.Guild;
             if (guild == null)
             {
-                // Pause for realism.
-                await Task.Delay(TimeSpan.FromSeconds(1));
-
                 // Select and send message.
                 switch (client.GetRandomNumber(4))
                 {
@@ -187,9 +176,6 @@ namespace NinjaCatDiscordBot
             // If the guild is the Bots server, never speak.
             if (guild.Id == Constants.BotsGuildId)
             {
-                // Pause for realism.
-                await Task.Delay(TimeSpan.FromSeconds(1));
-
                 // Send message.
                 await ReplyAsync($"Because this is the bots server, I can't speak in any channels.");
                 return;
@@ -197,9 +183,6 @@ namespace NinjaCatDiscordBot
 
             // Get channel.
             var channel = await client.GetSpeakingChannelForIGuildAsync(guild);
-
-            // Pause for realism.
-            await Task.Delay(TimeSpan.FromSeconds(1));
 
             // If the channel is still null, that means no announcements.
             if (channel == null)
@@ -262,8 +245,9 @@ namespace NinjaCatDiscordBot
         [Command(Constants.RoleCommand)]
         public async Task GetRoleAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
+            await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
             var client = Context.Client as NinjaCatDiscordClient;
@@ -272,9 +256,6 @@ namespace NinjaCatDiscordBot
             var guild = (Context.Channel as IGuildChannel)?.Guild;
             if (guild == null)
             {
-                // Pause for realism.
-                await Task.Delay(TimeSpan.FromSeconds(1));
-
                 // Select and send message.
                 switch (client.GetRandomNumber(4))
                 {
@@ -300,9 +281,6 @@ namespace NinjaCatDiscordBot
             // If the guild is the Bots server, never speak.
             if (guild.Id == Constants.BotsGuildId)
             {
-                // Pause for realism.
-                await Task.Delay(TimeSpan.FromSeconds(1));
-
                 // Send message.
                 await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
                 return;
@@ -310,9 +288,6 @@ namespace NinjaCatDiscordBot
 
             // Get role.
             var role = client.GetSpeakingRoleForIGuild(guild);
-
-            // Pause for realism.
-            await Task.Delay(TimeSpan.FromSeconds(1));
 
             // If the role is still null, that means no announcements.
             if (role == null)
@@ -372,10 +347,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.SetNicknameCommand)]
         public async Task SetNicknameAsync(params string[] nickname)
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
@@ -468,10 +441,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.SetChannelCommand)]
         public async Task SetChannelAsync(ITextChannel channel = null)
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
@@ -576,10 +547,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.DisableChannelCommand)]
         public async Task DisableChannelAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
@@ -686,10 +655,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.SetRoleCommand)]
         public async Task SetRoleAsync(IRole role)
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
@@ -791,10 +758,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.DisableRoleCommand)]
         public async Task DisableRoleAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
@@ -901,10 +866,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.AnnouncementCommand)]
         public async Task SendAnnouncementAsync(string message)
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
@@ -956,10 +919,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.UpdateGameCommand)]
         public async Task UpdateGameAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
@@ -1007,10 +968,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.PingJaskaCommand)]
         public async Task PingJaskaAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
@@ -1075,10 +1034,8 @@ namespace NinjaCatDiscordBot
                     // Wait 2 seconds.
                     await Task.Delay(TimeSpan.FromSeconds(2));
 
-                    // Send typing message.
-                    await channel.TriggerTypingAsync();
-
-                    // Pause for realism.
+                    // Bot is typing, with added pause for realism.
+                    await Context.Channel.TriggerTypingAsync();
                     await Task.Delay(TimeSpan.FromSeconds(2));
 
                     // Send message.

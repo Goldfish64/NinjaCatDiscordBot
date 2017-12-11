@@ -96,11 +96,8 @@ namespace NinjaCatDiscordBot
                 // Update server count.
                 await UpdateSiteServerCountAsync();
 
-                // Get current user.
-                var user = channel.Guild.CurrentUser;
-
                 // Does the bot have permission to message? If not return.
-                if (!user.GetPermissions(channel).SendMessages)
+                if (!channel.Guild.CurrentUser.GetPermissions(channel).SendMessages)
                     return;
 
                 // Get the mention if speaking is enabled.

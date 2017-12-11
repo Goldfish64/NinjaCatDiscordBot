@@ -56,7 +56,7 @@ namespace NinjaCatDiscordBot
         /// <summary>
         /// Initializes a new instance of the <see cref="NinjaCatDiscordClient"/> class.
         /// </summary>
-        public NinjaCatDiscordClient() : base(new DiscordSocketConfig() { TotalShards = 6 })
+        public NinjaCatDiscordClient() : base(new DiscordSocketConfig() { TotalShards = Constants.ShardCount })
         {
             // Write startup messages.
             LogOutput($"{Constants.AppName} on {RuntimeInformation.FrameworkDescription} has started.");
@@ -258,13 +258,8 @@ namespace NinjaCatDiscordBot
         /// <param name="info">The information to log.</param>
         public void LogOutput(string info)
         {
-            // Get current time and date.
-            var timeDate = DateTime.Now;
-
-            // Write to console and logfile.
-            Console.WriteLine($"{timeDate}: {info}");
-            //  logStreamWriter.WriteLine($"{timeDate}: {info}");
-            //  logStreamWriter.Flush();
+            // Write to console.
+            Console.WriteLine($"{DateTime.Now}: {info}");
         }
 
         /// <summary>

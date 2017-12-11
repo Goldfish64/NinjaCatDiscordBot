@@ -26,7 +26,6 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -57,10 +56,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.AboutCommand)]
         private async Task GetAboutAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
@@ -123,10 +120,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.HelpCommand)]
         private async Task GetHelpAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message.
@@ -153,10 +148,8 @@ namespace NinjaCatDiscordBot
         [Alias(Constants.HomeCommandAlias, Constants.HomeCommandAlias2)]
         private async Task GetHomeAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message with URL.
@@ -167,7 +160,7 @@ namespace NinjaCatDiscordBot
                     break;
 
                 case 1:
-                    await ReplyAsync($"Here are where my insides are stored:\n{Constants.HomeCommandUrl}");
+                    await ReplyAsync($"Here are where my source code is stored:\n{Constants.HomeCommandUrl}");
                     break;
 
                 case 2:
@@ -182,10 +175,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.InviteCommand)]
         private async Task GetInviteAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message with invite URL.
@@ -211,10 +202,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.PingCommand)]
         private async Task GetPingAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message.
@@ -252,10 +241,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.TrexCommand)]
         private async Task GetTrexAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message with link.
@@ -358,15 +345,13 @@ namespace NinjaCatDiscordBot
         [Command(Constants.TimeCommand)]
         private async Task GetTimeAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
+            await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get current time and time zone.
             var time = DateTime.Now.ToLocalTime();
             var timeZone = TimeZoneInfo.Local;
-
-            // Pause for realism.
-            await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Select and send message.
             switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(6))
@@ -403,10 +388,8 @@ namespace NinjaCatDiscordBot
         [Command(Constants.BotInfoCommand)]
         private async Task GetBotInfoAsync()
         {
-            // Bot is typing.
+            // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
-
-            // Pause for realism.
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
@@ -425,39 +408,10 @@ namespace NinjaCatDiscordBot
                 }.SkipWhile(i => i.Item2 <= 0);
             var timeString = string.Join(", ", parts.Select(p => string.Format("{0} {1}{2}", p.Item2, p.Item1, p.Item2 > 1 ? "s" : string.Empty)));
 
-            // Get user.
-            var user = Context.Client.CurrentUser;
-
-            // Get biggest server.
-            SocketGuild biggestServer = null;
-            foreach (var shard in client.Shards)
-            {
-                foreach (var guild in shard.Guilds)
-                {
-                    // Omit Discord Bots from results.
-                    if (guild.Id == Constants.BotsGuildId)
-                        continue;
-
-                    if (biggestServer == null || guild.MemberCount > biggestServer.MemberCount)
-                        biggestServer = guild;
-                }
-            }
-
-            // Get smallest server.
-            SocketGuild smallestServer = null;
-            foreach (var shard in client.Shards)
-            {
-                foreach (var guild in shard.Guilds)
-                {
-                    if (smallestServer == null || guild.MemberCount < smallestServer.MemberCount)
-                        smallestServer = guild;
-                }
-            }
-
             // Build embed.
             var embed = new EmbedBuilder();
             embed.Author = new EmbedAuthorBuilder();
-            embed.Author.IconUrl = user.GetAvatarUrl();
+            embed.Author.IconUrl = client.CurrentUser.GetAvatarUrl();
 
             // If in a guild, make color.
             if (Context.Guild != null)
@@ -482,17 +436,13 @@ namespace NinjaCatDiscordBot
             else
             {
                 // Set username.
-                embed.Author.Name = user.Username;
+                embed.Author.Name = client.CurrentUser.Username;
             }
 
             // Add final fields.
             var shardId = Context.Guild != null ? (client.GetShardIdFor(Context.Guild) + 1) : 0;
             embed.AddField((e) => { e.Name = "Servers"; e.Value = client.Guilds.Count.ToString(); e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{shardId.ToString()}/{client.Shards.Count.ToString()}"; e.IsInline = true; });
-
-            embed.AddField((e) => { e.Name = "Largest server"; e.Value = $"{biggestServer.Name} ({biggestServer.MemberCount})"; e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Smallest server"; e.Value = $"{smallestServer.Name} ({smallestServer.MemberCount})"; e.IsInline = true; });
-
+            embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{shardId.ToString()} of {client.Shards.Count.ToString()}"; e.IsInline = true; });
             embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
 
             // Select and send message with embed.
