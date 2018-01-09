@@ -63,9 +63,6 @@ namespace NinjaCatDiscordBot
             // Get client.
             var client = Context.Client as NinjaCatDiscordClient;
 
-            // Get owner of bot.
-            //var owner = client.GetUser(Constants.OwnerId);
-
             // Create variable for speaking channel mention.
             var speakingChannel = string.Empty;
             var speakingRole = string.Empty;
@@ -245,21 +242,7 @@ namespace NinjaCatDiscordBot
             await Context.Channel.TriggerTypingAsync();
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Select and send message with link.
-            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(3))
-            {
-                default:
-                    await ReplyAsync($"Here you go.\n{Constants.TrexCommandUrl}");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"ROAAAAR!\n{Constants.TrexCommandUrl}");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"Here I am riding the T-Rex!\n{Constants.TrexCommandUrl}");
-                    break;
-            }
+            await ReplyAsync("<a:trexa:393897398881222656>");
         }
 
         private async Task<Tuple<string, string>> GetLatestBuildNumberAsync(string type = "pc")
@@ -419,12 +402,12 @@ namespace NinjaCatDiscordBot
                 // Get current user.
                 var guildUser = await Context.Guild.GetCurrentUserAsync();
 
-                // Get highest role.
+                // Get highest role with color.
                 var highestrole = Context.Guild.EveryoneRole;
                 foreach (var role in guildUser.RoleIds)
                 {
                     var newRole = Context.Guild.GetRole(role);
-                    if (newRole.Position > highestrole.Position)
+                    if (newRole.Position > highestrole.Position && newRole.Color.RawValue != 0)
                         highestrole = newRole;
                 }
 

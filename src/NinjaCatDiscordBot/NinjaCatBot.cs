@@ -487,6 +487,12 @@ namespace NinjaCatDiscordBot
 
                 try
                 {
+                    // Check if the role is mentionable.
+                    // If not, attempt to make it mentionable, and revert the setting after the message is sent.
+                    var mentionable = role?.IsMentionable;
+                    if (mentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
+                        await role.ModifyAsync((e) => e.Mentionable = true);
+
                     // Wait a second.
                     await Task.Delay(TimeSpan.FromSeconds(1));
 
@@ -531,6 +537,10 @@ namespace NinjaCatDiscordBot
                                 break;
                         }
                     }
+
+                    // Revert mentionable setting.
+                    if (mentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
+                        await role.ModifyAsync((e) => e.Mentionable = false);
                 }
                 catch (Exception ex)
                 {

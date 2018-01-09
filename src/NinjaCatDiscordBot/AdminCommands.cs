@@ -52,6 +52,7 @@ namespace NinjaCatDiscordBot
             // Get client and channel.
             var client = Context.Client as NinjaCatDiscordClient;
             var channel = await client.GetSpeakingChannelForIGuildAsync(Context.Guild);
+            var currentUser = client.GetGuild(Context.Guild.Id).CurrentUser;
 
             // If the channel is null, return message saying that speaking is disabled.
             if (channel == null)
@@ -61,13 +62,19 @@ namespace NinjaCatDiscordBot
             }
 
             // Verify we have permission to speak.
-            if (!(await Context.Guild.GetCurrentUserAsync()).GetPermissions(channel).SendMessages)
+            if (!currentUser.GetPermissions(channel).SendMessages)
             {
                 await ReplyAsync($"I don't have permission to send messages in {channel.Mention}. Please give me that permission.");
                 return;
             }
 
-            await ReplyAsync($"I'm all set to speak in {channel.Mention}!");
+            // Check role permissions to toggle mentionable flag on/off.
+            var role = client.GetSpeakingRoleForIGuild(Context.Guild);
+            var roleText = "";
+            if (role?.IsMentionable == false && (!currentUser.GuildPermissions.ManageRoles || currentUser.Hierarchy <= role.Position))
+                roleText = $"\n\nHowever, I cannot manage the **{role.Name}** role. Please ensure I'm above that role and have permission to manage roles.";
+
+            await ReplyAsync($"I'm all set to speak in {channel.Mention}!{roleText}");
             return;
         }
 
