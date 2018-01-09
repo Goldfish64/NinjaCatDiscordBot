@@ -85,6 +85,7 @@ namespace NinjaCatDiscordBot
         public const string AnnouncementCommand = "announce"; // Bot owner only.
         public const string UpdateGameCommand = "updategame"; // Bot owner only.
         public const string PingJaskaCommand = "jaska"; // Bot owner only.
+        public const string TestPingCommand = "testping"; // Bot owner only.
 
         public const string NicknameCommand = "nickname";
         public const string NicknameCommandDesc = "gets my nickname";

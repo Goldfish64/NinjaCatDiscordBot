@@ -1014,6 +1014,66 @@ namespace NinjaCatDiscordBot
             await ReplyAsync($"<@71270107371802624>");
         }
 
+        /// <summary>
+        /// Ping jaska.
+        /// </summary>
+        /// <returns></returns>
+        [Command(Constants.TestPingCommand)]
+        public async Task TestPingAsync()
+        {
+            // Bot is typing, with added pause for realism.
+            await Context.Channel.TriggerTypingAsync();
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Get client.
+            var client = Context.Client as NinjaCatDiscordClient;
+
+            // Get the user.
+            var user = Context.Message.Author as IUser;
+
+            // If the user is not master, show error.
+            if (user?.Id != Constants.OwnerId)
+            {
+                // Select and send message.
+                switch (client.GetRandomNumber(4))
+                {
+                    default:
+                        await ReplyAsync($"Sorry, but only my master can do this.");
+                        break;
+
+                    case 1:
+                        await ReplyAsync($"No can do. You aren't my owner.");
+                        break;
+
+                    case 2:
+                        await ReplyAsync($"I'm sorry {Context.Message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
+                        break;
+
+                    case 3:
+                        await ReplyAsync($"Not happening. Only my owner can do this.");
+                        break;
+                }
+                return;
+            }
+
+            // Get current guild user.
+            var currentUser = client.GetGuild(Context.Guild.Id).CurrentUser;
+
+            // Check if the role is mentionable.
+            // If not, attempt to make it mentionable, and revert the setting after the message is sent.
+            var role = client.GetSpeakingRoleForIGuild(Context.Guild);
+            var mentionable = role?.IsMentionable;
+            if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
+                await role.ModifyAsync((e) => e.Mentionable = true);
+
+            // Send message.
+            await ReplyAsync($"{role.Mention}");
+
+            // Revert mentionable setting.
+            if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
+                await role.ModifyAsync((e) => e.Mentionable = false);
+        }
+
         private async void SendMessageShardAsync(NinjaCatDiscordClient client, DiscordSocketClient shard, string message)
         {
             // Announce in the specified channel of each guild.
