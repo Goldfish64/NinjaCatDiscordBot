@@ -65,4 +65,16 @@ namespace NinjaCatDiscordBot
 
         #endregion
     }
+
+    public class ServicedURL
+    {
+        public string ShortURL { get; set; }
+        public string LongURL { get; set; }
+        public ServicedURL()
+        {
+            this.ShortURL = string.Empty;
+            this.LongURL = string.Empty;
+        }
+    }
+
 }

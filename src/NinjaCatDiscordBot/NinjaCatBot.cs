@@ -31,6 +31,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -239,49 +240,91 @@ namespace NinjaCatDiscordBot
                 {
                     // Try to get a blogs URL.
                     var fullUrl = string.Empty;
-                    foreach (var url in tweet.Urls)
+                    var urls = tweet.ExtendedTweet.LegacyEntities.Urls ?? tweet.Urls;
+                    foreach (var url in urls)
                     {
                         for (int t = 0; t < 3; t++)
                         {
-                            // Create the HttpClient.
-                            using (var httpClient = new HttpClient())
+                            // Retry up to three times.
+                            for (int i = 0; i < 3; i++)
                             {
-                                // Retry up to three times.
-                                for (int i = 0; i < 3; i++)
+                                string urlToUse = System.Web.HttpUtility.UrlEncode(url.ExpandedURL);
+                                using (var httpClient = new HttpClient())
                                 {
-                                    // Get full URL.
-                                    var tempUrl = url.ExpandedURL;
-                                    var response = await httpClient.GetAsync(tempUrl);
+                                    httpClient.BaseAddress = new Uri("https://lengthenurl.info/");
+                                    httpClient.DefaultRequestHeaders.Accept.Clear();
+                                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                                    // If the response was a redirect, try again up to 10 times.
-                                    var count = 10;
-                                    while ((response.StatusCode == HttpStatusCode.Redirect || response.StatusCode == HttpStatusCode.MovedPermanently || response.StatusCode == HttpStatusCode.Moved) ||
-                                        count < 10)
-                                    {
-                                        tempUrl = response.Headers.Location.ToString();
-                                        response = await httpClient.GetAsync(tempUrl);
-                                        count++;
-                                    }
+                                    string apiCall = String.Format("api/longurl/shorturl/?inputURL={0}", urlToUse);
+                                    HttpResponseMessage response = await httpClient.GetAsync(apiCall);
 
-                                    // Check to see if the full URL was gotten.
-                                    if (response.RequestMessage.RequestUri.ToString().Contains("blogs.windows.com/windowsexperience") && response.RequestMessage.RequestUri.ToString().Contains("insider-preview-build"))
+                                    if (response.IsSuccessStatusCode)
                                     {
-                                        fullUrl = response.RequestMessage.RequestUri.ToString();
-                                        break;
+                                        ServicedURL thisUrl = await response.Content.ReadAsAsync<ServicedURL>();
+                                        // Check to see if the full URL was gotten.
+                                        if (thisUrl.LongURL.Contains("blogs.windows.com/windowsexperience") && thisUrl.LongURL.Contains("insider-preview-build"))
+                                        {
+                                            fullUrl = thisUrl.LongURL;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            client.LogOutput($"URLFETCH ERROR: URL wasn't right.");
+                                        }
+
+                                        // Did the request fail? Log the error and retry.
+                                        if (!response.IsSuccessStatusCode)
+                                            client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
                                     }
                                     else
                                     {
                                         client.LogOutput($"URLFETCH ERROR: URL wasn't right.");
                                     }
-
-                                    // Did the request fail? Log the error and retry.
-                                    if (!response.IsSuccessStatusCode)
-                                        client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
                                 }
-                            }
+                            
 
-                            // Check to see if URL has what it takes. If not, retry in 5 minutes.
-                            if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
+
+                        }
+
+                        //// Create the HttpClient.
+                        //using (var httpClient = new HttpClient())
+                        //{
+                        //    // Retry up to three times.
+                        //    for (int i = 0; i < 3; i++)
+                        //    {
+                        //        // Get full URL.
+                        //        var tempUrl = url.ExpandedURL;
+                        //        var response = await httpClient.GetAsync(tempUrl);
+
+                        //        // If the response was a redirect, try again up to 10 times.
+                        //        var count = 10;
+                        //        while ((response.StatusCode == HttpStatusCode.Redirect || response.StatusCode == HttpStatusCode.MovedPermanently || response.StatusCode == HttpStatusCode.Moved) ||
+                        //            count < 10)
+                        //        {
+                        //            tempUrl = response.Headers.Location.ToString();
+                        //            response = await httpClient.GetAsync(tempUrl);
+                        //            count++;
+                        //        }
+
+                        //        // Check to see if the full URL was gotten.
+                        //        if (response.RequestMessage.RequestUri.ToString().Contains("blogs.windows.com/windowsexperience") && response.RequestMessage.RequestUri.ToString().Contains("insider-preview-build"))
+                        //        {
+                        //            fullUrl = response.RequestMessage.RequestUri.ToString();
+                        //            break;
+                        //        }
+                        //        else
+                        //        {
+                        //            client.LogOutput($"URLFETCH ERROR: URL wasn't right.");
+                        //        }
+
+                        //        // Did the request fail? Log the error and retry.
+                        //        if (!response.IsSuccessStatusCode)
+                        //            client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
+                        //    }
+                        //}
+
+                        // Check to see if URL has what it takes. If not, retry in 5 minutes.
+                        if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
                                 break;
 
                             // Clear URL.
