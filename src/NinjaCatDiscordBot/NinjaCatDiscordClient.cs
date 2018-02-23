@@ -288,7 +288,7 @@ namespace NinjaCatDiscordBot
                 list.AddRange(entries.ToList());
 
                 // Get most recent build post.
-                var post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("pc")).FirstOrDefault();
+                var post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build")).FirstOrDefault();
 
                 // Get build number.
                 var build = Regex.Match(post.Title, @"\d{5,}", RegexOptions.None).Value;

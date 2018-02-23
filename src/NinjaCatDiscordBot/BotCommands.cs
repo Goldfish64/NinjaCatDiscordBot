@@ -245,7 +245,7 @@ namespace NinjaCatDiscordBot
             await ReplyAsync("<a:trexa:393897398881222656>");
         }
 
-        private async Task<Tuple<string, string>> GetLatestBuildNumberAsync(string type = "pc")
+        private async Task<Tuple<string, string>> GetLatestBuildNumberAsync(string type = "")
         {
             // Create HTTP client.
             var client = new HttpClient();
