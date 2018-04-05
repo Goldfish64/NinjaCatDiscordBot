@@ -77,8 +77,6 @@ namespace NinjaCatDiscordBot
         public const string LatestMobileBuildCommandDesc = "gets the latest Insider Mobile build";
         public const string LatestServerBuildCommand = "latestserverbuild";
         public const string LatestServerBuildCommandDesc = "gets the latest Insider Server build";
-        public const string TimeCommand = "time";
-        public const string TimeCommandDesc = "shows the current time";
         public const string BotInfoCommand = "info";
         public const string BotInfoCommandDesc = "shows my info";
         public const string TestPermsCommand = "testperms";
@@ -122,7 +120,6 @@ namespace NinjaCatDiscordBot
             $"**{CommandPrefix}{HomeCommand}** or **{CommandPrefix}{HomeCommandAlias}**: {HomeCommandDesc}.\n" +
             $"**{CommandPrefix}{InviteCommand}**: {InviteCommandDesc}.\n" +
             $"**{CommandPrefix}{PingCommand}**: {PingCommandDesc}.\n" +
-            $"**{CommandPrefix}{TimeCommand}**: {TimeCommandDesc}.\n" +
             $"**{CommandPrefix}{TrexCommand}**: {TrexCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestMobileBuildCommand}**: {LatestMobileBuildCommandDesc}.\n" +

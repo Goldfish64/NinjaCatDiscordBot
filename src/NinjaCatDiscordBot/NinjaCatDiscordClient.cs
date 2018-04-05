@@ -262,6 +262,49 @@ namespace NinjaCatDiscordBot
             Console.WriteLine($"{DateTime.Now}: {info}");
         }
 
+        public async Task<Tuple<string, string>> GetLatestBuildNumberAsync(string type = "")
+        {
+            // Create HTTP client.
+            var client = new HttpClient();
+
+            // Get blog entries.
+            var doc = XDocument.Parse(await client.GetStringAsync("https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/"));
+            var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                          select new BlogEntry()
+                          { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
+            var list = entries.ToList();
+
+            // Get most recent build post. If post is null, get additional pages.
+            var post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains(type)).FirstOrDefault();
+            if (post == null)
+            {
+                for (int page = 2; page <= 10; page++)
+                {
+                    // Get page.
+                    doc = XDocument.Parse(await client.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged={page}"));
+                    entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                              select new BlogEntry()
+                              { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
+                    list.AddRange(entries.ToList());
+
+                    // Get post.
+                    post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains(type)).FirstOrDefault();
+                    if (post != null)
+                        break;
+                }
+            }
+
+            // If post is still null, no build was found.
+            if (post == null)
+                return null;
+
+            // Get build number.
+            var build = Regex.Match(post.Title, @"\d{5,}", type == "mobile" ? RegexOptions.RightToLeft : RegexOptions.None).Value;
+
+            // Return info.
+            return new Tuple<string, string>(build, post.Link);
+        }
+
         /// <summary>
         /// Updates the game.
         /// </summary>
@@ -270,31 +313,13 @@ namespace NinjaCatDiscordBot
         {
             try
             {
-                // Create HTTP client.
-                var client = new HttpClient();
-
-                // Get blog entries.
-                var doc = XDocument.Parse(await client.GetStringAsync("https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/"));
-                var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                              select new BlogEntry()
-                              { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
-                var list = entries.ToList();
-
-                // Get second page.
-                doc = XDocument.Parse(await client.GetStringAsync("https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged=2"));
-                entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                          select new BlogEntry()
-                          { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
-                list.AddRange(entries.ToList());
-
-                // Get most recent build post.
-                var post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build")).FirstOrDefault();
-
-                // Get build number.
-                var build = Regex.Match(post.Title, @"\d{5,}", RegexOptions.None).Value;
+                // Get build.
+                var build = await GetLatestBuildNumberAsync();
+                if (build == null)
+                    return;
 
                 // Create string.
-                var game = $"on {build} | {Constants.CommandPrefix}{Constants.HelpCommand}";
+                var game = $"on {build.Item1} | {Constants.CommandPrefix}{Constants.HelpCommand}";
 
                 // Update game.
                 foreach (var shard in Shards)

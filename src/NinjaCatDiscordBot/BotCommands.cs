@@ -27,10 +27,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Linq;
-using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace NinjaCatDiscordBot
 {
@@ -245,49 +242,6 @@ namespace NinjaCatDiscordBot
             await ReplyAsync("<a:trexa:393897398881222656>");
         }
 
-        private async Task<Tuple<string, string>> GetLatestBuildNumberAsync(string type = "")
-        {
-            // Create HTTP client.
-            var client = new HttpClient();
-
-            // Get blog entries.
-            var doc = XDocument.Parse(await client.GetStringAsync("https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/"));
-            var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                          select new BlogEntry()
-                          { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
-            var list = entries.ToList();
-
-            // Get most recent build post. If post is null, get additional pages.
-            var post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains(type)).FirstOrDefault();
-            if (post == null)
-            {
-                for (int page = 2; page <= 10; page++)
-                {
-                    // Get page.
-                    doc = XDocument.Parse(await client.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged={page}"));
-                    entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                              select new BlogEntry()
-                              { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
-                    list.AddRange(entries.ToList());
-
-                    // Get post.
-                    post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains(type)).FirstOrDefault();
-                    if (post != null)
-                        break;
-                }
-            }
-
-            // If post is still null, no build was found.
-            if (post == null)
-                return null;
-
-            // Get build number.
-            var build = Regex.Match(post.Title, @"\d{5,}", type == "mobile" ? RegexOptions.RightToLeft : RegexOptions.None).Value;
-
-            // Return info.
-            return new Tuple<string, string>(build, post.Link);
-        }
-
         /// <summary>
         /// Gets the latest Insider PC build.
         /// </summary>
@@ -298,7 +252,7 @@ namespace NinjaCatDiscordBot
             await Context.Channel.TriggerTypingAsync();
 
             // Get build.
-            var data = await GetLatestBuildNumberAsync();
+            var data = await (Context.Client as NinjaCatDiscordClient).GetLatestBuildNumberAsync();
             if (data == null)
             {
                 await ReplyAsync($"The latest Windows 10 build for PCs couldn't be found. :crying_cat_face: :computer:");
@@ -326,7 +280,7 @@ namespace NinjaCatDiscordBot
             await Context.Channel.TriggerTypingAsync();
 
             // Get build.
-            var data = await GetLatestBuildNumberAsync("mobile");
+            var data = await (Context.Client as NinjaCatDiscordClient).GetLatestBuildNumberAsync("mobile");
             if (data == null)
             {
                 await ReplyAsync($"The latest Windows 10 Mobile build couldn't be found. :crying_cat_face: :telephone:");
@@ -347,7 +301,7 @@ namespace NinjaCatDiscordBot
             await Context.Channel.TriggerTypingAsync();
 
             // Get build.
-            var data = await GetLatestBuildNumberAsync("server");
+            var data = await (Context.Client as NinjaCatDiscordClient).GetLatestBuildNumberAsync("server");
             if (data == null)
             {
                 await ReplyAsync($"The latest Windows Server build couldn't be found. :crying_cat_face: :desktop:");
@@ -356,49 +310,6 @@ namespace NinjaCatDiscordBot
 
             // Send.
             await ReplyAsync($"The latest Windows Server build is **{data.Item1}**. :cat: :desktop:\n{data.Item2}");
-        }
-
-        /// <summary>
-        /// Gets the local time.
-        /// </summary>
-        [Command(Constants.TimeCommand)]
-        private async Task GetTimeAsync()
-        {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Get current time and time zone.
-            var time = DateTime.Now.ToLocalTime();
-            var timeZone = TimeZoneInfo.Local;
-
-            // Select and send message.
-            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(6))
-            {
-                default:
-                    await ReplyAsync($"My watch says {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"I have no idea where you live, but my watch says {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"My current time is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
-                    break;
-
-                case 3:
-                    await ReplyAsync($"My internal clock is telling me it is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
-                    break;
-
-                case 4:
-                    await ReplyAsync($"Just glanced at the Peanuts clock on the wall. It is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
-                    break;
-
-                case 5:
-                    await ReplyAsync($"Beep. Boop. The current local time is {time.ToString("T")} {(timeZone.IsDaylightSavingTime(time) ? timeZone.DaylightName : timeZone.StandardName)}.");
-                    break;
-            }
         }
 
         /// <summary>
