@@ -71,6 +71,7 @@ namespace NinjaCatDiscordBot
         public const string TrexCommandDesc = "shows the Windows 10 Skype emoticon";
         public const string TrexCommandUrl = "http://static.skaip.su/img/emoticons/180x180/f6fcff/win10.gif";
         public const string LatestBuildCommand = "latestbuild";
+        public const string LatestCommand = "latest";
         public const string LatestBuildCommandDesc = "gets the latest Insider PC build";
         public const string LatestMobileBuildCommand = "latestmobilebuild";
         public const string LatestMobileBuildCommandDesc = "gets the latest Insider Mobile build";

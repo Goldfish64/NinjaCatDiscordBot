@@ -257,15 +257,29 @@ namespace NinjaCatDiscordBot
                           { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
             var list = entries.ToList();
 
-            // Get second page.
-            doc = XDocument.Parse(await client.GetStringAsync("https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged=2"));
-            entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                      select new BlogEntry()
-                      { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
-            list.AddRange(entries.ToList());
-
-            // Get most recent build post.
+            // Get most recent build post. If post is null, get additional pages.
             var post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains(type)).FirstOrDefault();
+            if (post == null)
+            {
+                for (int page = 2; page <= 10; page++)
+                {
+                    // Get page.
+                    doc = XDocument.Parse(await client.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged={page}"));
+                    entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                              select new BlogEntry()
+                              { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
+                    list.AddRange(entries.ToList());
+
+                    // Get post.
+                    post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains(type)).FirstOrDefault();
+                    if (post != null)
+                        break;
+                }
+            }
+
+            // If post is still null, no build was found.
+            if (post == null)
+                return null;
 
             // Get build number.
             var build = Regex.Match(post.Title, @"\d{5,}", type == "mobile" ? RegexOptions.RightToLeft : RegexOptions.None).Value;
@@ -285,9 +299,21 @@ namespace NinjaCatDiscordBot
 
             // Get build.
             var data = await GetLatestBuildNumberAsync();
+            if (data == null)
+            {
+                await ReplyAsync($"The latest Windows 10 build for PCs couldn't be found. :crying_cat_face: :computer:");
+                return;
+            }
 
             // Send.
             await ReplyAsync($"The latest Windows 10 build for PCs is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
+        }
+
+        [Command(Constants.LatestCommand)]
+        private async Task GetLatestAsync()
+        {
+            // Alias for latest build.
+            await GetLatestBuildAsync();
         }
 
         /// <summary>
@@ -301,6 +327,11 @@ namespace NinjaCatDiscordBot
 
             // Get build.
             var data = await GetLatestBuildNumberAsync("mobile");
+            if (data == null)
+            {
+                await ReplyAsync($"The latest Windows 10 Mobile build couldn't be found. :crying_cat_face: :telephone:");
+                return;
+            }
 
             // Send.
             await ReplyAsync($"The latest Windows 10 Mobile build is **{data.Item1}**. :cat: :telephone:\n{data.Item2}");
@@ -317,6 +348,11 @@ namespace NinjaCatDiscordBot
 
             // Get build.
             var data = await GetLatestBuildNumberAsync("server");
+            if (data == null)
+            {
+                await ReplyAsync($"The latest Windows Server build couldn't be found. :crying_cat_face: :desktop:");
+                return;
+            }
 
             // Send.
             await ReplyAsync($"The latest Windows Server build is **{data.Item1}**. :cat: :desktop:\n{data.Item2}");

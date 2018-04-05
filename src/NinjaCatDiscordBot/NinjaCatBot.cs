@@ -608,6 +608,7 @@ namespace NinjaCatDiscordBot
             // Is this a bot guild?
             if (guild.MemberCount >= 50 && (guild.Users.Count(u => u.IsBot) / (double)guild.MemberCount) >= 0.9)
             {
+                client.LogOutput($"LEAVING BOT SERVER: {guild.Name}");
                 try
                 {
                     // Bot is typing in default channel.
