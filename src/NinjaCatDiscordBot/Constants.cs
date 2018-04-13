@@ -34,6 +34,7 @@ namespace NinjaCatDiscordBot
         //public const string LogFileName = "nj-logfile.log";
         public const string ChannelsFileName = "nj-channels.json";
         public const string RolesFileName = "nj-roles.json";
+        public const string RolesSkipFileName = "nj-roles-skip.json";
 
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
         public const string UserName = "Ninja Cat";
@@ -102,6 +103,12 @@ namespace NinjaCatDiscordBot
         public const string SetRoleCommandDesc = "sets the role I ping when new builds are released";
         public const string DisableRoleCommand = "offrole";
         public const string DisableRoleCommandDesc = "disables the announcement role";
+        public const string RoleSkipCommand = "skiprole";
+        public const string RoleSkipCommandDesc = "gets the role I ping when new builds are released";
+        public const string SetRoleSkipCommand = "setskiprole";
+        public const string SetRoleSkipCommandDesc = "sets the role I ping when new builds are released";
+        public const string DisableRoleSkipCommand = "offskiprole";
+        public const string DisableRoleSkipCommandDesc = "disables the announcement role";
 
         public static readonly string AboutMessage1 =
             $"Hi there! I am {UserName}, a Discord.Net bot!\n" +

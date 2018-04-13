@@ -225,113 +225,49 @@ namespace NinjaCatDiscordBot
                 // Log tweet.
                 client.LogOutput($"TWEET: {tweet.FullText}");
 
-                // Is it a no-build tweet from Dona?
-                if ((tweet.FullText.ToLowerInvariant().Contains("no build") || tweet.FullText.ToLowerInvariant().Contains("no new build") ||
-                    tweet.FullText.ToLowerInvariant().Contains("not releasing") || tweet.FullText.ToLowerInvariant().Contains("not flighting")) && tweet.Urls.Count == 0)
+                // Try to get a blogs URL.
+                var fullUrl = string.Empty;
+                var urls = tweet.ExtendedTweet.LegacyEntities.Urls ?? tweet.Urls;
+                foreach (var url in urls)
                 {
-                    // Log tweet.
-                    client.LogOutput($"TWEET CONFIRMED: NO BUILDS TODAY");
-
-                    // Send message to guilds.
-                    foreach (var shard in client.Shards)
-                        SendNoBuildsToShard(shard);
-                }
-                else
-                {
-                    // Try to get a blogs URL.
-                    var fullUrl = string.Empty;
-                    var urls = tweet.ExtendedTweet.LegacyEntities.Urls ?? tweet.Urls;
-                    foreach (var url in urls)
+                    for (int t = 0; t < 3; t++)
                     {
-                        for (int t = 0; t < 3; t++)
+                        // Retry up to three times.
+                        for (int i = 0; i < 3; i++)
                         {
-                            // Retry up to three times.
-                            for (int i = 0; i < 3; i++)
+                            string urlToUse = System.Web.HttpUtility.UrlEncode(url.ExpandedURL);
+                            using (var httpClient = new HttpClient())
                             {
-                                string urlToUse = System.Web.HttpUtility.UrlEncode(url.ExpandedURL);
-                                using (var httpClient = new HttpClient())
+                                httpClient.BaseAddress = new Uri("https://lengthenurl.info/");
+                                httpClient.DefaultRequestHeaders.Accept.Clear();
+                                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                                string apiCall = String.Format("api/longurl/shorturl/?inputURL={0}", urlToUse);
+                                HttpResponseMessage response = await httpClient.GetAsync(apiCall);
+
+                                if (response.IsSuccessStatusCode)
                                 {
-                                    httpClient.BaseAddress = new Uri("https://lengthenurl.info/");
-                                    httpClient.DefaultRequestHeaders.Accept.Clear();
-                                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                                    string apiCall = String.Format("api/longurl/shorturl/?inputURL={0}", urlToUse);
-                                    HttpResponseMessage response = await httpClient.GetAsync(apiCall);
-
-                                    if (response.IsSuccessStatusCode)
+                                    ServicedURL thisUrl = await response.Content.ReadAsAsync<ServicedURL>();
+                                    // Check to see if the full URL was gotten.
+                                    if (thisUrl.LongURL.Contains("blogs.windows.com/windowsexperience") && thisUrl.LongURL.Contains("insider-preview-build"))
                                     {
-                                        ServicedURL thisUrl = await response.Content.ReadAsAsync<ServicedURL>();
-                                        // Check to see if the full URL was gotten.
-                                        if (thisUrl.LongURL.Contains("blogs.windows.com/windowsexperience") && thisUrl.LongURL.Contains("insider-preview-build"))
-                                        {
-                                            fullUrl = thisUrl.LongURL;
-                                            break;
-                                        }
-                                        else
-                                        {
-                                            client.LogOutput($"URLFETCH ERROR: URL wasn't right.");
-                                        }
-
-                                        // Did the request fail? Log the error and retry.
-                                        if (!response.IsSuccessStatusCode)
-                                            client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
+                                        fullUrl = thisUrl.LongURL;
+                                        break;
                                     }
                                     else
                                     {
                                         client.LogOutput($"URLFETCH ERROR: URL wasn't right.");
                                     }
+
+                                    // Did the request fail? Log the error and retry.
+                                    if (!response.IsSuccessStatusCode)
+                                        client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
                                 }
-                            
-
-
-                        }
-
-                        //// Create the HttpClient.
-                        //using (var httpClient = new HttpClient())
-                        //{
-                        //    // Retry up to three times.
-                        //    for (int i = 0; i < 3; i++)
-                        //    {
-                        //        // Get full URL.
-                        //        var tempUrl = url.ExpandedURL;
-                        //        var response = await httpClient.GetAsync(tempUrl);
-
-                        //        // If the response was a redirect, try again up to 10 times.
-                        //        var count = 10;
-                        //        while ((response.StatusCode == HttpStatusCode.Redirect || response.StatusCode == HttpStatusCode.MovedPermanently || response.StatusCode == HttpStatusCode.Moved) ||
-                        //            count < 10)
-                        //        {
-                        //            tempUrl = response.Headers.Location.ToString();
-                        //            response = await httpClient.GetAsync(tempUrl);
-                        //            count++;
-                        //        }
-
-                        //        // Check to see if the full URL was gotten.
-                        //        if (response.RequestMessage.RequestUri.ToString().Contains("blogs.windows.com/windowsexperience") && response.RequestMessage.RequestUri.ToString().Contains("insider-preview-build"))
-                        //        {
-                        //            fullUrl = response.RequestMessage.RequestUri.ToString();
-                        //            break;
-                        //        }
-                        //        else
-                        //        {
-                        //            client.LogOutput($"URLFETCH ERROR: URL wasn't right.");
-                        //        }
-
-                        //        // Did the request fail? Log the error and retry.
-                        //        if (!response.IsSuccessStatusCode)
-                        //            client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
-                        //    }
-                        //}
-
-                        // Check to see if URL has what it takes. If not, retry in 5 minutes.
-                        if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
-                                break;
-
-                            // Clear URL.
-                            fullUrl = string.Empty;
-
-                            // Wait 10 minutes.
-                            await Task.Delay(TimeSpan.FromMinutes(10));
+                                else
+                                {
+                                    client.LogOutput($"URLFETCH ERROR: URL wasn't right.");
+                                }
+                            }
                         }
 
                         // Check to see if URL has what it takes. If not, retry in 5 minutes.
@@ -340,53 +276,70 @@ namespace NinjaCatDiscordBot
 
                         // Clear URL.
                         fullUrl = string.Empty;
+
+                        // Wait 10 minutes.
+                        await Task.Delay(TimeSpan.FromMinutes(10));
                     }
 
-                    // If URL is invalid, return.
-                    if (string.IsNullOrWhiteSpace(fullUrl))
-                        return;
+                    // Check to see if URL has what it takes. If not, retry in 5 minutes.
+                    if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
+                        break;
 
-                    // Get build numbers. If empty, ignore the tweet.
-                    var build = Regex.Match(fullUrl, @"\d{5,}").Value;
-                    var buildM = Regex.Match(fullUrl, @"\d{5,}", RegexOptions.RightToLeft).Value;
-                    if (string.IsNullOrWhiteSpace(build))
-                        return;
+                    // Clear URL.
+                    fullUrl = string.Empty;
+                }
 
-                    // Log tweet.
-                    client.LogOutput($"TWEET CONFIRMED: NEW BUILD");
+                // If URL is invalid, return.
+                if (string.IsNullOrWhiteSpace(fullUrl))
+                    return;
 
-                    // Create variables.
-                    var ring = string.Empty;
-                    var platform = string.Empty;
+                // Get build numbers. If empty, ignore the tweet.
+                var build = Regex.Match(fullUrl, @"\d{5,}").Value;
+                var buildM = Regex.Match(fullUrl, @"\d{5,}", RegexOptions.RightToLeft).Value;
+                if (string.IsNullOrWhiteSpace(build))
+                    return;
 
-                    // Check for fast or slow, or both.
+                // Log tweet.
+                client.LogOutput($"TWEET CONFIRMED: NEW BUILD");
+
+                // Create variables.
+                var ring = string.Empty;
+                var platform = string.Empty;
+
+                // Check for fast or slow, or both.
+                if (fullUrl.ToLowerInvariant().Contains("skip-ahead"))
+                {
+                    ring = " to the Skip Ahead ring";
+                }
+                else
+                {
                     if (tweet.FullText.ToLowerInvariant().Contains("fast") && tweet.FullText.ToLowerInvariant().Contains("slow"))
                         ring = " to both the Fast and Slow rings";
                     else if (tweet.FullText.ToLowerInvariant().Contains("fast"))
-                        ring = " to the Fast ring" + (fullUrl.ToLowerInvariant().Contains("skip-ahead") ? " (Skip Ahead)" : "");
+                        ring = " to the Fast ring";
                     else if (tweet.FullText.ToLowerInvariant().Contains("slow"))
                         ring = " to the Slow ring";
-
-                    // Check for PC or mobile, or both.
-                    if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile") && fullUrl.ToLowerInvariant().Contains("server"))
-                        platform = " for PC, Server, and Mobile";
-                    else if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile"))
-                        platform = " for both PC and Mobile";
-                    else if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("server"))
-                        platform = " for both PC and Server";
-                    else if (fullUrl.ToLowerInvariant().Contains("mobile") && fullUrl.ToLowerInvariant().Contains("server"))
-                        platform = " for both Server and Mobile";
-                    else if (fullUrl.ToLowerInvariant().Contains("pc"))
-                        platform = " for PC";
-                    else if (fullUrl.ToLowerInvariant().Contains("mobile"))
-                        platform = " for Mobile";
-                    else if (fullUrl.ToLowerInvariant().Contains("server"))
-                        platform = " for Server";
-
-                    // Send build to guilds.
-                    foreach (var shard in client.Shards)
-                        SendNewBuildToShard(shard, build, buildM, ring + platform, fullUrl);
                 }
+
+                // Check for PC or mobile, or both.
+                if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile") && fullUrl.ToLowerInvariant().Contains("server"))
+                    platform = " for PC, Server, and Mobile";
+                else if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile"))
+                    platform = " for both PC and Mobile";
+                else if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("server"))
+                    platform = " for both PC and Server";
+                else if (fullUrl.ToLowerInvariant().Contains("mobile") && fullUrl.ToLowerInvariant().Contains("server"))
+                    platform = " for both Server and Mobile";
+                else if (fullUrl.ToLowerInvariant().Contains("pc"))
+                    platform = " for PC";
+                else if (fullUrl.ToLowerInvariant().Contains("mobile"))
+                    platform = " for Mobile";
+                else if (fullUrl.ToLowerInvariant().Contains("server"))
+                    platform = " for Server";
+
+                // Send build to guilds.
+                foreach (var shard in client.Shards)
+                    SendNewBuildToShard(shard, build, buildM, ring + platform, fullUrl);
             };
 
             // Listen for stop.
@@ -439,65 +392,6 @@ namespace NinjaCatDiscordBot
             }
         }
 
-        private async void SendNoBuildsToShard(DiscordSocketClient shard)
-        {
-            // Announce in the specified channel of each guild.
-            foreach (var guild in shard.Guilds)
-            {
-                try
-                {
-                    // Get channel.
-                    var channel = client.GetSpeakingChannelForSocketGuild(guild);
-
-                    // If the channel is null, continue on to the next guild.
-                    if (channel == null)
-                    {
-                        client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
-                        continue;
-                    }
-
-                    // Verify we have permission to speak.
-                    if (!guild.CurrentUser.GetPermissions(channel).SendMessages)
-                    {
-                        client.LogOutput($"ROLLING OVER SERVER (NO PERMS) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
-                        continue;
-                    }
-
-                    // Wait a second.
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-
-                    // Send typing message.
-                    await channel.TriggerTypingAsync();
-
-                    // Pause for realism.
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-
-                    // Select and send message.
-                    switch (client.GetRandomNumber(3))
-                    {
-                        default:
-                            await channel.SendMessageAsync($"I've just received word that there won't be any builds today. Bummer. :crying_cat_face:");
-                            break;
-
-                        case 1:
-                            await channel.SendMessageAsync($"Aww. No builds today. :crying_cat_face:");
-                            break;
-
-                        case 2:
-                            await channel.SendMessageAsync($"There won't be any builds today. Maybe tomorrow.:crying_cat_face:");
-                            break;
-                    }
-
-                    // Log server.
-                    client.LogOutput($"SPOKEN IN SERVER ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
-                }
-                catch (Exception ex)
-                {
-                    client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1}): {ex}");
-                }
-            }
-        }
-
         private async void SendNewBuildToShard(DiscordSocketClient shard, string build, string buildM, string type, string url)
         {
             // Announce in the specified channel of each guild.
@@ -522,10 +416,13 @@ namespace NinjaCatDiscordBot
 
                 // Get ping role.
                 var role = client.GetSpeakingRoleForIGuild(guild);
+                var roleSkip = client.GetSpeakingRoleSkipForIGuild(guild);
+                if (type.ToLowerInvariant().Contains("skip ahead") && roleSkip != null)
+                    role = roleSkip;
                 var roleText = string.Empty;
 
                 // Does the role exist, and should we ping?
-                if (role != null && !type.ToLowerInvariant().Contains("server"))
+                if (!type.ToLowerInvariant().Contains("server") && role != null)
                     roleText = $"{role.Mention} ";
 
                 try

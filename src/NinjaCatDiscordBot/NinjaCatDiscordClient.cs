@@ -91,6 +91,17 @@ namespace NinjaCatDiscordBot
             // Add each entry to the client.
             foreach (var entry in roles)
                 SpeakingRoles[entry.Key] = entry.Value;
+
+            // Create temporary dictionary.
+            var rolesSkip = new Dictionary<ulong, ulong>();
+
+            // Does the roles file exist? If so, deserialize JSON.
+            if (File.Exists(Constants.RolesSkipFileName))
+                rolesSkip = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.RolesSkipFileName));
+
+            // Add each entry to the client.
+            foreach (var entry in rolesSkip)
+                SpeakingRolesSkip[entry.Key] = entry.Value;
         }
 
         #endregion
@@ -108,6 +119,12 @@ namespace NinjaCatDiscordBot
         /// </summary>
         /// <remarks>Guild is the key, role is the value.</remarks>
         public ConcurrentDictionary<ulong, ulong> SpeakingRoles { get; } = new ConcurrentDictionary<ulong, ulong>();
+
+        /// <summary>
+        /// Gets the list of speaking roles for skip ahead.
+        /// </summary>
+        /// <remarks>Guild is the key, role is the value.</remarks>
+        public ConcurrentDictionary<ulong, ulong> SpeakingRolesSkip { get; } = new ConcurrentDictionary<ulong, ulong>();
 
         /// <summary>
         /// Gets the time the client started.
@@ -156,8 +173,7 @@ namespace NinjaCatDiscordBot
             // If the channel is null, delete the entry from the dictionary and use the default one.
             if (channel == null)
             {
-                ulong outVar;
-                SpeakingChannels.TryRemove(guild.Id, out outVar);
+                SpeakingChannels.TryRemove(guild.Id, out ulong outVar);
                 channel = guild.DefaultChannel;
                 SaveSettings();
             }
@@ -193,8 +209,7 @@ namespace NinjaCatDiscordBot
             // If the channel is null, delete the entry from the dictionary and use the default one.
             if (channel == null)
             {
-                ulong outVar;
-                SpeakingChannels.TryRemove(guild.Id, out outVar);
+                SpeakingChannels.TryRemove(guild.Id, out ulong outVar);
                 channel = (await guild.GetChannelsAsync()).SingleOrDefault(g => g.Id == guild.DefaultChannelId) as ITextChannel;
                 SaveSettings();
             }
@@ -230,8 +245,42 @@ namespace NinjaCatDiscordBot
             // If the role is null, delete the entry from the dictionary and use the default one.
             if (role == null)
             {
-                ulong outVar;
-                SpeakingRoles.TryRemove(guild.Id, out outVar);
+                SpeakingRoles.TryRemove(guild.Id, out ulong outVar);
+                SaveSettings();
+            }
+
+            // Return the role.
+            return role;
+        }
+
+        /// <summary>
+        /// Gets the speaking skip ahead role for the specified guild.
+        /// </summary>
+        /// <param name="guild">The <see cref="IGuild"/> to get the role for.</param>
+        /// <returns>An <see cref="SocketTextRole"/> that should be used.</returns>
+        public IRole GetSpeakingRoleSkipForIGuild(IGuild guild)
+        {
+            // If the guild is the Bots server, never speak.
+            if (guild.Id == Constants.BotsGuildId)
+                return null;
+
+            // Create role variable.
+            IRole role = null;
+
+            // Try to get the saved role.
+            if (SpeakingRolesSkip.ContainsKey(guild.Id))
+            {
+                // If it is zero, return null to not speak.
+                if (SpeakingRolesSkip[guild.Id] == 0)
+                    return null;
+                else
+                    role = guild.Roles.SingleOrDefault(g => g.Id == SpeakingRolesSkip[guild.Id]) as IRole;
+            }
+
+            // If the role is null, delete the entry from the dictionary and use the default one.
+            if (role == null)
+            {
+                SpeakingRolesSkip.TryRemove(guild.Id, out ulong outVar);
                 SaveSettings();
             }
 
