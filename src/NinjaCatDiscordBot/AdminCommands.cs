@@ -1013,30 +1013,12 @@ namespace NinjaCatDiscordBot
             var client = Context.Client as NinjaCatDiscordClient;
 
             // Get the user.
-            var user = Context.Message.Author as IUser;
+            var user = Context.User as IGuildUser;
 
-            // If the user is not master, show error.
-            if (user?.Id != Constants.OwnerId)
+            // If the user is null, lacks the manage server permission, or is not master, show error.
+            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
             {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"Sorry, but only my master can do this.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You aren't my owner.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.Message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. Only my owner can do this.");
-                        break;
-                }
+                await ReplyAsync($"Sorry, but only those who have permission to manage this server can send a test ping.");
                 return;
             }
 
@@ -1046,16 +1028,44 @@ namespace NinjaCatDiscordBot
             // Check if the role is mentionable.
             // If not, attempt to make it mentionable, and revert the setting after the message is sent.
             var role = client.GetSpeakingRoleForIGuild(Context.Guild);
-            var mentionable = role?.IsMentionable;
-            if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
-                await role.ModifyAsync((e) => e.Mentionable = true);
+            if (role != null)
+            {
+                var mentionable = role?.IsMentionable;
+                if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
+                    await role.ModifyAsync((e) => e.Mentionable = true);
 
-            // Send message.
-            await ReplyAsync($"{role.Mention}");
+                // Send message.
+                await ReplyAsync($"Insiders role: {role.Mention}");
 
-            // Revert mentionable setting.
-            if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
-                await role.ModifyAsync((e) => e.Mentionable = false);
+                // Revert mentionable setting.
+                if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
+                    await role.ModifyAsync((e) => e.Mentionable = false);
+            }
+            else
+            {
+                await ReplyAsync($"No role configured.");
+            }
+
+            // Check if the skip role is mentionable.
+            // If not, attempt to make it mentionable, and revert the setting after the message is sent.
+            var roleSkip = client.GetSpeakingRoleSkipForIGuild(Context.Guild);
+            if (roleSkip != null)
+            {
+                var mentionableSkip = role?.IsMentionable;
+                if (mentionableSkip == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > roleSkip.Position)
+                    await roleSkip.ModifyAsync((e) => e.Mentionable = true);
+
+                // Send message.
+                await ReplyAsync($"Skip ahead role: {roleSkip.Mention}");
+
+                // Revert mentionable setting.
+                if (mentionableSkip == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > roleSkip.Position)
+                    await roleSkip.ModifyAsync((e) => e.Mentionable = false);
+            }
+            else
+            {
+                await ReplyAsync($"No skip ahead role configured.");
+            }
         }
 
         private async void SendMessageShardAsync(NinjaCatDiscordClient client, DiscordSocketClient shard, string message)

@@ -298,6 +298,7 @@ namespace NinjaCatDiscordBot
                 // Serialize settings to JSON.
                 File.WriteAllText(Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
                 File.WriteAllText(Constants.RolesFileName, JsonConvert.SerializeObject(SpeakingRoles));
+                File.WriteAllText(Constants.RolesSkipFileName, JsonConvert.SerializeObject(SpeakingRolesSkip));
             }
         }
 
