@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: AdminCommands.cs
 * 
-* Copyright (c) 2016-2017 John Davis
+* Copyright (c) 2016-2018 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,6 @@
 
 using Discord;
 using Discord.Commands;
-using Discord.Net;
 using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
@@ -38,29 +37,6 @@ namespace NinjaCatDiscordBot
     {
         #region Methods
 
-        private async Task ReplyErrorNoServer(NinjaCatDiscordClient client)
-        {
-            // Select and send message.
-            switch (client.GetRandomNumber(4))
-            {
-                default:
-                    await ReplyAsync($"I can only have a nickname within a server. Run this command again from a server channel.");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"No can do. You need to run this command from a server channel to change my nickname.");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"I'm sorry {Context.Message.Author.Mention}, I'm afraid I can't do that. To change my nickname, run this command in a server channel.");
-                    break;
-
-                case 3:
-                    await ReplyAsync($"Not happening. My nickname can only be changed from a server channel.");
-                    break;
-            }
-        }
-
         /// <summary>
         /// Tests the permissions.
         /// </summary>
@@ -68,12 +44,10 @@ namespace NinjaCatDiscordBot
         [Command(Constants.TestPermsCommand)]
         public async Task TestPermsAsync()
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            // Get client.
+            var client = await StartTypingAndGetClient();
 
-            // Get client and channel.
-            var client = Context.Client as NinjaCatDiscordClient;
+            // Get channel.
             var channel = await client.GetSpeakingChannelForIGuildAsync(Context.Guild);
             var currentUser = client.GetGuild(Context.Guild.Id).CurrentUser;
 
@@ -102,68 +76,19 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Gets with the bot's nickname.
-        /// </summary>
-        [Command(Constants.NicknameCommand)]
-        public async Task GetNicknameAsync()
-        {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
-
-            // Get guild. If null show error.
-            var guild = (Context.Channel as IGuildChannel)?.Guild;
-            if (guild == null)
-            {
-                await ReplyErrorNoServer(client);
-                return;
-            }
-
-            // Get self.
-            var self = await guild?.GetCurrentUserAsync();
-
-            // Select and send message.
-            switch (client.GetRandomNumber(4))
-            {
-                default:
-                    await ReplyAsync($"My name is {self.Mention}.");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"My nickname is currently {self.Mention}.");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"My name on this server is {self.Mention}.");
-                    break;
-
-                case 3:
-                    await ReplyAsync($"I go by {self.Mention} on this server.");
-                    break;
-            }
-        }
-
-        /// <summary>
         /// Gets the channel the bot will speak in.
         /// </summary>
         [Command(Constants.ChannelCommand)]
         public async Task GetChannelAsync()
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            var client = await StartTypingAndGetClient();
 
             // Get guild. If null show error.
             var guild = (Context.Channel as IGuildChannel)?.Guild;
             if (guild == null)
             {
-                await ReplyErrorNoServer(client);
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
                 return;
             }
 
@@ -171,7 +96,7 @@ namespace NinjaCatDiscordBot
             if (guild.Id == Constants.BotsGuildId)
             {
                 // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't speak in any channels.");
+                await ReplyAsync($"Because this is the bots server, I can't announce builds.");
                 return;
             }
 
@@ -180,77 +105,25 @@ namespace NinjaCatDiscordBot
 
             // If the channel is still null, that means no announcements.
             if (channel == null)
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"I'm not speaking in any channel.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"I'm not making announcements.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"When new builds are released, I'm keeping quiet.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"I'm being quiet right now.");
-                        break;
-
-                    case 4:
-                        await ReplyAsync($"I'm not announcing any builds.");
-                        break;
-                }
-            }
+                await ReplyAsync($"When new builds are released, I'm keeping quiet.");
             else
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"The channel I'll speak in is {channel.Mention}.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"My announcement channel is currently {channel.Mention}.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"When new builds are released, I'll announce them in {channel.Mention}.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"{channel.Mention} is the channel I'll speak in.");
-                        break;
-
-                    case 4:
-                        await ReplyAsync($"I'll only announce builds in {channel.Mention}.");
-                        break;
-                }
-            }
+                await ReplyAsync($"When new builds are released, I'll announce them in {channel.Mention}.");
         }
 
         /// <summary>
-        /// Gets the role the bot will speak in.
+        /// Gets the role the bot will ping when builds come out.
         /// </summary>
         [Command(Constants.RoleCommand)]
         public async Task GetRoleAsync()
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            var client = await StartTypingAndGetClient();
 
             // Get guild. If null show error.
             var guild = (Context.Channel as IGuildChannel)?.Guild;
             if (guild == null)
             {
-                await ReplyErrorNoServer(client);
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
                 return;
             }
 
@@ -264,76 +137,26 @@ namespace NinjaCatDiscordBot
 
             // Get role.
             var role = client.GetSpeakingRoleForIGuild(guild);
-
-            // If the role is still null, that means no announcements.
             if (role == null)
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(3))
-                {
-                    default:
-                        await ReplyAsync($"I'm not pinging a role when new builds come out.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"I'm not making announcements to a certain role.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"When new builds are released, I'm not pinging anyone");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"I'm not pinging anyone right now.");
-                        break;
-                }
-            }
+                await ReplyAsync($"I'm not pinging a role when new builds come out.");
             else
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"The role I ping is **{role.Name}** when new builds are released.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"My announcement role is **{role.Name}**.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"When new builds are released, I announce them to **{role.Name}**.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"**{role.Name}** is the role I mention when I speak.");
-                        break;
-
-                    case 4:
-                        await ReplyAsync($"I announce builds to those with the **{role.Name}** role.");
-                        break;
-                }
-            }
+                await ReplyAsync($"The role I ping is **{role.Name}** when new builds are released.");
         }
 
         /// <summary>
-        /// Gets the role the bot will speak in.
+        /// Gets the role the bot will ping when skip ahead builds come out.
         /// </summary>
         [Command(Constants.RoleSkipCommand)]
         public async Task GetRoleSkipAsync()
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            var client = await StartTypingAndGetClient();
 
             // Get guild. If null show error.
             var guild = (Context.Channel as IGuildChannel)?.Guild;
             if (guild == null)
             {
-                await ReplyErrorNoServer(client);
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
                 return;
             }
 
@@ -347,106 +170,10 @@ namespace NinjaCatDiscordBot
 
             // Get role.
             var role = client.GetSpeakingRoleSkipForIGuild(guild);
-
-            // If the role is still null, that means no announcements.
             if (role == null)
                 await ReplyAsync($"I'm not pinging a special role when new skip ahead builds come out.");
             else
                 await ReplyAsync($"The role I ping is **{role.Name}** when new skip ahead builds are released.");
-        }
-
-        /// <summary>
-        /// Sets the bot's nickname.
-        /// </summary>
-        /// <param name="nickname">The new nickname.</param>
-        [Command(Constants.SetNicknameCommand)]
-        public async Task SetNicknameAsync(params string[] nickname)
-        {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
-
-            // If guild is null show error.
-            if (Context.Guild == null)
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"I can only have a nickname within a server. Run this command again from a server channel.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You need to run this command from a server channel to change my nickname.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.User.Mention}, I'm afraid I can't do that. To change my nickname, run this command in a server channel.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. My nickname can only be changed from a server channel.");
-                        break;
-                }
-                return;
-            }
-
-            // Get the user.
-            var user = Context.User as IGuildUser;
-
-            // If the user is null, lacks the manage nicknames permission, or is not master, show error.
-            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageNicknames != true)
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"Sorry, but only those who have permission to manage nicknames on this server can change my nickname.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You need to be able to manage nicknames on this server to change my nickname.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.User.Mention}, I'm afraid I can't do that. You must have the manage nickname permission to change my nickname.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. To change my nickname you must be able to manage nicknames on this server.");
-                        break;
-                }
-                return;
-            }
-
-            // Get self.
-            var self = await Context.Guild.GetCurrentUserAsync();
-
-            // Change nickname.
-            await self.ModifyAsync(u => u.Nickname = string.Join(" ", nickname));
-
-            // Select and send message.
-            switch (client.GetRandomNumber(4))
-            {
-                default:
-                    await ReplyAsync($"I am now known as {self.Mention}");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"My new nickname is {self.Mention}");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"My name in this server is now {self.Mention}. Thank you.");
-                    break;
-
-                case 3:
-                    await ReplyAsync($"A new name? For me? Thanks! I'll use {self.Mention} as my name now.");
-                    break;
-            }
         }
 
         /// <summary>
@@ -456,25 +183,22 @@ namespace NinjaCatDiscordBot
         [Command(Constants.SetChannelCommand)]
         public async Task SetChannelAsync(ITextChannel channel = null)
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            var client = await StartTypingAndGetClient();
 
-            // If guild is null show error.
-            if (Context.Guild == null)
+            // Get guild. If null show error.
+            var guild = (Context.Channel as IGuildChannel)?.Guild;
+            if (guild == null)
             {
-                await ReplyErrorNoServer(client);
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
                 return;
             }
 
             // If the guild is the Bots server, never speak.
-            if (Context.Guild.Id == Constants.BotsGuildId)
+            if (guild.Id == Constants.BotsGuildId)
             {
                 // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't speak in any channels.");
+                await ReplyAsync($"Because this is the bots server, I can't make announcements.");
                 return;
             }
 
@@ -484,168 +208,47 @@ namespace NinjaCatDiscordBot
             // If the user is null, lacks the manage server permission, or is not master, show error.
             if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
             {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the channel I speak in.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You need to be able to manage this server to change my announcement channel.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.User.Mention}, I'm afraid I can't do that. You must have manage server permissions to change my channel.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. To change the channel I speak in you must be able to manage this server.");
-                        break;
-                }
+                await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the channel I speak in.");
                 return;
             }
 
-            // Get channel if null.
-            channel = channel ?? Context.Channel as ITextChannel;
-
-            // Save channel.
-            client.SpeakingChannels[channel.Guild.Id] = channel.Id;
-            client.SaveSettings();
-
-            // Select and send message.
-            switch (client.GetRandomNumber(4))
+            // If channel is valid, enable announcements.
+            if (channel != null)
             {
-                default:
-                    await ReplyAsync($"The channel I'll speak in from now on is {channel.Mention}.");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"My announcement channel is now {channel.Mention}.");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"When new builds are released, I'll now announce them in {channel.Mention}.");
-                    break;
-
-                case 3:
-                    await ReplyAsync($"{channel.Mention} is the channel I'll now speak in.");
-                    break;
-
-                case 4:
-                    await ReplyAsync($"I'll now announce builds only in {channel.Mention}.");
-                    break;
+                // Save channel.
+                client.SpeakingChannels[guild.Id] = channel.Id;
+                client.SaveSettings();
+                await ReplyAsync($"When new builds are released, I'll now announce them in {channel.Mention}.");
+            }
+            else
+            {
+                // Set channel to 0.
+                client.SpeakingChannels[guild.Id] = 0;
+                client.SaveSettings();
+                await ReplyAsync($"When new builds are released, I'll now keep quiet.");
             }
         }
 
         /// <summary>
-        /// Disables the bot's speaking channel.
+        /// Sets the role that is pinged when new builds are released.
         /// </summary>
-        [Command(Constants.DisableChannelCommand)]
-        public async Task DisableChannelAsync()
-        {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
-
-            // If guild is null show error.
-            if (Context.Guild == null)
-            {
-                await ReplyErrorNoServer(client);
-                return;
-            }
-
-            // If the guild is the Bots server, never speak.
-            if (Context.Guild.Id == Constants.BotsGuildId)
-            {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't speak in any channels.");
-                return;
-            }
-
-            // Get the user.
-            var user = Context.User as IGuildUser;
-
-            // If the user is null, lacks the manage server permission, or is not master, show error.
-            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"Sorry, but only those who have permission to manage this server can disable the channel I speak in.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You need to be able to manage this server to disable my announcements.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.User.Mention}, I'm afraid I can't do that. You must have manage server permissions to disable my channel.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. To disable public speaking you must be able to manage this server.");
-                        break;
-                }
-                return;
-            }
-
-            // Set channel to 0.
-            client.SpeakingChannels.TryRemove(Context.Guild.Id, out ulong outVar);
-            client.SaveSettings();
-
-            // Select and send message.
-            switch (client.GetRandomNumber(4))
-            {
-                default:
-                    await ReplyAsync($"I'll no longer speak in any channel.");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"I won't make announcements anymore.");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"When new builds are released, I'll keep quiet.");
-                    break;
-
-                case 3:
-                    await ReplyAsync($"I'll stay quiet from now on.");
-                    break;
-
-                case 4:
-                    await ReplyAsync($"I'll no longer announce builds.");
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Sets the bot's speaking channel.
-        /// </summary>
-        /// <param name="role">The new role.</param>
+        /// <param name="role">The new role. A null value will disable role pinging.</param>
         [Command(Constants.SetRoleCommand)]
-        public async Task SetRoleAsync(IRole role)
+        public async Task SetRoleAsync(IRole role = null)
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            var client = await StartTypingAndGetClient();
 
-            // If guild is null show error.
-            if (Context.Guild == null)
+            // Get guild. If null show error.
+            var guild = (Context.Channel as IGuildChannel)?.Guild;
+            if (guild == null)
             {
-                await ReplyErrorNoServer(client);
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
                 return;
             }
 
             // If the guild is the Bots server, never speak.
-            if (Context.Guild.Id == Constants.BotsGuildId)
+            if (guild.Id == Constants.BotsGuildId)
             {
                 // Send message.
                 await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
@@ -658,57 +261,47 @@ namespace NinjaCatDiscordBot
             // If the user is null, lacks the manage server permission, or is not master, show error.
             if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
             {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the role I ping.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You need to be able to manage this server to change my announcement role.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.User.Mention}, I'm afraid I can't do that. You must have manage server permissions to change the role I ping.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. To change the role I ping you must be able to manage this server.");
-                        break;
-                }
+                await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the role I ping.");
                 return;
             }
 
-            // Save channel.
-            client.SpeakingRoles[role.Guild.Id] = role.Id;
-            client.SaveSettings();
-            await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new builds are released.");
+            // If role is valid, save it. Otherwise remove the role.
+            if (role != null)
+            {
+                // Save role.
+                client.SpeakingRoles[guild.Id] = role.Id;
+                client.SaveSettings();
+                await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new builds are released.");
+            }
+            else
+            {
+                // Remove role.
+                client.SpeakingRoles.TryRemove(guild.Id, out ulong outVar);
+                client.SaveSettings();
+                await ReplyAsync($"I'll no longer ping a role when new builds come out.");
+            }
         }
 
         /// <summary>
-        /// Sets the bot's speaking role for skip ahead.
+        /// Sets the role that is pinged when new skip ahead builds are released.
         /// </summary>
-        /// <param name="role">The new role.</param>
+        /// <param name="role">The new role. A null value will disable role pinging.</param>
         [Command(Constants.SetRoleSkipCommand)]
-        public async Task SetRoleSkipAsync(IRole role)
+        public async Task SetRoleSkipAsync(IRole role = null)
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            var client = await StartTypingAndGetClient();
 
-            // If guild is null show error.
-            if (Context.Guild == null)
+            // Get guild. If null show error.
+            var guild = (Context.Channel as IGuildChannel)?.Guild;
+            if (guild == null)
             {
-                await ReplyErrorNoServer(client);
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
                 return;
             }
 
             // If the guild is the Bots server, never speak.
-            if (Context.Guild.Id == Constants.BotsGuildId)
+            if (guild.Id == Constants.BotsGuildId)
             {
                 // Send message.
                 await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
@@ -721,185 +314,30 @@ namespace NinjaCatDiscordBot
             // If the user is null, lacks the manage server permission, or is not master, show error.
             if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
             {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the role I ping.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You need to be able to manage this server to change my announcement role.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.User.Mention}, I'm afraid I can't do that. You must have manage server permissions to change the role I ping.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. To change the role I ping you must be able to manage this server.");
-                        break;
-                }
+                await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the role I ping.");
                 return;
             }
 
-            // Save channel.
-            client.SpeakingRolesSkip[role.Guild.Id] = role.Id;
-            client.SaveSettings();
-            await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new skip ahead builds are released.");
-        }
-
-        /// <summary>
-        /// Disables the bot's mention role.
-        /// </summary>
-        [Command(Constants.DisableRoleCommand)]
-        public async Task DisableRoleAsync()
-        {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
-
-            // If guild is null show error.
-            if (Context.Guild == null)
+            // If role is valid, save it. Otherwise remove the role.
+            if (role != null)
             {
-                await ReplyErrorNoServer(client);
-                return;
+                // Save role.
+                client.SpeakingRolesSkip[guild.Id] = role.Id;
+                client.SaveSettings();
+                await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new skip ahead builds are released.");
             }
-
-            // If the guild is the Bots server, never speak.
-            if (Context.Guild.Id == Constants.BotsGuildId)
+            else
             {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
-                return;
+                // Remove role.
+                client.SpeakingRolesSkip.TryRemove(guild.Id, out ulong outVar);
+                client.SaveSettings();
+                await ReplyAsync($"I'll no longer ping a role when new skip ahead builds come out.");
             }
-
-            // Get the user.
-            var user = Context.User as IGuildUser;
-
-            // If the user is null, lacks the manage server permission, or is not master, show error.
-            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"Sorry, but only those who have permission to manage this server can disable the role I ping.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You need to be able to manage this server to disable my announcement ping.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.User.Mention}, I'm afraid I can't do that. You must have manage server permissions to disable the role I ping.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. To disable the role I ping you must be able to manage this server.");
-                        break;
-                }
-                return;
-            }
-
-            // Set channel to 0.
-            client.SpeakingRoles.TryRemove(Context.Guild.Id, out ulong outVar);
-            client.SaveSettings();
-
-            // Select and send message.
-            switch (client.GetRandomNumber(4))
-            {
-                default:
-                    await ReplyAsync($"I'll no longer speak in any channel.");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"I won't make announcements anymore.");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"When new builds are released, I'll keep quiet.");
-                    break;
-
-                case 3:
-                    await ReplyAsync($"I'll stay quiet from now on.");
-                    break;
-
-                case 4:
-                    await ReplyAsync($"I'll no longer announce builds.");
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Disables the bot's mention role for skip ahead.
-        /// </summary>
-        [Command(Constants.DisableRoleSkipCommand)]
-        public async Task DisableRoleSkipAsync()
-        {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
-
-            // If guild is null show error.
-            if (Context.Guild == null)
-            {
-                await ReplyErrorNoServer(client);
-                return;
-            }
-
-            // If the guild is the Bots server, never speak.
-            if (Context.Guild.Id == Constants.BotsGuildId)
-            {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
-                return;
-            }
-
-            // Get the user.
-            var user = Context.User as IGuildUser;
-
-            // If the user is null, lacks the manage server permission, or is not master, show error.
-            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true)
-            {
-                // Select and send message.
-                switch (client.GetRandomNumber(4))
-                {
-                    default:
-                        await ReplyAsync($"Sorry, but only those who have permission to manage this server can disable the role I ping.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You need to be able to manage this server to disable my announcement ping.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.User.Mention}, I'm afraid I can't do that. You must have manage server permissions to disable the role I ping.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. To disable the role I ping you must be able to manage this server.");
-                        break;
-                }
-                return;
-            }
-
-            // Set channel to 0.
-            client.SpeakingRolesSkip.TryRemove(Context.Guild.Id, out ulong outVar);
-            client.SaveSettings();
-            await ReplyAsync($"I'll no longer ping a special role for skip ahead builds.");
         }
 
         /// <summary>
         /// Send an announcement.
         /// </summary>
-        /// <returns></returns>
         [Command(Constants.AnnouncementCommand)]
         public async Task SendAnnouncementAsync(string message)
         {
@@ -952,7 +390,6 @@ namespace NinjaCatDiscordBot
         /// <summary>
         /// Force-update the bot's game.
         /// </summary>
-        /// <returns></returns>
         [Command(Constants.UpdateGameCommand)]
         public async Task UpdateGameAsync()
         {
@@ -999,9 +436,8 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Ping jaska.
+        /// Test ping..
         /// </summary>
-        /// <returns></returns>
         [Command(Constants.TestPingCommand)]
         public async Task TestPingAsync()
         {
@@ -1043,7 +479,7 @@ namespace NinjaCatDiscordBot
             }
             else
             {
-                await ReplyAsync($"No role configured.");
+                await ReplyAsync($"Insiders role: No role configured.");
             }
 
             // Check if the skip role is mentionable.
@@ -1064,7 +500,7 @@ namespace NinjaCatDiscordBot
             }
             else
             {
-                await ReplyAsync($"No skip ahead role configured.");
+                await ReplyAsync($"Skip ahead role: No role configured.");
             }
         }
 

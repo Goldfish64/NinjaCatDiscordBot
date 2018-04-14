@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: Constants.cs
 * 
-* Copyright (c) 2016-2017 John Davis
+* Copyright (c) 2016-2018 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -58,57 +58,43 @@ namespace NinjaCatDiscordBot
         public const string AboutCommandDesc = "get to know me";
         public const string HelpCommand = "help";
         public const string HelpCommandDesc = "get help";
-        public const string HomeCommand = "home";
-        public const string HomeCommandDesc = "go to my homepage";
-        public const string HomeCommandAlias = "source";
-        public const string HomeCommandAlias2 = "sourcecode";
+        public const string HomeCommand = "source";
+        public const string HomeCommandDesc = "go to my source code";
         public const string HomeCommandUrl = AppUrl;
         public const string InviteCommand = "invite";
         public const string InviteCommandDesc = "invite me to your server";
         public const string InviteCommandUrl = InviteUrl;
-        public const string PingCommand = "ping";
-        public const string PingCommandDesc = "pong";
         public const string TrexCommand = "trex";
         public const string TrexCommandDesc = "shows the Windows 10 Skype emoticon";
-        public const string TrexCommandUrl = "http://static.skaip.su/img/emoticons/180x180/f6fcff/win10.gif";
-        public const string LatestBuildCommand = "latestbuild";
-        public const string LatestCommand = "latest";
+        public const string LatestBuildCommand = "latest";
         public const string LatestBuildCommandDesc = "gets the latest Insider PC build";
-        public const string LatestMobileBuildCommand = "latestmobilebuild";
+        public const string LatestMobileBuildCommand = "latestmobile";
         public const string LatestMobileBuildCommandDesc = "gets the latest Insider Mobile build";
-        public const string LatestServerBuildCommand = "latestserverbuild";
+        public const string LatestServerBuildCommand = "latestserver";
         public const string LatestServerBuildCommandDesc = "gets the latest Insider Server build";
+        public const string LatestSkipAheadBuildCommand = "latestskip";
+        public const string LatestSkipAheadBuildCommandDesc = "gets the latest Skip Ahead Insider build";
         public const string BotInfoCommand = "info";
         public const string BotInfoCommandDesc = "shows my info";
-        public const string TestPermsCommand = "testperms";
-        public const string TestPermsCommandDesc = "tests my speaking channel permissions";
         public const string AnnouncementCommand = "announce"; // Bot owner only.
         public const string UpdateGameCommand = "updategame"; // Bot owner only.
-        public const string PingJaskaCommand = "jaska"; // Bot owner only.
-        public const string TestPingCommand = "testping"; // Bot owner only.
 
-        public const string NicknameCommand = "nickname";
-        public const string NicknameCommandDesc = "gets my nickname";
-        public const string SetNicknameCommand = "setnickname";
-        public const string SetNicknameCommandDesc = "sets my nickname";
         public const string ChannelCommand = "channel";
         public const string ChannelCommandDesc = "gets the channel I speak in";
         public const string SetChannelCommand = "setchannel";
-        public const string SetChannelCommandDesc = "sets the channel I speak in";
-        public const string DisableChannelCommand = "offchannel";
-        public const string DisableChannelCommandDesc = "disables announcements";
+        public const string SetChannelCommandDesc = "sets the channel I speak in; specify nothing to disable announcements";
         public const string RoleCommand = "role";
         public const string RoleCommandDesc = "gets the role I ping when new builds are released";
         public const string SetRoleCommand = "setrole";
-        public const string SetRoleCommandDesc = "sets the role I ping when new builds are released";
-        public const string DisableRoleCommand = "offrole";
-        public const string DisableRoleCommandDesc = "disables the announcement role";
+        public const string SetRoleCommandDesc = "sets the role I ping when new builds are released; specify nothing to disable pings";
         public const string RoleSkipCommand = "skiprole";
-        public const string RoleSkipCommandDesc = "gets the role I ping when new builds are released";
+        public const string RoleSkipCommandDesc = "gets the role I ping when new skip ahead builds are released";
         public const string SetRoleSkipCommand = "setskiprole";
-        public const string SetRoleSkipCommandDesc = "sets the role I ping when new builds are released";
-        public const string DisableRoleSkipCommand = "offskiprole";
-        public const string DisableRoleSkipCommandDesc = "disables the announcement role";
+        public const string SetRoleSkipCommandDesc = "sets the role I ping when new skip ahead builds are released; specify nothing to disable pings";
+        public const string TestPermsCommand = "testperms";
+        public const string TestPermsCommandDesc = "tests my speaking channel permissions";
+        public const string TestPingCommand = "testping";
+        public const string TestPingCommandDesc = "tests my pinging abilities";
 
         public static readonly string AboutMessage1 =
             $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
@@ -123,24 +109,22 @@ namespace NinjaCatDiscordBot
             $"**{CommandPrefix}{AboutCommand}**: {AboutCommandDesc}.\n" +
             $"**{CommandPrefix}{HelpCommand}**: {HelpCommandDesc}.\n" +
             $"**{CommandPrefix}{BotInfoCommand}**: {BotInfoCommandDesc}.\n" +
-         //   $"**{CommandPrefix}{ServersCommand}**: {ServersCommandDesc}.\n" +
-            $"**{CommandPrefix}{HomeCommand}** or **{CommandPrefix}{HomeCommandAlias}**: {HomeCommandDesc}.\n" +
+            $"**{CommandPrefix}{HomeCommand}**: {HomeCommandDesc}.\n" +
             $"**{CommandPrefix}{InviteCommand}**: {InviteCommandDesc}.\n" +
-            $"**{CommandPrefix}{PingCommand}**: {PingCommandDesc}.\n" +
             $"**{CommandPrefix}{TrexCommand}**: {TrexCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestMobileBuildCommand}**: {LatestMobileBuildCommandDesc}.\n" +
-            $"**{CommandPrefix}{LatestServerBuildCommand}**: {LatestServerBuildCommandDesc}.\n\n" +
-            $"Admin commands:\n" +
-            $"**{CommandPrefix}{NicknameCommand}**: {NicknameCommandDesc}.\n" +
-            $"**{CommandPrefix}{SetNicknameCommand}** *nickname*: {SetNicknameCommandDesc}.\n" +
+            $"**{CommandPrefix}{LatestServerBuildCommand}**: {LatestServerBuildCommandDesc}.\n" +
+            $"**{CommandPrefix}{LatestSkipAheadBuildCommand}**: {LatestSkipAheadBuildCommandDesc}.\n\n" +
+            $"Admin commands (manage server perm required):\n" +
             $"**{CommandPrefix}{ChannelCommand}**: {ChannelCommandDesc}.\n" +
             $"**{CommandPrefix}{SetChannelCommand}** *channel*: {SetChannelCommandDesc}.\n" +
-            $"**{CommandPrefix}{DisableChannelCommand}**: {DisableChannelCommandDesc}.\n" +
             $"**{CommandPrefix}{RoleCommand}**: {RoleCommandDesc}.\n" +
             $"**{CommandPrefix}{SetRoleCommand}** *role*: {SetRoleCommandDesc}.\n" +
-            $"**{CommandPrefix}{DisableRoleCommand}**: {DisableRoleCommandDesc}.\n" +
-            $"**{CommandPrefix}{TestPermsCommand}**: {TestPermsCommandDesc}.";
+            $"**{CommandPrefix}{RoleSkipCommand}**: {RoleSkipCommandDesc}.\n" +
+            $"**{CommandPrefix}{SetRoleSkipCommand}** *role*: {SetRoleSkipCommandDesc}.\n" +
+            $"**{CommandPrefix}{TestPermsCommand}**: {TestPermsCommandDesc}.\n" +
+            $"**{CommandPrefix}{TestPingCommand}**: {TestPingCommandDesc}.";
 
         #endregion
     }

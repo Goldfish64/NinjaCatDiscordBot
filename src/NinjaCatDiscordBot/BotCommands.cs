@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: BotCommands.cs
 * 
-* Copyright (c) 2016-2017 John Davis
+* Copyright (c) 2016-2018 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -47,18 +47,24 @@ namespace NinjaCatDiscordBot
 
         #region Methods
 
-        /// <summary>
-        /// Gets the about message.
-        /// </summary>
-        [Command(Constants.AboutCommand)]
-        private async Task GetAboutAsync()
+        private async Task<NinjaCatDiscordClient> StartTypingAndGetClient()
         {
             // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            return Context.Client as NinjaCatDiscordClient;
+        }
+
+        /// <summary>
+        /// Gets the about message.
+        /// </summary>
+        [Command(Constants.AboutCommand)]
+        private async Task GetAboutAsync()
+        {
+            // Get client.
+            var client = await StartTypingAndGetClient();
 
             // Create variable for speaking channel mention.
             var speakingChannel = string.Empty;
@@ -114,12 +120,11 @@ namespace NinjaCatDiscordBot
         [Command(Constants.HelpCommand)]
         private async Task GetHelpAsync()
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            // Get client.
+            var client = await StartTypingAndGetClient();
 
             // Select and send message.
-            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(2))
+            switch (client.GetRandomNumber(2))
             {
                 default:
                     await ReplyAsync($"So you need help huh? You've come to the right place. :cat::question:\n\n" +
@@ -139,15 +144,13 @@ namespace NinjaCatDiscordBot
         /// Gets the homepage URL.
         /// </summary>
         [Command(Constants.HomeCommand)]
-        [Alias(Constants.HomeCommandAlias, Constants.HomeCommandAlias2)]
         private async Task GetHomeAsync()
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            // Get client.
+            var client = await StartTypingAndGetClient();
 
             // Select and send message with URL.
-            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(3))
+            switch (client.GetRandomNumber(3))
             {
                 default:
                     await ReplyAsync($"My source code is here:\n{Constants.HomeCommandUrl}");
@@ -169,12 +172,11 @@ namespace NinjaCatDiscordBot
         [Command(Constants.InviteCommand)]
         private async Task GetInviteAsync()
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            // Get client.
+            var client = await StartTypingAndGetClient();
 
             // Select and send message with invite URL.
-            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(3))
+            switch (client.GetRandomNumber(3))
             {
                 default:
                     await ReplyAsync($"This link will let me be on *your* server:\n{Constants.InviteCommandUrl}");
@@ -191,54 +193,13 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Gets a pong.
-        /// </summary>
-        [Command(Constants.PingCommand)]
-        private async Task GetPingAsync()
-        {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Select and send message.
-            switch ((Context.Client as NinjaCatDiscordClient).GetRandomNumber(5))
-            {
-                default:
-                    await ReplyAsync($"Pong {Context.Message.Author.Mention}! :ping_pong:");
-                    break;
-
-                case 0:
-                    await ReplyAsync($"I'm very good at ping pong {Context.Message.Author.Mention}. :ping_pong:");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"I know where you live {Context.Message.Author.Mention}. :smirk_cat: :house:");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"You know, I can do other things besides play ping-pong {Context.Message.Author.Mention}. :ping_pong:");
-                    break;
-
-                case 3:
-                    await ReplyAsync($"Why, {Context.Message.Author.Mention}. Are you lonely?");
-                    break;
-
-                case 4:
-                    await ReplyAsync($"Remember, {Context.Message.Author.Mention}, I am always here. :slight_smile:");
-                    break;
-            }
-        }
-
-        /// <summary>
         /// Gets the T-Rex.
         /// </summary>
         [Command(Constants.TrexCommand)]
         private async Task GetTrexAsync()
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
+            // Get client.
+            var client = await StartTypingAndGetClient();
             await ReplyAsync("<a:trexa:393897398881222656>");
         }
 
@@ -248,11 +209,11 @@ namespace NinjaCatDiscordBot
         [Command(Constants.LatestBuildCommand)]
         private async Task GetLatestBuildAsync()
         {
-            // Bot is typing.
-            await Context.Channel.TriggerTypingAsync();
+            // Get client.
+            var client = await StartTypingAndGetClient();
 
             // Get build.
-            var data = await (Context.Client as NinjaCatDiscordClient).GetLatestBuildNumberAsync();
+            var data = await client.GetLatestBuildNumberAsync();
             if (data == null)
             {
                 await ReplyAsync($"The latest Windows 10 build for PCs couldn't be found. :crying_cat_face: :computer:");
@@ -263,24 +224,17 @@ namespace NinjaCatDiscordBot
             await ReplyAsync($"The latest Windows 10 build for PCs is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
         }
 
-        [Command(Constants.LatestCommand)]
-        private async Task GetLatestAsync()
-        {
-            // Alias for latest build.
-            await GetLatestBuildAsync();
-        }
-
         /// <summary>
         /// Gets the latest Insider mobile build.
         /// </summary>
         [Command(Constants.LatestMobileBuildCommand)]
         private async Task GetLatestMobileBuildAsync()
         {
-            // Bot is typing.
-            await Context.Channel.TriggerTypingAsync();
+            // Get client.
+            var client = await StartTypingAndGetClient();
 
             // Get build.
-            var data = await (Context.Client as NinjaCatDiscordClient).GetLatestBuildNumberAsync("mobile");
+            var data = await client.GetLatestBuildNumberAsync(BuildType.Mobile);
             if (data == null)
             {
                 await ReplyAsync($"The latest Windows 10 Mobile build couldn't be found. :crying_cat_face: :telephone:");
@@ -297,11 +251,11 @@ namespace NinjaCatDiscordBot
         [Command(Constants.LatestServerBuildCommand)]
         private async Task GetLatestServerBuildAsync()
         {
-            // Bot is typing.
-            await Context.Channel.TriggerTypingAsync();
+            // Get client.
+            var client = await StartTypingAndGetClient();
 
             // Get build.
-            var data = await (Context.Client as NinjaCatDiscordClient).GetLatestBuildNumberAsync("server");
+            var data = await client.GetLatestBuildNumberAsync(BuildType.Server);
             if (data == null)
             {
                 await ReplyAsync($"The latest Windows Server build couldn't be found. :crying_cat_face: :desktop:");
@@ -313,17 +267,34 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
+        /// Gets the latest Insider skip-ahead build.
+        /// </summary>
+        [Command(Constants.LatestSkipAheadBuildCommand)]
+        private async Task GetLatestSkipAheadBuildAsync()
+        {
+            // Get client.
+            var client = await StartTypingAndGetClient();
+
+            // Get build.
+            var data = await client.GetLatestBuildNumberAsync(BuildType.SkipAheadPc);
+            if (data == null)
+            {
+                await ReplyAsync($"The latest Windows 10 Skip Ahead build couldn't be found. :crying_cat_face: :desktop:");
+                return;
+            }
+
+            // Send.
+            await ReplyAsync($"The latest Windows 10 Skip Ahead build is **{data.Item1}**. :cat: :fast_forward:\n{data.Item2}");
+        }
+
+        /// <summary>
         /// Replies with the bot's info.
         /// </summary>
         [Command(Constants.BotInfoCommand)]
         private async Task GetBotInfoAsync()
         {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            var client = await StartTypingAndGetClient();
 
             // Get passed time.
             var timeSpan = DateTime.Now.ToLocalTime() - client.StartTime.ToLocalTime();

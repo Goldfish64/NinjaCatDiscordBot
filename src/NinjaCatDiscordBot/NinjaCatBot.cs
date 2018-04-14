@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: NinjaCatBot.cs
 * 
-* Copyright (c) 2016-2017 John Davis
+* Copyright (c) 2016-2018 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -174,7 +174,7 @@ namespace NinjaCatDiscordBot
 
                         // Pause for realism and send message.
                         await Task.Delay(TimeSpan.FromSeconds(0.75));
-                        await msg.Channel.SendMessageAsync($"I'm sorry, but something happened. Error: {result.ErrorReason}");
+                        await msg.Channel.SendMessageAsync($"I'm sorry, but something happened. Error: {result.ErrorReason}\n\nIf there are spaces in a parameter, make sure to surround it with quotes.");
                     }
                     return;
                 }

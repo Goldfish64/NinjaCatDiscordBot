@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: NinjaCatDiscordClient.cs
 * 
-* Copyright (c) 2016-2017 John Davis
+* Copyright (c) 2016-2018 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -312,36 +312,47 @@ namespace NinjaCatDiscordBot
             Console.WriteLine($"{DateTime.Now}: {info}");
         }
 
-        public async Task<Tuple<string, string>> GetLatestBuildNumberAsync(string type = "")
+        /// <summary>
+        /// Gets the latest build of the specified type.
+        /// </summary>
+        /// <param name="type">The type of build to get.</param>
+        public async Task<Tuple<string, string>> GetLatestBuildNumberAsync(BuildType type = BuildType.NormalPc)
         {
             // Create HTTP client.
             var client = new HttpClient();
 
-            // Get blog entries.
-            var doc = XDocument.Parse(await client.GetStringAsync("https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/"));
-            var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                          select new BlogEntry()
-                          { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
-            var list = entries.ToList();
-
-            // Get most recent build post. If post is null, get additional pages.
-            var post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains(type)).FirstOrDefault();
-            if (post == null)
+            // Get most recent build post..
+            BlogEntry post = null;
+            for (int page = 1; page <= 10; page++)
             {
-                for (int page = 2; page <= 10; page++)
-                {
-                    // Get page.
-                    doc = XDocument.Parse(await client.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged={page}"));
-                    entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                              select new BlogEntry()
-                              { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
-                    list.AddRange(entries.ToList());
+                // Get page.
+                var doc = XDocument.Parse(await client.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged={page}"));
+                var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                            select new BlogEntry()
+                            { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
+                var list = entries.ToList();
 
-                    // Get post.
-                    post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains(type)).FirstOrDefault();
-                    if (post != null)
+                // Get post.
+                switch (type)
+                {
+                    case BuildType.NormalPc:
+                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && !p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        break;
+
+                    case BuildType.Mobile:
+                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("mobile") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        break;
+
+                    case BuildType.Server:
+                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        break;
+
+                    case BuildType.SkipAheadPc:
+                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
                         break;
                 }
+                if (post != null)
+                    break;
             }
 
             // If post is still null, no build was found.
@@ -349,7 +360,7 @@ namespace NinjaCatDiscordBot
                 return null;
 
             // Get build number.
-            var build = Regex.Match(post.Title, @"\d{5,}", type == "mobile" ? RegexOptions.RightToLeft : RegexOptions.None).Value;
+            var build = Regex.Match(post.Title, @"\d{5,}", type == BuildType.Mobile ? RegexOptions.RightToLeft : RegexOptions.None).Value;
 
             // Return info.
             return new Tuple<string, string>(build, post.Link);
@@ -387,5 +398,13 @@ namespace NinjaCatDiscordBot
         }
 
         #endregion
+    }
+
+    public enum BuildType
+    {
+        NormalPc,
+        Mobile,
+        Server,
+        SkipAheadPc
     }
 }
