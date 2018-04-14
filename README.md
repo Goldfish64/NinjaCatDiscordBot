@@ -12,23 +12,20 @@ My set of commands include:
 * **$nj-about**: get to know me.
 * **$nj-help**: get help.
 * **$nj-info**: shows my info.
-* **$nj-servers**: shows the number of servers I'm part of.
-* **$nj-home** or **$nj-source**: go to my homepage.
+* **$nj-source**: go to my source code.
 * **$nj-invite**: invite me to your server.
-* **$nj-ping**: pong.
-* **$nj-time**: shows the current time.
 * **$nj-trex**: shows the Windows 10 Skype emoticon.
-* **$nj-latestbuild**: gets the latest Insider PC build.
-* **$nj-latestmobilebuild**: gets the latest Insider Mobile build.
+* **$nj-latest**: gets the latest Insider PC build.
+* **$nj-latestmobile**: gets the latest Insider Mobile build.
+* **$nj-latestserver**: gets the latest Insider Server build.
+* **$nj-latestskip**: gets the latest Skip Ahead Insider build.
 
-
-Admin commands:
-* **$nj-nickname**: gets my nickname.
-* **$nj-setnickname** *nickname*: sets my nickname.
+Admin commands (manage server perm required):
 * **$nj-channel**: gets the channel I speak in.
-* **$nj-setchannel** *channel*: sets the channel I speak in.
-* **$nj-offchannel**: disables announcements.
+* **$nj-setchannel** *channel*: sets the channel I speak in; specify nothing to disable announcements.
 * **$nj-role**: gets the role I ping when new builds are released.
-* **$nj-setrole** *role*: sets the role I ping when new builds are released.
-* **$nj-offrole**: disables the announcement role.
+* **$nj-setrole** *role*: sets the role I ping when new builds are released; specify nothing to disable pings.
+* **$nj-skiprole**: gets the role I ping when new skip ahead builds are released.
+* **$nj-setskiprole** *role*: sets the role I ping when new skip ahead builds are released; specify nothing to disable pings.
 * **$nj-testperms**: tests my speaking channel permissions.
+* **$nj-testping**: tests my pinging abilities.
