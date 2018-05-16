@@ -227,7 +227,7 @@ namespace NinjaCatDiscordBot
 
                 // Try to get a blogs URL.
                 var fullUrl = string.Empty;
-                var urls = tweet.ExtendedTweet.LegacyEntities.Urls ?? tweet.Urls;
+                var urls = tweet.ExtendedTweet?.LegacyEntities.Urls ?? tweet.Urls;
                 foreach (var url in urls)
                 {
                     for (int t = 0; t < 3; t++)
