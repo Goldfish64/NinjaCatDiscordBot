@@ -200,7 +200,7 @@ namespace NinjaCatDiscordBot
             var httpClient = new HttpClient();
 
             // Start checking for new builds.
-            var buildTimer = new Timer(async (e) =>
+            var buildThread = new Thread(new ThreadStart(async () =>
             {
                 BlogEntry post = null;
                 try
@@ -294,15 +294,27 @@ namespace NinjaCatDiscordBot
                     await client.UpdateGameAsync();
                 }
 
-            }, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(5));
+                // Wait 5 minutes.
+                await Task.Delay(TimeSpan.FromMinutes(5));
+            }));
+            buildThread.Start();
 
-            // Create timer for POSTing server count.
-            var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCountAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromHours(1));
+            // Wait a minute for bot to start up.
+            await Task.Delay(TimeSpan.FromMinutes(1));
 
-            // Create timer for game play status of builds.
-            var buildPlayTimer = new Timer(async (e) => await client.UpdateGameAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(30));
+            // Create thread for POSTing server count and updating game.
+            var serverCountThread = new Thread(new ThreadStart(async () =>
+            {
+                // Update count and game.
+                await UpdateSiteServerCountAsync();
+                await client.UpdateGameAsync();
 
-            // Wait.
+                // Wait an hour.
+                await Task.Delay(TimeSpan.FromHours(1));
+            }));
+            serverCountThread.Start();
+
+            // Wait forever.
             await Task.Delay(-1);
         }
 

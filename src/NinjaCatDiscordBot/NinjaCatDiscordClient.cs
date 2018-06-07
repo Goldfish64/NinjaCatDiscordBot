@@ -138,7 +138,7 @@ namespace NinjaCatDiscordBot
         /// <summary>
         /// Gets or sets the current post URL. Used for keeping track of new posts.
         /// </summary>
-        public string CurrentUrl { get; set; }
+        public string CurrentUrl { get; set; } = "";
 
         #endregion
 
