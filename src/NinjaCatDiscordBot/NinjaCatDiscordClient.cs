@@ -70,6 +70,10 @@ namespace NinjaCatDiscordBot
                 return Task.CompletedTask;
             };
 
+            // Get latest post URL, if there is one.
+            if (File.Exists(Constants.LatestPostFileName))
+                CurrentUrl = File.ReadAllText(Constants.LatestPostFileName);
+
             // Create temporary dictionary.
             var channels = new Dictionary<ulong, ulong>();
 
@@ -131,7 +135,10 @@ namespace NinjaCatDiscordBot
         /// </summary>
         public DateTime StartTime { get; } = DateTime.Now;
 
-
+        /// <summary>
+        /// Gets or sets the current post URL. Used for keeping track of new posts.
+        /// </summary>
+        public string CurrentUrl { get; set; }
 
         #endregion
 
@@ -297,6 +304,9 @@ namespace NinjaCatDiscordBot
         {
             lock (lockObject)
             {
+                // Save latest post URL.
+                File.WriteAllText(Constants.LatestPostFileName, CurrentUrl);
+
                 // Serialize settings to JSON.
                 File.WriteAllText(Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
                 File.WriteAllText(Constants.RolesFileName, JsonConvert.SerializeObject(SpeakingRoles));

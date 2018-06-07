@@ -32,6 +32,7 @@ namespace NinjaCatDiscordBot
         #region Constants
 
         //public const string LogFileName = "nj-logfile.log";
+        public const string LatestPostFileName = "nj-latestposturl.txt";
         public const string ChannelsFileName = "nj-channels.json";
         public const string RolesFileName = "nj-roles.json";
         public const string RolesSkipFileName = "nj-roles-skip.json";

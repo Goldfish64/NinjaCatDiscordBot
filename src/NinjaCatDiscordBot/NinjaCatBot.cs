@@ -31,13 +31,11 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Tweetinvi;
 
 namespace NinjaCatDiscordBot
 {
@@ -198,196 +196,60 @@ namespace NinjaCatDiscordBot
 #pragma warning restore 4014
             }
 
-            /* // Log in to Twitter.
-             Auth.SetUserCredentials(Credentials.TwitterConsumerKey, Credentials.TwitterConsumerSecret,
-                 Credentials.TwitterAccessToken, Credentials.TwitterAccessSecret);
-
-             // Create Twitter stream to follow @donasarkar.
-             var donaUser = User.GetUserFromScreenName("windowsinsider");
-             var stream = Tweetinvi.Stream.CreateFilteredStream();
-             stream.AddFollow(donaUser);
-
- #if DEBUG
-             // Used for testing tweets.
-             var goldfishUser = User.GetUserFromScreenName("goldfishx64");
-             stream.AddFollow(goldfishUser);
- #endif
-
-             // Listen for incoming tweets from Dona.
-             stream.MatchingTweetReceived += async (s, e) =>
-             {
-                 // Get tweet.
-                 var tweet = e.Tweet.RetweetedTweet ?? e.Tweet;
-
-                 // If the tweet is a reply or if it doesn't belong to a known user, ignore it.
-                 if (tweet.CreatedBy.Id != donaUser.Id || !string.IsNullOrEmpty(tweet.InReplyToScreenName))
-                     return;
-
-                 // Log tweet.
-                 client.LogOutput($"TWEET: {tweet.FullText}");
-
-                 // Try to get a blogs URL.
-                 var fullUrl = string.Empty;
-                 var urls = tweet.ExtendedTweet?.LegacyEntities.Urls ?? tweet.Urls;
-                 foreach (var url in urls)
-                 {
-                     for (int t = 0; t < 3; t++)
-                     {
-                         // Retry up to three times.
-                         for (int i = 0; i < 3; i++)
-                         {
-                             string urlToUse = System.Web.HttpUtility.UrlEncode(url.ExpandedURL);
-                             using (var httpClient = new HttpClient())
-                             {
-                                 httpClient.BaseAddress = new Uri("https://lengthenurl.info/");
-                                 httpClient.DefaultRequestHeaders.Accept.Clear();
-                                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                                 string apiCall = String.Format("api/longurl/shorturl/?inputURL={0}", urlToUse);
-                                 HttpResponseMessage response = await httpClient.GetAsync(apiCall);
-
-                                 if (response.IsSuccessStatusCode)
-                                 {
-                                     ServicedURL thisUrl = await response.Content.ReadAsAsync<ServicedURL>();
-                                     // Check to see if the full URL was gotten.
-                                     if (thisUrl.LongURL.Contains("blogs.windows.com/windowsexperience") && thisUrl.LongURL.Contains("insider-preview-build"))
-                                     {
-                                         fullUrl = thisUrl.LongURL;
-                                         break;
-                                     }
-                                     else
-                                     {
-                                         client.LogOutput($"URLFETCH ERROR: URL wasn't right.");
-                                     }
-
-                                     // Did the request fail? Log the error and retry.
-                                     if (!response.IsSuccessStatusCode)
-                                         client.LogOutput($"URLFETCH ERROR: {response.StatusCode}");
-                                 }
-                                 else
-                                 {
-                                     client.LogOutput($"URLFETCH ERROR: URL wasn't right.");
-                                 }
-                             }
-                         }
-
-                         // Check to see if URL has what it takes. If not, retry in 5 minutes.
-                         if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
-                             break;
-
-                         // Clear URL.
-                         fullUrl = string.Empty;
-
-                         // Wait 10 minutes.
-                         await Task.Delay(TimeSpan.FromMinutes(10));
-                     }
-
-                     // Check to see if URL has what it takes. If not, retry in 5 minutes.
-                     if (!string.IsNullOrEmpty(fullUrl) && fullUrl.Contains("blogs.windows.com/windowsexperience") && fullUrl.Contains("insider-preview-build"))
-                         break;
-
-                     // Clear URL.
-                     fullUrl = string.Empty;
-                 }
-
-                 // If URL is invalid, return.
-                 if (string.IsNullOrWhiteSpace(fullUrl))
-                     return;
-
-                 // Get build numbers. If empty, ignore the tweet.
-                 var build = Regex.Match(fullUrl, @"\d{5,}").Value;
-                 var buildM = Regex.Match(fullUrl, @"\d{5,}", RegexOptions.RightToLeft).Value;
-                 if (string.IsNullOrWhiteSpace(build))
-                     return;
-
-                 // Log tweet.
-                 client.LogOutput($"TWEET CONFIRMED: NEW BUILD");
-
-                 // Create variables.
-                 var ring = string.Empty;
-                 var platform = string.Empty;
-
-                 // Check for fast or slow, or both.
-                 if (fullUrl.ToLowerInvariant().Contains("skip-ahead"))
-                 {
-                     ring = " to the Skip Ahead ring";
-                 }
-                 else
-                 {
-                     if (tweet.FullText.ToLowerInvariant().Contains("fast") && tweet.FullText.ToLowerInvariant().Contains("slow"))
-                         ring = " to both the Fast and Slow rings";
-                     else if (tweet.FullText.ToLowerInvariant().Contains("fast"))
-                         ring = " to the Fast ring";
-                     else if (tweet.FullText.ToLowerInvariant().Contains("slow"))
-                         ring = " to the Slow ring";
-                 }
-
-                 // Check for PC or mobile, or both.
-                 if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile") && fullUrl.ToLowerInvariant().Contains("server"))
-                     platform = " for PC, Server, and Mobile";
-                 else if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("mobile"))
-                     platform = " for both PC and Mobile";
-                 else if (fullUrl.ToLowerInvariant().Contains("pc") && fullUrl.ToLowerInvariant().Contains("server"))
-                     platform = " for both PC and Server";
-                 else if (fullUrl.ToLowerInvariant().Contains("mobile") && fullUrl.ToLowerInvariant().Contains("server"))
-                     platform = " for both Server and Mobile";
-                 else if (fullUrl.ToLowerInvariant().Contains("pc"))
-                     platform = " for PC";
-                 else if (fullUrl.ToLowerInvariant().Contains("mobile"))
-                     platform = " for Mobile";
-                 else if (fullUrl.ToLowerInvariant().Contains("server"))
-                     platform = " for Server";
-
-                 // Send build to guilds.
-                 foreach (var shard in client.Shards)
-                     SendNewBuildToShard(shard, build, buildM, ring + platform, fullUrl);
-             };
-
-             // Listen for stop.
-             stream.StreamStopped += (s, e) =>
-             {
-                 // Log error.
-                 client.LogOutput($"TWEET STREAM STOPPED: {e.Exception}");
-             };
-
-             // Create timer for POSTing server count.
-             var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCountAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromHours(1));
-
-             // Create timer for game play status of builds.
-             var buildPlayTimer = new Timer(async (e) => await client.UpdateGameAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(30));
-
-             // Start the stream.
-             stream.StartStreamMatchingAllConditions();*/
-
             // Create HTTP client.
             var httpClient = new HttpClient();
 
             // Start checking for new builds.
             var buildTimer = new Timer(async (e) =>
             {
-                // Get latest post.
-                var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed"));
-                var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                              select new BlogEntry()
-                              { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value,
-                                Desc = item.Elements().First(i => i.Name.LocalName == "description").Value };
-                var post = entries.ToList().Where(p => p.Title.ToLowerInvariant().Contains("insider preview build")).FirstOrDefault();
+                BlogEntry post = null;
+                try
+                {
+                    // Get latest post.
+                    var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed"));
+                    var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                                  select new BlogEntry()
+                                  {
+                                      Link = item.Elements().First(i => i.Name.LocalName == "link").Value,
+                                      Title = item.Elements().First(i => i.Name.LocalName == "title").Value,
+                                      Desc = item.Elements().First(i => i.Name.LocalName == "description").Value
+                                  };
+                    post = entries.ToList().Where(p => p.Title.ToLowerInvariant().Contains("insider preview build")).FirstOrDefault();
+                }
+                catch (HttpRequestException ex)
+                {
+                    client.LogOutput($"ERROR GETTING NEW POST: {ex}");
+                    return;
+                }
 
                 // Check if post is a valid insider post.
                 if (post != null)
                 {
-                    // Check if post is newer than our last known one.
+                    // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
+                    if (string.IsNullOrWhiteSpace(client.CurrentUrl))
+                    {
+                        client.CurrentUrl = post.Link;
+                        client.SaveSettings();
+                        client.LogOutput($"SAVED POST AS LATEST: {post.Link}");
+                        return;
+                    }
 
-                    // Announce post.
+                    // Is the latest post the same? If so, no need to announce it.
+                    if (client.CurrentUrl == post.Link)
+                        return;
 
-                    // Get build numbers. If empty, ignore the tweet.
+                    // Get build numbers. If empty, ignore the post.
                     var build = Regex.Match(post.Link, @"\d{5,}").Value;
                     var buildM = Regex.Match(post.Link, @"\d{5,}", RegexOptions.RightToLeft).Value;
                     if (string.IsNullOrWhiteSpace(build))
                         return;
 
-                    // Log tweet.
+                    // Log post.
                     client.LogOutput($"POST CONFIRMED: NEW BUILD");
+
+                    // Save post.
+                    client.CurrentUrl = post.Link;
+                    client.SaveSettings();
 
                     // Create variables.
                     var ring = string.Empty;
@@ -427,6 +289,9 @@ namespace NinjaCatDiscordBot
                     // Send build to guilds.
                     foreach (var shard in client.Shards)
                         SendNewBuildToShard(shard, build, buildM, ring + platform, post.Link);
+
+                    // Update game.
+                    await client.UpdateGameAsync();
                 }
 
             }, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(5));
@@ -435,7 +300,7 @@ namespace NinjaCatDiscordBot
             //var serverCountTimer = new Timer(async (e) => await UpdateSiteServerCountAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromHours(1));
 
             // Create timer for game play status of builds.
-           // var buildPlayTimer = new Timer(async (e) => await client.UpdateGameAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(30));
+            var buildPlayTimer = new Timer(async (e) => await client.UpdateGameAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(30));
 
             // Wait.
             await Task.Delay(-1);
