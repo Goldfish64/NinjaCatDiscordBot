@@ -131,6 +131,8 @@ namespace NinjaCatDiscordBot
         /// </summary>
         public DateTime StartTime { get; } = DateTime.Now;
 
+
+
         #endregion
 
         #region Methods
