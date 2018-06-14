@@ -202,100 +202,104 @@ namespace NinjaCatDiscordBot
             // Start checking for new builds.
             var buildThread = new Thread(new ThreadStart(async () =>
             {
-                BlogEntry post = null;
-                try
+                while (true)
                 {
-                    // Get latest post.
-                    var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed"));
-                    var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                                  select new BlogEntry()
-                                  {
-                                      Link = item.Elements().First(i => i.Name.LocalName == "link").Value,
-                                      Title = item.Elements().First(i => i.Name.LocalName == "title").Value,
-                                      Desc = item.Elements().First(i => i.Name.LocalName == "description").Value
-                                  };
-                    post = entries.ToList().Where(p => p.Title.ToLowerInvariant().Contains("insider preview build")).FirstOrDefault();
-                }
-                catch (HttpRequestException ex)
-                {
-                    client.LogOutput($"ERROR GETTING NEW POST: {ex}");
-                    return;
-                }
+                    // Wait 5 minutes.
+                    await Task.Delay(TimeSpan.FromMinutes(5));
 
-                // Check if post is a valid insider post.
-                if (post != null)
-                {
-                    // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
-                    if (string.IsNullOrWhiteSpace(client.CurrentUrl))
+                    client.LogOutput($"In blog post loop");
+                    BlogEntry post = null;
+                    try
                     {
+                        // Get latest post.
+                        var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed"));
+                        var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                                      select new BlogEntry()
+                                      {
+                                          Link = item.Elements().First(i => i.Name.LocalName == "link").Value,
+                                          Title = item.Elements().First(i => i.Name.LocalName == "title").Value,
+                                          Desc = item.Elements().First(i => i.Name.LocalName == "description").Value
+                                      };
+                        post = entries.ToList().Where(p => p.Title.ToLowerInvariant().Contains("insider preview build")).FirstOrDefault();
+                    }
+                    catch (HttpRequestException ex)
+                    {
+                        client.LogOutput($"ERROR GETTING NEW POST: {ex}");
+                        continue;
+                    }
+
+                    // Check if post is a valid insider post.
+                    if (post != null)
+                    {
+                        // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
+                        if (string.IsNullOrWhiteSpace(client.CurrentUrl))
+                        {
+                            client.CurrentUrl = post.Link;
+                            client.SaveSettings();
+                            client.LogOutput($"SAVED POST AS LATEST: {post.Link}");
+                            continue;
+                        }
+
+                        // Is the latest post the same? If so, no need to announce it.
+                        if (client.CurrentUrl == post.Link)
+                            continue;
+
+                        // Get build numbers. If empty, ignore the post.
+                        var build = Regex.Match(post.Link, @"\d{5,}").Value;
+                        var buildM = Regex.Match(post.Link, @"\d{5,}", RegexOptions.RightToLeft).Value;
+                        if (string.IsNullOrWhiteSpace(build))
+                            continue;
+
+                        // Log post.
+                        client.LogOutput($"POST CONFIRMED: NEW BUILD");
+
+                        // Save post.
                         client.CurrentUrl = post.Link;
                         client.SaveSettings();
-                        client.LogOutput($"SAVED POST AS LATEST: {post.Link}");
-                        return;
+
+                        // Create variables.
+                        var ring = string.Empty;
+                        var platform = string.Empty;
+
+                        // Check for fast or slow, or both.
+                        if (post.Link.ToLowerInvariant().Contains("skip-ahead"))
+                        {
+                            ring = " to the Skip Ahead ring";
+                        }
+                        else
+                        {
+                            if (post.Desc.ToLowerInvariant().Contains("fast") && post.Desc.ToLowerInvariant().Contains("slow"))
+                                ring = " to both the Fast and Slow rings";
+                            else if (post.Desc.ToLowerInvariant().Contains("fast"))
+                                ring = " to the Fast ring";
+                            else if (post.Desc.ToLowerInvariant().Contains("slow"))
+                                ring = " to the Slow ring";
+                        }
+
+                        // Check for PC or mobile, or both.
+                        if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("mobile") && post.Link.ToLowerInvariant().Contains("server"))
+                            platform = " for PC, Server, and Mobile";
+                        else if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("mobile"))
+                            platform = " for both PC and Mobile";
+                        else if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("server"))
+                            platform = " for both PC and Server";
+                        else if (post.Link.ToLowerInvariant().Contains("mobile") && post.Link.ToLowerInvariant().Contains("server"))
+                            platform = " for both Server and Mobile";
+                        else if (post.Link.ToLowerInvariant().Contains("pc"))
+                            platform = " for PC";
+                        else if (post.Link.ToLowerInvariant().Contains("mobile"))
+                            platform = " for Mobile";
+                        else if (post.Link.ToLowerInvariant().Contains("server"))
+                            platform = " for Server";
+
+                        // Send build to guilds.
+                        foreach (var shard in client.Shards)
+                            SendNewBuildToShard(shard, build, buildM, ring + platform, post.Link);
+
+                        // Update game.
+                        await client.UpdateGameAsync();
                     }
-
-                    // Is the latest post the same? If so, no need to announce it.
-                    if (client.CurrentUrl == post.Link)
-                        return;
-
-                    // Get build numbers. If empty, ignore the post.
-                    var build = Regex.Match(post.Link, @"\d{5,}").Value;
-                    var buildM = Regex.Match(post.Link, @"\d{5,}", RegexOptions.RightToLeft).Value;
-                    if (string.IsNullOrWhiteSpace(build))
-                        return;
-
-                    // Log post.
-                    client.LogOutput($"POST CONFIRMED: NEW BUILD");
-
-                    // Save post.
-                    client.CurrentUrl = post.Link;
-                    client.SaveSettings();
-
-                    // Create variables.
-                    var ring = string.Empty;
-                    var platform = string.Empty;
-
-                    // Check for fast or slow, or both.
-                    if (post.Link.ToLowerInvariant().Contains("skip-ahead"))
-                    {
-                        ring = " to the Skip Ahead ring";
-                    }
-                    else
-                    {
-                        if (post.Desc.ToLowerInvariant().Contains("fast") && post.Desc.ToLowerInvariant().Contains("slow"))
-                            ring = " to both the Fast and Slow rings";
-                        else if (post.Desc.ToLowerInvariant().Contains("fast"))
-                            ring = " to the Fast ring";
-                        else if (post.Desc.ToLowerInvariant().Contains("slow"))
-                            ring = " to the Slow ring";
-                    }
-
-                    // Check for PC or mobile, or both.
-                    if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("mobile") && post.Link.ToLowerInvariant().Contains("server"))
-                        platform = " for PC, Server, and Mobile";
-                    else if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("mobile"))
-                        platform = " for both PC and Mobile";
-                    else if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("server"))
-                        platform = " for both PC and Server";
-                    else if (post.Link.ToLowerInvariant().Contains("mobile") && post.Link.ToLowerInvariant().Contains("server"))
-                        platform = " for both Server and Mobile";
-                    else if (post.Link.ToLowerInvariant().Contains("pc"))
-                        platform = " for PC";
-                    else if (post.Link.ToLowerInvariant().Contains("mobile"))
-                        platform = " for Mobile";
-                    else if (post.Link.ToLowerInvariant().Contains("server"))
-                        platform = " for Server";
-
-                    // Send build to guilds.
-                    foreach (var shard in client.Shards)
-                        SendNewBuildToShard(shard, build, buildM, ring + platform, post.Link);
-
-                    // Update game.
-                    await client.UpdateGameAsync();
                 }
-
-                // Wait 5 minutes.
-                await Task.Delay(TimeSpan.FromMinutes(5));
             }));
             buildThread.Start();
 
@@ -305,12 +309,15 @@ namespace NinjaCatDiscordBot
             // Create thread for POSTing server count and updating game.
             var serverCountThread = new Thread(new ThreadStart(async () =>
             {
-                // Update count and game.
-                await UpdateSiteServerCountAsync();
-                await client.UpdateGameAsync();
+                while (true)
+                {
+                    // Update count and game.
+                    await UpdateSiteServerCountAsync();
+                    await client.UpdateGameAsync();
 
-                // Wait an hour.
-                await Task.Delay(TimeSpan.FromHours(1));
+                    // Wait an hour.
+                    await Task.Delay(TimeSpan.FromHours(1));
+                }
             }));
             serverCountThread.Start();
 
