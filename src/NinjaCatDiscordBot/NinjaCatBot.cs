@@ -87,61 +87,10 @@ namespace NinjaCatDiscordBot
                 if (await CheckBotGuild(guild))
                     return;
 
-                // Create variable for speaking channel mention.
-                var speakingChannel = string.Empty;
-
-                // Get speaking channel.
-                var channel = client.GetSpeakingChannelForSocketGuild(guild);
-
                 // Update server count.
                 await UpdateSiteServerCountAsync();
 
-                // Does the bot have permission to message? If not return.
-                if (!channel.Guild.CurrentUser.GetPermissions(channel).SendMessages)
-                    return;
-
-                // Get the mention if speaking is enabled.
-                if (channel != null)
-                    speakingChannel = channel.Mention;
-
-                // Bot is typing in default channel.
-                await channel.TriggerTypingAsync();
-
-                // Pause for realism.
-                await Task.Delay(TimeSpan.FromSeconds(1));
-
                 // Dev began Oct 2. 2016.
-                // Is a speaking channel set?
-                if (!string.IsNullOrEmpty(speakingChannel))
-                {
-                    // Select and send message.
-                    switch (client.GetRandomNumber(2))
-                    {
-                        default:
-                            await channel.SendMessageAsync($"{Constants.AboutMessage1}\n\n" +
-                                $"By default, I'll speak in {speakingChannel}, but you can change it with the **{Constants.CommandPrefix}{Constants.SetChannelCommand}** command.");
-                            break;
-
-                        case 1:
-                            await channel.SendMessageAsync($"{Constants.AboutMessage2}\n\n" +
-                                $"I'll speak in {speakingChannel} by default, but it can be changed with the **{Constants.CommandPrefix}{Constants.SetChannelCommand}** command.");
-                            break;
-                    }
-                }
-                else
-                {
-                    // Select and send message.
-                    switch (client.GetRandomNumber(2))
-                    {
-                        default:
-                            await channel.SendMessageAsync(Constants.AboutMessage1);
-                            break;
-
-                        case 1:
-                            await channel.SendMessageAsync(Constants.AboutMessage2);
-                            break;
-                    }
-                }
             };
 
             // Update count on guild leave.
