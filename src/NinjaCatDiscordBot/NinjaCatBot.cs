@@ -77,6 +77,7 @@ namespace NinjaCatDiscordBot
             // Load commands from assembly.
             await commands.AddModulesAsync(Assembly.GetEntryAssembly());
 
+#if !PRIVATE
             // Certain things are to be done when the bot joins a guild.
             client.JoinedGuild += async (guild) =>
             {
@@ -95,6 +96,7 @@ namespace NinjaCatDiscordBot
 
             // Update count on guild leave.
             client.LeftGuild += async (guild) => await UpdateSiteServerCountAsync();
+#endif
 
             // Listen for messages.
             client.MessageReceived += async (message) =>
@@ -132,6 +134,7 @@ namespace NinjaCatDiscordBot
             await client.LoginAsync(TokenType.Bot, Credentials.DiscordToken);
             await client.StartAsync();
 
+#if !PRIVATE
             // Check for bot guilds.
             foreach (var shard in client.Shards)
             {
@@ -144,6 +147,7 @@ namespace NinjaCatDiscordBot
                 };
 #pragma warning restore 4014
             }
+#endif
 
             // Create HTTP client.
             var httpClient = new HttpClient();
@@ -261,7 +265,9 @@ namespace NinjaCatDiscordBot
                 while (true)
                 {
                     // Update count and game.
+#if !PRIVATE
                     await UpdateSiteServerCountAsync();
+#endif
                     await client.UpdateGameAsync();
 
                     // Wait an hour.
@@ -274,6 +280,7 @@ namespace NinjaCatDiscordBot
             await Task.Delay(-1);
         }
 
+#if !PRIVATE
         /// <summary>
         /// Updates the site server count.
         /// </summary>
@@ -306,6 +313,7 @@ namespace NinjaCatDiscordBot
                 client.LogOutput($"FAILED UPDATING SERVER COUNT: {ex}");
             }
         }
+#endif
 
         private async void SendNewBuildToShard(DiscordSocketClient shard, string build, string buildM, string type, string url)
         {

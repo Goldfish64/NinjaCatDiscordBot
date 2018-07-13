@@ -43,16 +43,21 @@ namespace NinjaCatDiscordBot
         public const ulong BotsGuildId = 110373943822540800;
         public const string OwnerName = "Goldfish64";
 
-#if DEBUG
-        public const string AppName = "Ninja Cat beta (DEBUG)";
-        public const string InviteUrl = "<https://discordapp.com/oauth2/authorize?permissions=19456&client_id=238475402937499648&scope=bot>";
-        public const string CommandPrefix = "$njd-";
-        public const int ShardCount = 2;
-#else
+#if PRIVATE
+        public const string AppName = "Ninja Cat (Private)";
+        public const string InviteUrl = "<https://discordapp.com/oauth2/authorize?permissions=19456&client_id=232369430456172545&scope=bot>";
+        public const string CommandPrefix = "$nj-";
+        public const int ShardCount = 1;
+#elif RELEASE
         public const string AppName = "Ninja Cat";
         public const string InviteUrl = "<https://discordapp.com/oauth2/authorize?permissions=19456&client_id=232369430456172545&scope=bot>";
         public const string CommandPrefix = "$nj-";
         public const int ShardCount = 6;
+#else
+        public const string AppName = "Ninja Cat beta (DEBUG)";
+        public const string InviteUrl = "<https://discordapp.com/oauth2/authorize?permissions=19456&client_id=238475402937499648&scope=bot>";
+        public const string CommandPrefix = "$njd-";
+        public const int ShardCount = 2;
 #endif
 
         public const string AboutCommand = "about";
