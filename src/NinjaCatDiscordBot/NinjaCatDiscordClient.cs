@@ -348,19 +348,19 @@ namespace NinjaCatDiscordBot
                 switch (type)
                 {
                     case BuildType.NormalPc:
-                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && !p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
                         break;
 
                     case BuildType.Mobile:
-                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("mobile") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("mobile") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
                         break;
 
                     case BuildType.Server:
-                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
                         break;
 
                     case BuildType.SkipAheadPc:
-                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
                         break;
                 }
                 if (post != null)

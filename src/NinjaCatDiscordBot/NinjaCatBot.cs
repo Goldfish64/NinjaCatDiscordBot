@@ -169,7 +169,7 @@ namespace NinjaCatDiscordBot
                                           Title = item.Elements().First(i => i.Name.LocalName == "title").Value,
                                           Desc = item.Elements().First(i => i.Name.LocalName == "description").Value
                                       };
-                        post = entries.ToList().Where(p => p.Title.ToLowerInvariant().Contains("insider preview build")).FirstOrDefault();
+                        post = entries.ToList().Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build")).FirstOrDefault();
                     }
                     catch (HttpRequestException ex)
                     {
