@@ -41,6 +41,7 @@ namespace NinjaCatDiscordBot
         public const string UserName = "Ninja Cat";
         public const ulong OwnerId = 191330317439598593;
         public const ulong BotsGuildId = 110373943822540800;
+        public const ulong MsGuildId = 150662382874525696;
         public const string OwnerName = "Goldfish64";
 
 #if PRIVATE

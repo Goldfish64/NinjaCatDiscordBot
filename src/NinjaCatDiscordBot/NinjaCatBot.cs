@@ -158,7 +158,7 @@ namespace NinjaCatDiscordBot
                 while (true)
                 {
                     // Wait 5 minutes.
-                    await Task.Delay(TimeSpan.FromMinutes(5));
+                    await Task.Delay(TimeSpan.FromMinutes(1));
 
                     client.LogOutput($"In blog post loop");
                     BlogEntry post = null;
@@ -315,103 +315,118 @@ namespace NinjaCatDiscordBot
         }
 #endif
 
+        private async Task SendBuildToGuild(DiscordSocketClient shard, SocketGuild guild, string build, string buildM, string type, string url)
+        {
+            // Get channel.
+            var channel = client.GetSpeakingChannelForSocketGuild(guild);
+
+            // If the channel is null, continue on to the next guild.
+            if (channel == null)
+            {
+                client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
+                return;
+            }
+
+            // Verify we have permission to speak.
+            if (guild.CurrentUser?.GetPermissions(channel).SendMessages != true)
+            {
+                client.LogOutput($"ROLLING OVER SERVER (NO PERMS) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
+                return;
+            }
+
+            // Get ping role.
+            var role = client.GetSpeakingRoleForIGuild(guild);
+            var roleSkip = client.GetSpeakingRoleSkipForIGuild(guild);
+            if (type.ToLowerInvariant().Contains("skip ahead") && roleSkip != null)
+                role = roleSkip;
+            var roleText = string.Empty;
+
+            // Does the role exist, and should we ping?
+            if (!type.ToLowerInvariant().Contains("server") && role != null)
+                roleText = $"{role.Mention} ";
+
+            try
+            {
+                // Check if the role is mentionable.
+                // If not, attempt to make it mentionable, and revert the setting after the message is sent.
+                var mentionable = role?.IsMentionable;
+                if (mentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
+                    await role.ModifyAsync((e) => e.Mentionable = true);
+
+                // Wait a second.
+                await Task.Delay(TimeSpan.FromSeconds(1));
+
+                // Send typing message.
+                await channel.TriggerTypingAsync();
+
+                // Pause for realism.
+                await Task.Delay(TimeSpan.FromSeconds(1));
+
+                // Select and send message.
+                if (build != buildM)
+                {
+                    switch (client.GetRandomNumber(3))
+                    {
+                        default:
+                            await channel.SendMessageAsync($"{roleText}Yay! Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            break;
+
+                        case 1:
+                            await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            break;
+
+                        case 2:
+                            await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (client.GetRandomNumber(3))
+                    {
+                        default:
+                            await channel.SendMessageAsync($"{roleText}Yay! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            break;
+
+                        case 1:
+                            await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            break;
+
+                        case 2:
+                            await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            break;
+                    }
+                }
+
+                // Revert mentionable setting.
+                if (mentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
+                    await role.ModifyAsync((e) => e.Mentionable = false);
+            }
+            catch (Exception ex)
+            {
+                client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1}): {ex}");
+            }
+
+            // Log server.
+            client.LogOutput($"SPOKEN IN SERVER: {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1})");
+        }
+
         private async void SendNewBuildToShard(DiscordSocketClient shard, string build, string buildM, string type, string url)
         {
+            // If the MS server is in this shard, announce there first.
+            var msGuild = shard.Guilds.SingleOrDefault(g => g.Id == Constants.MsGuildId);
+            if (msGuild != null)
+                await SendBuildToGuild(shard, msGuild, build, buildM, type, url);
+
             // Announce in the specified channel of each guild.
             foreach (var guild in shard.Guilds)
             {
-                // Get channel.
-                var channel = client.GetSpeakingChannelForSocketGuild(guild);
-
-                // If the channel is null, continue on to the next guild.
-                if (channel == null)
-                {
-                    client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
+                // Skip MS guild.
+                if (guild.Id == Constants.MsGuildId)
                     continue;
-                }
 
-                // Verify we have permission to speak.
-                if (guild.CurrentUser?.GetPermissions(channel).SendMessages != true)
-                {
-                    client.LogOutput($"ROLLING OVER SERVER (NO PERMS) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
-                    continue;
-                }
-
-                // Get ping role.
-                var role = client.GetSpeakingRoleForIGuild(guild);
-                var roleSkip = client.GetSpeakingRoleSkipForIGuild(guild);
-                if (type.ToLowerInvariant().Contains("skip ahead") && roleSkip != null)
-                    role = roleSkip;
-                var roleText = string.Empty;
-
-                // Does the role exist, and should we ping?
-                if (!type.ToLowerInvariant().Contains("server") && role != null)
-                    roleText = $"{role.Mention} ";
-
-                try
-                {
-                    // Check if the role is mentionable.
-                    // If not, attempt to make it mentionable, and revert the setting after the message is sent.
-                    var mentionable = role?.IsMentionable;
-                    if (mentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
-                        await role.ModifyAsync((e) => e.Mentionable = true);
-
-                    // Wait a second.
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-
-                    // Send typing message.
-                    await channel.TriggerTypingAsync();
-
-                    // Pause for realism.
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-
-                    // Select and send message.
-                    if (build != buildM)
-                    {
-                        switch (client.GetRandomNumber(3))
-                        {
-                            default:
-                                await channel.SendMessageAsync($"{roleText}Yay! Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
-                                break;
-
-                            case 1:
-                                await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
-                                break;
-
-                            case 2:
-                                await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        switch (client.GetRandomNumber(3))
-                        {
-                            default:
-                                await channel.SendMessageAsync($"{roleText}Yay! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
-                                break;
-
-                            case 1:
-                                await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
-                                break;
-
-                            case 2:
-                                await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
-                                break;
-                        }
-                    }
-
-                    // Revert mentionable setting.
-                    if (mentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
-                        await role.ModifyAsync((e) => e.Mentionable = false);
-                }
-                catch (Exception ex)
-                {
-                    client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1}): {ex}");
-                }
-
-                // Log server.
-                client.LogOutput($"SPOKEN IN SERVER: {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1})");
+                // Send to guild.
+                await SendBuildToGuild(shard, guild, build, buildM, type, url);
             }
         }
 
