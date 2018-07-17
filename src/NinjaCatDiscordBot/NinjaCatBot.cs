@@ -368,7 +368,7 @@ namespace NinjaCatDiscordBot
                     switch (client.GetRandomNumber(3))
                     {
                         default:
-                            await channel.SendMessageAsync($"{roleText}Yay! Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
                             break;
 
                         case 1:
@@ -385,7 +385,7 @@ namespace NinjaCatDiscordBot
                     switch (client.GetRandomNumber(3))
                     {
                         default:
-                            await channel.SendMessageAsync($"{roleText}Yay! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                            await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
                             break;
 
                         case 1:
