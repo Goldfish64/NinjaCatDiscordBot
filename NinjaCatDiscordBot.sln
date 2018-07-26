@@ -7,16 +7,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{372F78A3-5DB
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{96556DD6-6382-4832-BB1D-AC2188070B69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NinjaCatDiscordBot", "src\NinjaCatDiscordBot\NinjaCatDiscordBot.csproj", "{1B81B399-9F00-450F-AE4A-DCC29F561136}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NinjaCatDiscordBot", "src\NinjaCatDiscordBot\NinjaCatDiscordBot.csproj", "{1B81B399-9F00-450F-AE4A-DCC29F561136}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Private|Any CPU = Private|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{1B81B399-9F00-450F-AE4A-DCC29F561136}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1B81B399-9F00-450F-AE4A-DCC29F561136}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B81B399-9F00-450F-AE4A-DCC29F561136}.Private|Any CPU.ActiveCfg = Private|Any CPU
+		{1B81B399-9F00-450F-AE4A-DCC29F561136}.Private|Any CPU.Build.0 = Private|Any CPU
 		{1B81B399-9F00-450F-AE4A-DCC29F561136}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1B81B399-9F00-450F-AE4A-DCC29F561136}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

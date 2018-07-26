@@ -10,6 +10,7 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <Configurations>Debug;Release;Private</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,7 +18,6 @@
     <PackageReference Include="Discord.Net.Core" Version="1.0.2" />
     <PackageReference Include="Discord.Net.WebSocket" Version="1.0.2" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.6" />
-    <PackageReference Include="TweetinviAPI" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>

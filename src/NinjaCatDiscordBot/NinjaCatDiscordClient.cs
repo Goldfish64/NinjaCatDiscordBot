@@ -70,6 +70,10 @@ namespace NinjaCatDiscordBot
                 return Task.CompletedTask;
             };
 
+            // Get latest post URL, if there is one.
+            if (File.Exists(Constants.LatestPostFileName))
+                CurrentUrl = File.ReadAllText(Constants.LatestPostFileName);
+
             // Create temporary dictionary.
             var channels = new Dictionary<ulong, ulong>();
 
@@ -130,6 +134,11 @@ namespace NinjaCatDiscordBot
         /// Gets the time the client started.
         /// </summary>
         public DateTime StartTime { get; } = DateTime.Now;
+
+        /// <summary>
+        /// Gets or sets the current post URL. Used for keeping track of new posts.
+        /// </summary>
+        public string CurrentUrl { get; set; } = "";
 
         #endregion
 
@@ -295,6 +304,9 @@ namespace NinjaCatDiscordBot
         {
             lock (lockObject)
             {
+                // Save latest post URL.
+                File.WriteAllText(Constants.LatestPostFileName, CurrentUrl);
+
                 // Serialize settings to JSON.
                 File.WriteAllText(Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
                 File.WriteAllText(Constants.RolesFileName, JsonConvert.SerializeObject(SpeakingRoles));
@@ -336,19 +348,19 @@ namespace NinjaCatDiscordBot
                 switch (type)
                 {
                     case BuildType.NormalPc:
-                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && !p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
                         break;
 
                     case BuildType.Mobile:
-                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("mobile") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("mobile") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
                         break;
 
                     case BuildType.Server:
-                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
                         break;
 
                     case BuildType.SkipAheadPc:
-                        post = list.Where(p => p.Title.ToLowerInvariant().Contains("insider preview build") && p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
                         break;
                 }
                 if (post != null)
