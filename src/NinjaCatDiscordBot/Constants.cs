@@ -103,6 +103,8 @@ namespace NinjaCatDiscordBot
         public const string TestPingCommand = "testping";
         public const string TestPingCommandDesc = "tests my pinging abilities";
 
+        public const string JumboCommand = "jumbo";
+
         public static readonly string AboutMessage1 =
             $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
             $"I was created by **{OwnerName}** with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +

@@ -72,7 +72,6 @@ namespace NinjaCatDiscordBot
 
             // Create command service and map.
             var commands = new CommandService();
-            var commandMap = new ServiceCollection();
 
             // Load commands from assembly.
             await commands.AddModulesAsync(Assembly.GetEntryAssembly());

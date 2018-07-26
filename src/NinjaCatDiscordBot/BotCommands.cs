@@ -26,7 +26,9 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot
@@ -201,6 +203,27 @@ namespace NinjaCatDiscordBot
             // Get client.
             var client = await StartTypingAndGetClient();
             await ReplyAsync("<a:trexa:393897398881222656>");
+        }
+
+        /// <summary>
+        /// Jumbo.
+        /// </summary>
+        [Command(Constants.JumboCommand)]
+        private async Task SendJumboAsync(params string[] emotes) {
+            var webClient = new WebClient();
+
+            foreach (var emote in emotes) {
+                if (emote.LastIndexOf(':') > 0) {
+                    var idStr = emote.Substring(emote.LastIndexOf(':') + 1);
+                    idStr = idStr.Substring(0, idStr.Length - 1);
+                    if (ulong.TryParse(idStr, out ulong emoteId)) {
+                        var isGif = emote.StartsWith("<a:");
+                        var data = webClient.DownloadData($"https://cdn.discordapp.com/emojis/{emoteId}" + (isGif ? ".gif" : ".png"));
+                        await Context.Channel.SendFileAsync(new MemoryStream(data), "emote" + (isGif ? ".gif" : ".png"));
+                        return;
+                    }
+                }
+            }        
         }
 
         /// <summary>
