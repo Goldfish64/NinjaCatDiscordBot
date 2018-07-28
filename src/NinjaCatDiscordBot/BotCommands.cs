@@ -210,8 +210,22 @@ namespace NinjaCatDiscordBot
         /// </summary>
         [Command(Constants.JumboCommand)]
         private async Task SendJumboAsync(params string[] emotes) {
+            // Get client.
+            var client = Context.Client as NinjaCatDiscordClient;
+
+            // Check perms if on server.
+            if (Context.Guild != null) {
+                var role = client.GetJumboRoleForIGuild(Context.Guild);
+                var user = Context.User as SocketGuildUser;
+
+                if (role != null && !user.Roles.Contains(role))
+                    return;
+            } 
+
+            // Create web client.
             var webClient = new WebClient();
 
+            // Get first emote.
             foreach (var emote in emotes) {
                 if (emote.LastIndexOf(':') > 0) {
                     var idStr = emote.Substring(emote.LastIndexOf(':') + 1);

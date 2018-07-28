@@ -36,6 +36,7 @@ namespace NinjaCatDiscordBot
         public const string ChannelsFileName = "nj-channels.json";
         public const string RolesFileName = "nj-roles.json";
         public const string RolesSkipFileName = "nj-roles-skip.json";
+        public const string RolesJumboFileName = "nj-roles-jumbo.json";
 
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
         public const string UserName = "Ninja Cat";
@@ -98,6 +99,8 @@ namespace NinjaCatDiscordBot
         public const string RoleSkipCommandDesc = "gets the role I ping when new skip ahead builds are released";
         public const string SetRoleSkipCommand = "setskiprole";
         public const string SetRoleSkipCommandDesc = "sets the role I ping when new skip ahead builds are released; specify nothing to disable pings";
+        public const string RoleJumboCommand = "rolejumbo";
+        public const string SetRoleJumboCommand = "setjumborole";
         public const string TestPermsCommand = "testperms";
         public const string TestPermsCommandDesc = "tests my speaking channel permissions";
         public const string TestPingCommand = "testping";

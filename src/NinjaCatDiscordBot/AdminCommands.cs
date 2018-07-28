@@ -177,6 +177,36 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
+        /// Gets the role required for jumbo.
+        /// </summary>
+        [Command(Constants.RoleJumboCommand)]
+        public async Task GetRoleJumbo() {
+            // Get client.
+            var client = await StartTypingAndGetClient();
+
+            // Get guild. If null show error.
+            var guild = (Context.Channel as IGuildChannel)?.Guild;
+            if (guild == null) {
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
+                return;
+            }
+
+            // If the guild is the Bots server, never speak.
+            if (guild.Id == Constants.BotsGuildId) {
+                // Send message.
+                await ReplyAsync($"Because this is the bots server, I am off.");
+                return;
+            }
+
+            // Get role.
+            var role = client.GetJumboRoleForIGuild(guild);
+            if (role == null)
+                await ReplyAsync($"I don't require a special role for the jumbo command.");
+            else
+                await ReplyAsync($"To use the jumbo command, you must have **{role.Name}**.");
+        }
+
+        /// <summary>
         /// Sets the bot's speaking channel.
         /// </summary>
         /// <param name="channel">The new channel.</param>
@@ -332,6 +362,53 @@ namespace NinjaCatDiscordBot
                 client.SpeakingRolesSkip.TryRemove(guild.Id, out ulong outVar);
                 client.SaveSettings();
                 await ReplyAsync($"I'll no longer ping a role when new skip ahead builds come out.");
+            }
+        }
+
+        /// <summary>
+        /// Sets the role that is pinged when new skip ahead builds are released.
+        /// </summary>
+        /// <param name="role">The new role. A null value will disable role pinging.</param>
+        [Command(Constants.SetRoleJumboCommand)]
+        public async Task SetRoleJumboAsync(IRole role = null) {
+            // Get client.
+            var client = await StartTypingAndGetClient();
+
+            // Get guild. If null show error.
+            var guild = (Context.Channel as IGuildChannel)?.Guild;
+            if (guild == null) {
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
+                return;
+            }
+
+            // If the guild is the Bots server, never speak.
+            if (guild.Id == Constants.BotsGuildId) {
+                // Send message.
+                await ReplyAsync($"Because this is the bots server, I'm off.");
+                return;
+            }
+
+            // Get the user.
+            var user = Context.User as IGuildUser;
+
+            // If the user is null, lacks the manage server permission, or is not master, show error.
+            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true) {
+                await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the jumbo role.");
+                return;
+            }
+
+            // If role is valid, save it. Otherwise remove the role.
+            if (role != null) {
+                // Save role.
+                client.JumboRoles[guild.Id] = role.Id;
+                client.SaveSettings();
+                await ReplyAsync($"I'll now require users to have **{role.Name}** in order to use the jumbo command.");
+            }
+            else {
+                // Remove role.
+                client.JumboRoles.TryRemove(guild.Id, out ulong outVar);
+                client.SaveSettings();
+                await ReplyAsync($"I'll no longer require a role for the jumbo command.");
             }
         }
 
