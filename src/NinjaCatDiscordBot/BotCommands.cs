@@ -388,15 +388,15 @@ namespace NinjaCatDiscordBot
             switch (client.GetRandomNumber(3))
             {
                 default:
-                    await ReplyAsync("Here are my stats:", embed: embed);
+                    await ReplyAsync("Here are my stats:", embed: embed.Build());
                     break;
 
                 case 1:
-                    await ReplyAsync("Here you go:", embed: embed);
+                    await ReplyAsync("Here you go:", embed: embed.Build());
                     break;
 
                 case 2:
-                    await ReplyAsync("My information awaits:", embed: embed);
+                    await ReplyAsync("My information awaits:", embed: embed.Build());
                     break;
             }
         }
