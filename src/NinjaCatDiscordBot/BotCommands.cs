@@ -28,7 +28,7 @@ using Discord.WebSocket;
 using System;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot
@@ -38,14 +38,7 @@ namespace NinjaCatDiscordBot
     /// </summary>
     public sealed partial class CommandModule : ModuleBase
     {
-        #region Constructor
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CommandModule"/> class.
-        /// </summary>
-        public CommandModule() { }
-
-        #endregion
+        private HttpClient _client = new HttpClient();
 
         #region Methods
 
@@ -209,6 +202,7 @@ namespace NinjaCatDiscordBot
         /// Jumbo.
         /// </summary>
         [Command(Constants.JumboCommand)]
+        [Alias(Constants.JumboCommandAlias)]
         private async Task SendJumboAsync(params string[] emotes) {
             // Get client.
             var client = Context.Client as NinjaCatDiscordClient;
@@ -220,24 +214,31 @@ namespace NinjaCatDiscordBot
 
                 if (role != null && !user.Roles.Contains(role))
                     return;
-            } 
+            }
 
-            // Create web client.
-            var webClient = new WebClient();
+            foreach (var emote in emotes)
+            {
+                try
+                {
+                    string emoteUrl = null;
 
-            // Get first emote.
-            foreach (var emote in emotes) {
-                if (emote.LastIndexOf(':') > 0) {
-                    var idStr = emote.Substring(emote.LastIndexOf(':') + 1);
-                    idStr = idStr.Substring(0, idStr.Length - 1);
-                    if (ulong.TryParse(idStr, out ulong emoteId)) {
-                        var isGif = emote.StartsWith("<a:");
-                        var data = webClient.DownloadData($"https://cdn.discordapp.com/emojis/{emoteId}" + (isGif ? ".gif" : ".png"));
-                        await Context.Channel.SendFileAsync(new MemoryStream(data), "emote" + (isGif ? ".gif" : ".png"));
-                        return;
+                    if (Emote.TryParse(emote, out Emote found))
+                    {
+                        emoteUrl = found.Url;
                     }
+                    else
+                    {
+                        int codepoint = Char.ConvertToUtf32(emote, 0);
+                        string codepointHex = codepoint.ToString("X").ToLower();
+
+                        emoteUrl = $"https://raw.githubusercontent.com/twitter/twemoji/gh-pages/2/72x72/{codepointHex}.png";
+                    }
+
+                    var req = await _client.GetStreamAsync(emoteUrl);
+                    await Context.Channel.SendFileAsync(req, Path.GetFileName(emoteUrl));
                 }
-            }        
+                catch (HttpRequestException) { } // Failed to download emote, skip it
+            }
         }
 
         /// <summary>
