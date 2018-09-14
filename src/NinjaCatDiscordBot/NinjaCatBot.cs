@@ -159,7 +159,7 @@ namespace NinjaCatDiscordBot
                     // Wait 5 minutes.
                     await Task.Delay(TimeSpan.FromMinutes(1));
 
-                    client.LogOutput($"In blog post loop");
+                    //client.LogOutput($"In blog post loop");
                     BlogEntry post = null;
                     try
                     {
@@ -214,7 +214,7 @@ namespace NinjaCatDiscordBot
                         var platform = string.Empty;
 
                         // Check for fast or slow, or both.
-                        if (post.Link.ToLowerInvariant().Contains("skip-ahead"))
+                        if (post.Desc.ToLowerInvariant().Contains("skip ahead"))
                         {
                             ring = " to the Skip Ahead ring";
                         }

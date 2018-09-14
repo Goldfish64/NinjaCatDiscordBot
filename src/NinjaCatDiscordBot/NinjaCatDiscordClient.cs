@@ -391,26 +391,27 @@ namespace NinjaCatDiscordBot
                 var doc = XDocument.Parse(await client.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged={page}"));
                 var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
                             select new BlogEntry()
-                            { Link = item.Elements().First(i => i.Name.LocalName == "link").Value, Title = item.Elements().First(i => i.Name.LocalName == "title").Value };
+                            { Link = item.Elements().First(i => i.Name.LocalName == "link").Value,
+                                Title = item.Elements().First(i => i.Name.LocalName == "title").Value, Desc = item.Elements().First(i => i.Name.LocalName == "description").Value };
                 var list = entries.ToList();
 
                 // Get post.
                 switch (type)
                 {
                     case BuildType.NormalPc:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && !p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
                         break;
 
                     case BuildType.Mobile:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("mobile") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("mobile") && !p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
                         break;
 
                     case BuildType.Server:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("server") && !p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("server") && !p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
                         break;
 
                     case BuildType.SkipAheadPc:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("skip")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
                         break;
                 }
                 if (post != null)

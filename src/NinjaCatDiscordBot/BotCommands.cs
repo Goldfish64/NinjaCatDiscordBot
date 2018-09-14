@@ -216,8 +216,13 @@ namespace NinjaCatDiscordBot
                     return;
             }
 
+            // Iterate through each emote and jumbo it, up to the max of 2.
+            int limit = 0;
             foreach (var emote in emotes)
             {
+                if (limit >= 2)
+                    return;
+
                 try
                 {
                     string emoteUrl = null;
@@ -238,6 +243,8 @@ namespace NinjaCatDiscordBot
                     await Context.Channel.SendFileAsync(req, Path.GetFileName(emoteUrl));
                 }
                 catch (HttpRequestException) { } // Failed to download emote, skip it
+
+                limit++;
             }
         }
 
