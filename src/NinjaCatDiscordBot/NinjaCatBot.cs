@@ -74,7 +74,7 @@ namespace NinjaCatDiscordBot
             var commands = new CommandService();
 
             // Load commands from assembly.
-            await commands.AddModulesAsync(Assembly.GetEntryAssembly());
+            await commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
 
 #if !PRIVATE
             // Certain things are to be done when the bot joins a guild.
@@ -111,7 +111,7 @@ namespace NinjaCatDiscordBot
                 // Attempt to parse a command.
                 if (msg.HasStringPrefixLower(Constants.CommandPrefix, ref pos))
                 {
-                    var result = await commands.ExecuteAsync(new CommandContext(client, msg), msg.Content.Substring(pos));
+                    var result = await commands.ExecuteAsync(new CommandContext(client, msg), msg.Content.Substring(pos), null);
                     if (!result.IsSuccess)
                     {
                         // Is the command just unknown? If so, return.
@@ -265,7 +265,7 @@ namespace NinjaCatDiscordBot
                 {
                     // Update count and game.
 #if !PRIVATE
-                    await UpdateSiteServerCountAsync();
+                  //  await UpdateSiteServerCountAsync();
 #endif
                     await client.UpdateGameAsync();
 

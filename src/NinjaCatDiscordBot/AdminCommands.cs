@@ -564,7 +564,7 @@ namespace NinjaCatDiscordBot
             var roleSkip = client.GetSpeakingRoleSkipForIGuild(Context.Guild);
             if (roleSkip != null)
             {
-                var mentionableSkip = role?.IsMentionable;
+                var mentionableSkip = roleSkip?.IsMentionable;
                 if (mentionableSkip == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > roleSkip.Position)
                     await roleSkip.ModifyAsync((e) => e.Mentionable = true);
 
