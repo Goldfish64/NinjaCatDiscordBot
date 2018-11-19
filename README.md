@@ -5,7 +5,7 @@ Hi there! I am Ninja Cat, a [Discord.Net](https://github.com/RogueException/Disc
 
 ### [Click here to invite me to your server!](https://discordapp.com/oauth2/authorize?permissions=19456&client_id=232369430456172545&scope=bot) ###
 
- [![Discord](https://discordapp.com/api/guilds/232352575196889091/embed.png?style=banner4)](https://discord.gg/BVPjbk6)
+ [![Discord](https://discordapp.com/api/guilds/232352575196889091/embed.png?style=banner4)](https://discord.gg/E5nDN7N)
 
 ## Commands ##
 My set of commands include:
