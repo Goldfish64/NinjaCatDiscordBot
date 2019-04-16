@@ -399,7 +399,7 @@ namespace NinjaCatDiscordBot
                 switch (type)
                 {
                     case BuildType.NormalPc:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && !p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && (!p.Desc.ToLowerInvariant().Contains("skip ahead") || p.Desc.ToLowerInvariant().Contains("fast ring"))).FirstOrDefault();
                         break;
 
                     case BuildType.Mobile:
