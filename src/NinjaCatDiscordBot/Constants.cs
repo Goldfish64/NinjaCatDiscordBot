@@ -126,7 +126,7 @@ namespace NinjaCatDiscordBot
             $"**{CommandPrefix}{InviteCommand}**: {InviteCommandDesc}.\n" +
             $"**{CommandPrefix}{TrexCommand}**: {TrexCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
-            $"**{CommandPrefix}{LatestMobileBuildCommand}**: {LatestMobileBuildCommandDesc}.\n" +
+            //$"**{CommandPrefix}{LatestMobileBuildCommand}**: {LatestMobileBuildCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestServerBuildCommand}**: {LatestServerBuildCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestSkipAheadBuildCommand}**: {LatestSkipAheadBuildCommandDesc}.\n\n" +
             $"Admin commands (manage server perm required):\n" +
