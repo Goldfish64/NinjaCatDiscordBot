@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: BotCommands.cs
 * 
-* Copyright (c) 2016-2018 John Davis
+* Copyright (c) 2016-2019 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -31,19 +31,16 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace NinjaCatDiscordBot
-{
+namespace NinjaCatDiscordBot {
     /// <summary>
     /// Contains commands for the bot.
     /// </summary>
-    public sealed partial class CommandModule : ModuleBase
-    {
+    public sealed partial class CommandModule : ModuleBase {
         private HttpClient _client = new HttpClient();
 
         #region Methods
 
-        private async Task<NinjaCatDiscordClient> StartTypingAndGetClient()
-        {
+        private async Task<NinjaCatDiscordClient> StartTypingAndGetClient() {
             // Bot is typing, with added pause for realism.
             await Context.Channel.TriggerTypingAsync();
             await Task.Delay(TimeSpan.FromSeconds(1));
@@ -56,8 +53,7 @@ namespace NinjaCatDiscordBot
         /// Gets the about message.
         /// </summary>
         [Command(Constants.AboutCommand)]
-        private async Task GetAboutAsync()
-        {
+        private async Task GetAboutAsync() {
             // Get client.
             var client = await StartTypingAndGetClient();
 
@@ -67,8 +63,7 @@ namespace NinjaCatDiscordBot
 
             // Get guild. If null, ignore it.
             var guild = (Context.Channel as IGuildChannel)?.Guild as SocketGuild;
-            if (guild != null)
-            {
+            if (guild != null) {
                 // Get speaking channel.
                 var channel = client.GetSpeakingChannelForSocketGuild(guild);
 
@@ -97,8 +92,7 @@ namespace NinjaCatDiscordBot
                 roleText = $"\n\nWhen a new build releases, I will ping the **{speakingRole}** role, but that can be changed with the **{Constants.CommandPrefix}{Constants.SetRoleCommand}** command.";
 
             // Select and send message.
-            switch (client.GetRandomNumber(2))
-            {
+            switch (client.GetRandomNumber(2)) {
                 default:
                     await ReplyAsync($"{Constants.AboutMessage1}" + channelText + roleText);
                     break;
@@ -113,14 +107,12 @@ namespace NinjaCatDiscordBot
         /// Gets help.
         /// </summary>
         [Command(Constants.HelpCommand)]
-        private async Task GetHelpAsync()
-        {
+        private async Task GetHelpAsync() {
             // Get client.
             var client = await StartTypingAndGetClient();
 
             // Select and send message.
-            switch (client.GetRandomNumber(2))
-            {
+            switch (client.GetRandomNumber(2)) {
                 default:
                     await ReplyAsync($"So you need help huh? You've come to the right place. :cat::question:\n\n" +
                         $"My set of commands include:\n" +
@@ -139,14 +131,12 @@ namespace NinjaCatDiscordBot
         /// Gets the homepage URL.
         /// </summary>
         [Command(Constants.HomeCommand)]
-        private async Task GetHomeAsync()
-        {
+        private async Task GetHomeAsync() {
             // Get client.
             var client = await StartTypingAndGetClient();
 
             // Select and send message with URL.
-            switch (client.GetRandomNumber(3))
-            {
+            switch (client.GetRandomNumber(3)) {
                 default:
                     await ReplyAsync($"My source code is here:\n{Constants.HomeCommandUrl}");
                     break;
@@ -165,14 +155,12 @@ namespace NinjaCatDiscordBot
         /// Gets the invite URL.
         /// </summary>
         [Command(Constants.InviteCommand)]
-        private async Task GetInviteAsync()
-        {
+        private async Task GetInviteAsync() {
             // Get client.
             var client = await StartTypingAndGetClient();
 
             // Select and send message with invite URL.
-            switch (client.GetRandomNumber(3))
-            {
+            switch (client.GetRandomNumber(3)) {
                 default:
                     await ReplyAsync($"This link will let me be on *your* server:\n{Constants.InviteCommandUrl}");
                     break;
@@ -191,8 +179,7 @@ namespace NinjaCatDiscordBot
         /// Gets the T-Rex.
         /// </summary>
         [Command(Constants.TrexCommand)]
-        private async Task GetTrexAsync()
-        {
+        private async Task GetTrexAsync() {
             // Get client.
             var client = await StartTypingAndGetClient();
             await ReplyAsync("<a:trexa:393897398881222656>");
@@ -218,21 +205,17 @@ namespace NinjaCatDiscordBot
 
             // Iterate through each emote and jumbo it, up to the max of 2.
             int limit = 0;
-            foreach (var emote in emotes)
-            {
+            foreach (var emote in emotes) {
                 if (limit >= 2)
                     return;
 
-                try
-                {
+                try {
                     string emoteUrl = null;
 
-                    if (Emote.TryParse(emote, out Emote found))
-                    {
+                    if (Emote.TryParse(emote, out Emote found)) {
                         emoteUrl = found.Url;
                     }
-                    else
-                    {
+                    else {
                         int codepoint = Char.ConvertToUtf32(emote, 0);
                         string codepointHex = codepoint.ToString("X").ToLower();
 
@@ -252,15 +235,13 @@ namespace NinjaCatDiscordBot
         /// Gets the latest Insider PC build.
         /// </summary>
         [Command(Constants.LatestBuildCommand)]
-        private async Task GetLatestBuildAsync()
-        {
+        private async Task GetLatestBuildAsync() {
             // Get client.
             var client = await StartTypingAndGetClient();
 
             // Get build.
             var data = await client.GetLatestBuildNumberAsync();
-            if (data == null)
-            {
+            if (data == null) {
                 await ReplyAsync($"The latest Windows 10 build for PCs couldn't be found. :crying_cat_face: :computer:");
                 return;
             }
@@ -273,15 +254,13 @@ namespace NinjaCatDiscordBot
         /// Gets the latest Insider server build.
         /// </summary>
         [Command(Constants.LatestServerBuildCommand)]
-        private async Task GetLatestServerBuildAsync()
-        {
+        private async Task GetLatestServerBuildAsync() {
             // Get client.
             var client = await StartTypingAndGetClient();
 
             // Get build.
             var data = await client.GetLatestBuildNumberAsync(BuildType.Server);
-            if (data == null)
-            {
+            if (data == null) {
                 await ReplyAsync($"The latest Windows Server build couldn't be found. :crying_cat_face: :desktop:");
                 return;
             }
@@ -294,15 +273,13 @@ namespace NinjaCatDiscordBot
         /// Gets the latest Insider skip-ahead build.
         /// </summary>
         [Command(Constants.LatestSkipAheadBuildCommand)]
-        private async Task GetLatestSkipAheadBuildAsync()
-        {
+        private async Task GetLatestSkipAheadBuildAsync() {
             // Get client.
             var client = await StartTypingAndGetClient();
 
             // Get build.
             var data = await client.GetLatestBuildNumberAsync(BuildType.SkipAheadPc);
-            if (data == null)
-            {
+            if (data == null) {
                 await ReplyAsync($"The latest Windows 10 Skip Ahead build couldn't be found. :crying_cat_face: :desktop:");
                 return;
             }
@@ -315,8 +292,7 @@ namespace NinjaCatDiscordBot
         /// Replies with the bot's info.
         /// </summary>
         [Command(Constants.BotInfoCommand)]
-        private async Task GetBotInfoAsync()
-        {
+        private async Task GetBotInfoAsync() {
             // Get client.
             var client = await StartTypingAndGetClient();
 
@@ -339,15 +315,13 @@ namespace NinjaCatDiscordBot
             embed.Author.IconUrl = client.CurrentUser.GetAvatarUrl();
 
             // If in a guild, make color.
-            if (Context.Guild != null)
-            {
+            if (Context.Guild != null) {
                 // Get current user.
                 var guildUser = await Context.Guild.GetCurrentUserAsync();
 
                 // Get highest role with color.
                 var highestrole = Context.Guild.EveryoneRole;
-                foreach (var role in guildUser.RoleIds)
-                {
+                foreach (var role in guildUser.RoleIds) {
                     var newRole = Context.Guild.GetRole(role);
                     if (newRole.Position > highestrole.Position && newRole.Color.RawValue != 0)
                         highestrole = newRole;
@@ -358,8 +332,7 @@ namespace NinjaCatDiscordBot
                 embed.Author.Name = guildUser.Nickname ?? guildUser.Username;
                 embed.AddField((e) => { e.Name = "Join date"; e.Value = guildUser.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
             }
-            else
-            {
+            else {
                 // Set username.
                 embed.Author.Name = client.CurrentUser.Username;
             }
@@ -371,8 +344,7 @@ namespace NinjaCatDiscordBot
             embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
 
             // Select and send message with embed.
-            switch (client.GetRandomNumber(3))
-            {
+            switch (client.GetRandomNumber(3)) {
                 default:
                     await ReplyAsync("Here are my stats:", embed: embed.Build());
                     break;

@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: Extensions.cs
 * 
-* Copyright (c) 2016-2018 John Davis
+* Copyright (c) 2016-2019 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -27,17 +27,13 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NinjaCatDiscordBot
-{
-    internal static class Extensions
-    {
+namespace NinjaCatDiscordBot {
+    internal static class Extensions {
         #region Methods
 
-        public static bool HasStringPrefixLower(this IUserMessage msg, string str, ref int argPos)
-        {
+        public static bool HasStringPrefixLower(this IUserMessage msg, string str, ref int argPos) {
             var text = msg.Content.ToLowerInvariant();
-            if (text.StartsWith(str))
-            {
+            if (text.StartsWith(str)) {
                 argPos = str.Length;
                 return true;
             }
@@ -52,8 +48,7 @@ namespace NinjaCatDiscordBot
         /// immediately as canceled.</param>
         /// <returns>A Task representing waiting for the process to end.</returns>
         public static Task WaitForExitAsync(this Process process,
-            CancellationToken cancellationToken = default(CancellationToken))
-        {
+            CancellationToken cancellationToken = default(CancellationToken)) {
             var tcs = new TaskCompletionSource<object>();
             process.EnableRaisingEvents = true;
             process.Exited += (sender, args) => tcs.TrySetResult(null);
@@ -66,12 +61,10 @@ namespace NinjaCatDiscordBot
         #endregion
     }
 
-    public class ServicedURL
-    {
+    public class ServicedURL {
         public string ShortURL { get; set; }
         public string LongURL { get; set; }
-        public ServicedURL()
-        {
+        public ServicedURL() {
             this.ShortURL = string.Empty;
             this.LongURL = string.Empty;
         }

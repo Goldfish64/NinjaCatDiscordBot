@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: BlogEntry.cs
 * 
-* Copyright (c) 2016-2018 John Davis
+* Copyright (c) 2016-2019 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -22,10 +22,8 @@
 * IN THE SOFTWARE.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-namespace NinjaCatDiscordBot
-{
-    public class BlogEntry
-    {
+namespace NinjaCatDiscordBot {
+    public class BlogEntry {
         public string Title { get; set; }
         public string Link { get; set; }
         public string Desc { get; set; }

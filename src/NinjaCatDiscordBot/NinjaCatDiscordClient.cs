@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: NinjaCatDiscordClient.cs
 * 
-* Copyright (c) 2016-2018 John Davis
+* Copyright (c) 2016-2019 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -36,13 +36,11 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace NinjaCatDiscordBot
-{
+namespace NinjaCatDiscordBot {
     /// <summary>
     /// Represents a <see cref="DiscordSocketClient"/> with additional properties.
     /// </summary>
-    public sealed class NinjaCatDiscordClient : DiscordShardedClient
-    {
+    public sealed class NinjaCatDiscordClient : DiscordShardedClient {
         #region Private variables
 
         // private StreamWriter logStreamWriter;
@@ -56,15 +54,13 @@ namespace NinjaCatDiscordBot
         /// <summary>
         /// Initializes a new instance of the <see cref="NinjaCatDiscordClient"/> class.
         /// </summary>
-        public NinjaCatDiscordClient() : base(new DiscordSocketConfig() { TotalShards = Constants.ShardCount })
-        {
+        public NinjaCatDiscordClient() : base(new DiscordSocketConfig() { TotalShards = Constants.ShardCount }) {
             // Write startup messages.
             LogOutput($"{Constants.AppName} on {RuntimeInformation.FrameworkDescription} has started.");
             LogOutput($"===============================================================");
 
             // Listen for events.
-            Log += (message) =>
-            {
+            Log += (message) => {
                 // Log the output.
                 LogOutput(message.ToString());
                 return Task.CompletedTask;
@@ -166,8 +162,7 @@ namespace NinjaCatDiscordBot
         /// </summary>
         /// <param name="maxValue">The maximum value of the number generated.</param>
         /// <returns>The random number.</returns>
-        public int GetRandomNumber(int maxValue)
-        {
+        public int GetRandomNumber(int maxValue) {
             // Return a random number.
             return random.Next(maxValue);
         }
@@ -177,8 +172,7 @@ namespace NinjaCatDiscordBot
         /// </summary>
         /// <param name="guild">The <see cref="SocketGuild"/> to get the channel for.</param>
         /// <returns>An <see cref="SocketTextChannel"/> that should be used.</returns>
-        public SocketTextChannel GetSpeakingChannelForSocketGuild(SocketGuild guild)
-        {
+        public SocketTextChannel GetSpeakingChannelForSocketGuild(SocketGuild guild) {
             // If the guild is the Bots server, never speak.
             if (guild.Id == Constants.BotsGuildId)
                 return null;
@@ -187,8 +181,7 @@ namespace NinjaCatDiscordBot
             SocketTextChannel channel = null;
 
             // Try to get the saved channel.
-            if (SpeakingChannels.ContainsKey(guild.Id))
-            {
+            if (SpeakingChannels.ContainsKey(guild.Id)) {
                 // If it is zero, return null to not speak.
                 if (SpeakingChannels[guild.Id] == 0)
                     return null;
@@ -197,8 +190,7 @@ namespace NinjaCatDiscordBot
             }
 
             // If the channel is null, delete the entry from the dictionary and use the default one.
-            if (channel == null)
-            {
+            if (channel == null) {
                 SpeakingChannels.TryRemove(guild.Id, out ulong outVar);
                 channel = guild.DefaultChannel;
                 SaveSettings();
@@ -213,8 +205,7 @@ namespace NinjaCatDiscordBot
         /// </summary>
         /// <param name="guild">The <see cref="IGuild"/> to get the channel for.</param>
         /// <returns>An <see cref="SocketTextChannel"/> that should be used.</returns>
-        public async Task<ITextChannel> GetSpeakingChannelForIGuildAsync(IGuild guild)
-        {
+        public async Task<ITextChannel> GetSpeakingChannelForIGuildAsync(IGuild guild) {
             // If the guild is the Bots server, never speak.
             if (guild.Id == Constants.BotsGuildId)
                 return null;
@@ -223,8 +214,7 @@ namespace NinjaCatDiscordBot
             ITextChannel channel = null;
 
             // Try to get the saved channel.
-            if (SpeakingChannels.ContainsKey(guild.Id))
-            {
+            if (SpeakingChannels.ContainsKey(guild.Id)) {
                 // If it is zero, return null to not speak.
                 if (SpeakingChannels[guild.Id] == 0)
                     return null;
@@ -233,8 +223,7 @@ namespace NinjaCatDiscordBot
             }
 
             // If the channel is null, delete the entry from the dictionary and use the default one.
-            if (channel == null)
-            {
+            if (channel == null) {
                 SpeakingChannels.TryRemove(guild.Id, out ulong outVar);
                 channel = (await guild.GetChannelsAsync()).SingleOrDefault(g => g.Id == guild.DefaultChannelId) as ITextChannel;
                 SaveSettings();
@@ -249,8 +238,7 @@ namespace NinjaCatDiscordBot
         /// </summary>
         /// <param name="guild">The <see cref="IGuild"/> to get the role for.</param>
         /// <returns>An <see cref="SocketTextRole"/> that should be used.</returns>
-        public IRole GetSpeakingRoleForIGuild(IGuild guild)
-        {
+        public IRole GetSpeakingRoleForIGuild(IGuild guild) {
             // If the guild is the Bots server, never speak.
             if (guild.Id == Constants.BotsGuildId)
                 return null;
@@ -259,8 +247,7 @@ namespace NinjaCatDiscordBot
             IRole role = null;
 
             // Try to get the saved role.
-            if (SpeakingRoles.ContainsKey(guild.Id))
-            {
+            if (SpeakingRoles.ContainsKey(guild.Id)) {
                 // If it is zero, return null to not speak.
                 if (SpeakingRoles[guild.Id] == 0)
                     return null;
@@ -269,8 +256,7 @@ namespace NinjaCatDiscordBot
             }
 
             // If the role is null, delete the entry from the dictionary and use the default one.
-            if (role == null)
-            {
+            if (role == null) {
                 SpeakingRoles.TryRemove(guild.Id, out ulong outVar);
                 SaveSettings();
             }
@@ -284,8 +270,7 @@ namespace NinjaCatDiscordBot
         /// </summary>
         /// <param name="guild">The <see cref="IGuild"/> to get the role for.</param>
         /// <returns>An <see cref="SocketTextRole"/> that should be used.</returns>
-        public IRole GetSpeakingRoleSkipForIGuild(IGuild guild)
-        {
+        public IRole GetSpeakingRoleSkipForIGuild(IGuild guild) {
             // If the guild is the Bots server, never speak.
             if (guild.Id == Constants.BotsGuildId)
                 return null;
@@ -294,8 +279,7 @@ namespace NinjaCatDiscordBot
             IRole role = null;
 
             // Try to get the saved role.
-            if (SpeakingRolesSkip.ContainsKey(guild.Id))
-            {
+            if (SpeakingRolesSkip.ContainsKey(guild.Id)) {
                 // If it is zero, return null to not speak.
                 if (SpeakingRolesSkip[guild.Id] == 0)
                     return null;
@@ -304,8 +288,7 @@ namespace NinjaCatDiscordBot
             }
 
             // If the role is null, delete the entry from the dictionary and use the default one.
-            if (role == null)
-            {
+            if (role == null) {
                 SpeakingRolesSkip.TryRemove(guild.Id, out ulong outVar);
                 SaveSettings();
             }
@@ -349,10 +332,8 @@ namespace NinjaCatDiscordBot
         /// <summary>
         /// Saves the settings.
         /// </summary>
-        public void SaveSettings()
-        {
-            lock (lockObject)
-            {
+        public void SaveSettings() {
+            lock (lockObject) {
                 // Save latest post URL.
                 File.WriteAllText(Constants.LatestPostFileName, CurrentUrl);
 
@@ -368,8 +349,7 @@ namespace NinjaCatDiscordBot
         /// Logs the specified information to the console and logfile.
         /// </summary>
         /// <param name="info">The information to log.</param>
-        public void LogOutput(string info)
-        {
+        public void LogOutput(string info) {
             // Write to console.
             Console.WriteLine($"{DateTime.Now}: {info}");
         }
@@ -396,26 +376,25 @@ namespace NinjaCatDiscordBot
         /// Gets the latest build of the specified type.
         /// </summary>
         /// <param name="type">The type of build to get.</param>
-        public async Task<Tuple<string, string>> GetLatestBuildNumberAsync(BuildType type = BuildType.NormalPc)
-        {
+        public async Task<Tuple<string, string>> GetLatestBuildNumberAsync(BuildType type = BuildType.NormalPc) {
             // Create HTTP client.
             var client = new HttpClient();
 
             // Get most recent build post..
             BlogEntry post = null;
-            for (int page = 1; page <= 10; page++)
-            {
+            for (int page = 1; page <= 10; page++) {
                 // Get page.
                 var doc = XDocument.Parse(await client.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged={page}"));
                 var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                            select new BlogEntry()
-                            { Link = item.Elements().First(i => i.Name.LocalName == "link").Value,
-                                Title = item.Elements().First(i => i.Name.LocalName == "title").Value, Desc = item.Elements().First(i => i.Name.LocalName == "description").Value };
+                              select new BlogEntry() {
+                                  Link = item.Elements().First(i => i.Name.LocalName == "link").Value,
+                                  Title = item.Elements().First(i => i.Name.LocalName == "title").Value,
+                                  Desc = item.Elements().First(i => i.Name.LocalName == "description").Value
+                              };
                 var list = entries.ToList();
 
                 // Get post.
-                switch (type)
-                {
+                switch (type) {
                     case BuildType.NormalPc:
                         post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && (!p.Desc.ToLowerInvariant().Contains("skip ahead") || p.Desc.ToLowerInvariant().Contains("fast ring"))).FirstOrDefault();
                         break;
@@ -447,10 +426,8 @@ namespace NinjaCatDiscordBot
         /// Updates the game.
         /// </summary>
         /// <returns></returns>
-        public async Task UpdateGameAsync()
-        {
-            try
-            {
+        public async Task UpdateGameAsync() {
+            try {
                 // Get build.
                 var build = await GetLatestBuildNumberAsync();
                 if (build == null)
@@ -463,8 +440,7 @@ namespace NinjaCatDiscordBot
                 foreach (var shard in Shards)
                     await shard?.SetGameAsync(game);
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 // Log failure.
                 LogOutput($"FAILURE IN GAME: {ex}");
 
@@ -477,8 +453,7 @@ namespace NinjaCatDiscordBot
         #endregion
     }
 
-    public enum BuildType
-    {
+    public enum BuildType {
         NormalPc,
         Server,
         SkipAheadPc
