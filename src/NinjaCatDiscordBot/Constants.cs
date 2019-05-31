@@ -76,8 +76,6 @@ namespace NinjaCatDiscordBot
         public const string TrexCommandDesc = "shows the Windows 10 Skype emoticon";
         public const string LatestBuildCommand = "latest";
         public const string LatestBuildCommandDesc = "gets the latest Insider PC build";
-        public const string LatestMobileBuildCommand = "latestmobile";
-        public const string LatestMobileBuildCommandDesc = "gets the latest Insider Mobile build";
         public const string LatestServerBuildCommand = "latestserver";
         public const string LatestServerBuildCommandDesc = "gets the latest Insider Server build";
         public const string LatestSkipAheadBuildCommand = "latestskip";
@@ -126,7 +124,6 @@ namespace NinjaCatDiscordBot
             $"**{CommandPrefix}{InviteCommand}**: {InviteCommandDesc}.\n" +
             $"**{CommandPrefix}{TrexCommand}**: {TrexCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
-            //$"**{CommandPrefix}{LatestMobileBuildCommand}**: {LatestMobileBuildCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestServerBuildCommand}**: {LatestServerBuildCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestSkipAheadBuildCommand}**: {LatestSkipAheadBuildCommandDesc}.\n\n" +
             $"Admin commands (manage server perm required):\n" +

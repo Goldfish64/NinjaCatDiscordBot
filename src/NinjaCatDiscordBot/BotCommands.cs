@@ -270,27 +270,6 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
-        /// Gets the latest Insider mobile build.
-        /// </summary>
-        [Command(Constants.LatestMobileBuildCommand)]
-        private async Task GetLatestMobileBuildAsync()
-        {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get build.
-            var data = await client.GetLatestBuildNumberAsync(BuildType.Mobile);
-            if (data == null)
-            {
-                await ReplyAsync($"The latest Windows 10 Mobile build couldn't be found. :crying_cat_face: :telephone:");
-                return;
-            }
-
-            // Send.
-            await ReplyAsync($"The latest Windows 10 Mobile build is **{data.Item1}**. :cat: :telephone:\n{data.Item2}");
-        }
-
-        /// <summary>
         /// Gets the latest Insider server build.
         /// </summary>
         [Command(Constants.LatestServerBuildCommand)]

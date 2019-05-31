@@ -37,13 +37,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace NinjaCatDiscordBot
-{
+namespace NinjaCatDiscordBot {
     /// <summary>
     /// Represents the Ninja Cat bot.
     /// </summary>
-    public partial class NinjaCatBot
-    {
+    public partial class NinjaCatBot {
         #region Private variables
 
 
@@ -65,8 +63,7 @@ namespace NinjaCatDiscordBot
         /// <summary>
         /// Starts the bot.
         /// </summary>
-        private async Task Start()
-        {
+        private async Task Start() {
             // Create Discord client.
             client = new NinjaCatDiscordClient();
 
@@ -78,8 +75,7 @@ namespace NinjaCatDiscordBot
 
 #if !PRIVATE
             // Certain things are to be done when the bot joins a guild.
-            client.JoinedGuild += async (guild) =>
-            {
+            client.JoinedGuild += async (guild) => {
                 // Pause for 5 seconds.
                 await Task.Delay(TimeSpan.FromSeconds(5));
 
@@ -88,18 +84,17 @@ namespace NinjaCatDiscordBot
                     return;
 
                 // Update server count.
-                await UpdateSiteServerCountAsync();
+                // await UpdateSiteServerCountAsync();
 
                 // Dev began Oct 2. 2016.
             };
 
             // Update count on guild leave.
-            client.LeftGuild += async (guild) => await UpdateSiteServerCountAsync();
+            // client.LeftGuild += async (guild) => await UpdateSiteServerCountAsync();
 #endif
 
             // Listen for messages.
-            client.MessageReceived += async (message) =>
-            {
+            client.MessageReceived += async (message) => {
                 // Get the message and check to see if it is a user message.
                 var msg = message as IUserMessage;
                 if (msg == null)
@@ -109,11 +104,9 @@ namespace NinjaCatDiscordBot
                 var pos = 0;
 
                 // Attempt to parse a command.
-                if (msg.HasStringPrefixLower(Constants.CommandPrefix, ref pos))
-                {
+                if (msg.HasStringPrefixLower(Constants.CommandPrefix, ref pos)) {
                     var result = await commands.ExecuteAsync(new CommandContext(client, msg), msg.Content.Substring(pos), null);
-                    if (!result.IsSuccess)
-                    {
+                    if (!result.IsSuccess) {
                         // Is the command just unknown? If so, return.
                         if (result.Error == CommandError.UnknownCommand)
                             return;
@@ -135,11 +128,9 @@ namespace NinjaCatDiscordBot
 
 #if !PRIVATE
             // Check for bot guilds.
-            foreach (var shard in client.Shards)
-            {
+            foreach (var shard in client.Shards) {
 #pragma warning disable 4014
-                shard.Connected += async () =>
-                {
+                shard.Connected += async () => {
                     foreach (var guild in shard.Guilds)
                         CheckBotGuild(guild);
                     await Task.CompletedTask;
@@ -152,105 +143,96 @@ namespace NinjaCatDiscordBot
             var httpClient = new HttpClient();
 
             // Start checking for new builds.
-            var buildThread = new Thread(new ThreadStart(async () =>
-            {
-                while (true)
-                {
-                    // Wait 5 minutes.
+            var buildThread = new Thread(new ThreadStart(async () => {
+                while (true) {
+                    // Check for builds every minute.
                     await Task.Delay(TimeSpan.FromMinutes(1));
 
-                    //client.LogOutput($"In blog post loop");
+                    // Attempt to get the latest post and skip if we cannot.
                     BlogEntry post = null;
-                    try
-                    {
+                    try {
                         // Get latest post.
                         var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed"));
                         var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                                      select new BlogEntry()
-                                      {
+                                      select new BlogEntry() {
                                           Link = item.Elements().First(i => i.Name.LocalName == "link").Value,
                                           Title = item.Elements().First(i => i.Name.LocalName == "title").Value,
                                           Desc = item.Elements().First(i => i.Name.LocalName == "description").Value
                                       };
                         post = entries.ToList().Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build")).FirstOrDefault();
                     }
-                    catch (HttpRequestException ex)
-                    {
-                        client.LogOutput($"ERROR GETTING NEW POST: {ex}");
+                    catch (HttpRequestException ex) {
+                        client.LogError($"Exception when getting post: {ex}");
+                        continue;
+                    }
+                    if (post == null) {
+                        client.LogError($"Unable to get new post");
                         continue;
                     }
 
-                    // Check if post is a valid insider post.
-                    if (post != null)
-                    {
-                        // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
-                        if (string.IsNullOrWhiteSpace(client.CurrentUrl))
-                        {
-                            client.CurrentUrl = post.Link;
-                            client.SaveSettings();
-                            client.LogOutput($"SAVED POST AS LATEST: {post.Link}");
-                            continue;
-                        }
-
-                        // Is the latest post the same? If so, no need to announce it.
-                        if (client.CurrentUrl == post.Link)
-                            continue;
-
-                        // Get build numbers. If empty, ignore the post.
-                        var build = Regex.Match(post.Link, @"\d{5,}").Value;
-                        var buildM = Regex.Match(post.Link, @"\d{5,}", RegexOptions.RightToLeft).Value;
-                        if (string.IsNullOrWhiteSpace(build))
-                            continue;
-
-                        // Log post.
-                        client.LogOutput($"POST CONFIRMED: NEW BUILD");
-
-                        // Save post.
+                    // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
+                    if (string.IsNullOrWhiteSpace(client.CurrentUrl)) {
                         client.CurrentUrl = post.Link;
                         client.SaveSettings();
-
-                        // Create variables.
-                        var ring = string.Empty;
-                        var platform = string.Empty;
-
-                        // Check for fast or slow, or both.
-                        if (post.Desc.ToLowerInvariant().Contains("skip ahead"))
-                        {
-                            ring = " to the Skip Ahead ring";
-                        }
-                        else
-                        {
-                            if (post.Desc.ToLowerInvariant().Contains("fast") && post.Desc.ToLowerInvariant().Contains("slow"))
-                                ring = " to both the Fast and Slow rings";
-                            else if (post.Desc.ToLowerInvariant().Contains("fast"))
-                                ring = " to the Fast ring";
-                            else if (post.Desc.ToLowerInvariant().Contains("slow"))
-                                ring = " to the Slow ring";
-                        }
-
-                        // Check for PC or mobile, or both.
-                        if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("mobile") && post.Link.ToLowerInvariant().Contains("server"))
-                            platform = " for PC, Server, and Mobile";
-                        else if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("mobile"))
-                            platform = " for both PC and Mobile";
-                        else if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("server"))
-                            platform = " for both PC and Server";
-                        else if (post.Link.ToLowerInvariant().Contains("mobile") && post.Link.ToLowerInvariant().Contains("server"))
-                            platform = " for both Server and Mobile";
-                        else if (post.Link.ToLowerInvariant().Contains("pc"))
-                            platform = " for PC";
-                        else if (post.Link.ToLowerInvariant().Contains("mobile"))
-                            platform = " for Mobile";
-                        else if (post.Link.ToLowerInvariant().Contains("server"))
-                            platform = " for Server";
-
-                        // Send build to guilds.
-                        foreach (var shard in client.Shards)
-                            SendNewBuildToShard(shard, build, buildM, ring + platform, post.Link);
-
-                        // Update game.
-                        await client.UpdateGameAsync();
+                        client.LogInfo($"Saved post as new latest build: {post.Link}");
+                        continue;
                     }
+
+                    // Is the latest post the same? If so, no need to announce it.
+                    if (client.CurrentUrl == post.Link)
+                        continue;
+
+                    // Get build numbers. If empty, ignore the post.
+                    var build = Regex.Match(post.Link, @"\d{5,}").Value;
+                    if (string.IsNullOrWhiteSpace(build)) {
+                        client.LogError($"Post build number is blank");
+                        continue;
+                    }
+
+                    // Log post.
+                    client.LogInfo($"New build received");
+
+                    // Save post.
+                    client.CurrentUrl = post.Link;
+                    client.SaveSettings();
+
+                    // Get first sentence of post. We'll parse the ring out of this.
+                    var description = post.Desc.ToLowerInvariant().Split('.').FirstOrDefault();
+                    if (description == null) {
+                        client.LogError($"Post description is blank");
+                        continue;
+                    }
+
+                    // Determine ring.
+                    var ring = string.Empty;
+                    var platform = string.Empty;
+                    if (description.Contains("skip ahead")) {
+                        // Skip ahead takes priority over other rings.
+                        ring = " to the Skip Ahead ring";
+                    }
+                    else {
+                        if (description.Contains("fast") && description.Contains("slow"))
+                            ring = " to both the Fast and Slow rings";
+                        else if (description.Contains("fast"))
+                            ring = " to the Fast ring";
+                        else if (description.Contains("slow"))
+                            ring = " to the Slow ring";
+                    }
+
+                    // Determine build platform.
+                    if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("server"))
+                        platform = " for both PC and Server";
+                    else if (post.Link.ToLowerInvariant().Contains("pc"))
+                        platform = " for PC";
+                    else if (post.Link.ToLowerInvariant().Contains("server"))
+                        platform = " for Server";
+
+                    // Send build to guilds.
+                    foreach (var shard in client.Shards)
+                        SendNewBuildToShard(shard, build, ring + platform, post.Link);
+
+                    // Update game.
+                    await client.UpdateGameAsync();
                 }
             }));
             buildThread.Start();
@@ -258,15 +240,10 @@ namespace NinjaCatDiscordBot
             // Wait a minute for bot to start up.
             await Task.Delay(TimeSpan.FromMinutes(1));
 
-            // Create thread for POSTing server count and updating game.
-            var serverCountThread = new Thread(new ThreadStart(async () =>
-            {
-                while (true)
-                {
-                    // Update count and game.
-#if !PRIVATE
-                  //  await UpdateSiteServerCountAsync();
-#endif
+            // Create thread for updating game.
+            var serverCountThread = new Thread(new ThreadStart(async () => {
+                while (true) {
+                    // Update game.
                     await client.UpdateGameAsync();
 
                     // Wait an hour.
@@ -279,56 +256,18 @@ namespace NinjaCatDiscordBot
             await Task.Delay(-1);
         }
 
-#if !PRIVATE
-        /// <summary>
-        /// Updates the site server count.
-        /// </summary>
-        private async Task UpdateSiteServerCountAsync()
-        {
-            try
-            {
-                // Get current user.
-                var user = client.Shards?.FirstOrDefault()?.CurrentUser;
-                if (user == null)
-                    return;
-
-                // Create request.
-                var httpWebRequest = (HttpWebRequest)WebRequest.Create($"https://bots.discord.pw/api/bots/{user.Id}/stats");
-                httpWebRequest.ContentType = "application/json";
-                httpWebRequest.Method = "POST";
-                httpWebRequest.Headers["Authorization"] = Credentials.BotApiToken;
-
-                using (var streamWriter = new StreamWriter(await httpWebRequest.GetRequestStreamAsync()))
-                {
-                    streamWriter.Write($"{{\"server_count\":{client.Guilds.Count}}}");
-                    streamWriter.Flush();
-                }
-
-                await httpWebRequest.GetResponseAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log error.
-                client.LogOutput($"FAILED UPDATING SERVER COUNT: {ex}");
-            }
-        }
-#endif
-
-        private async Task SendBuildToGuild(DiscordSocketClient shard, SocketGuild guild, string build, string buildM, string type, string url)
-        {
+        private async Task SendBuildToGuild(DiscordSocketClient shard, SocketGuild guild, string build, string type, string url) {
             // Get channel.
             var channel = client.GetSpeakingChannelForSocketGuild(guild);
 
             // If the channel is null, continue on to the next guild.
-            if (channel == null)
-            {
+            if (channel == null) {
                 client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
                 return;
             }
 
             // Verify we have permission to speak.
-            if (guild.CurrentUser?.GetPermissions(channel).SendMessages != true)
-            {
+            if (guild.CurrentUser?.GetPermissions(channel).SendMessages != true) {
                 client.LogOutput($"ROLLING OVER SERVER (NO PERMS) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
                 return;
             }
@@ -344,8 +283,7 @@ namespace NinjaCatDiscordBot
             if (!type.ToLowerInvariant().Contains("server") && role != null)
                 roleText = $"{role.Mention} ";
 
-            try
-            {
+            try {
                 // Check if the role is mentionable.
                 // If not, attempt to make it mentionable, and revert the setting after the message is sent.
                 var mentionable = role?.IsMentionable;
@@ -362,47 +300,25 @@ namespace NinjaCatDiscordBot
                 await Task.Delay(TimeSpan.FromSeconds(1));
 
                 // Select and send message.
-                if (build != buildM)
-                {
-                    switch (client.GetRandomNumber(3))
-                    {
-                        default:
-                            await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
-                            break;
+                switch (client.GetRandomNumber(3)) {
+                    default:
+                        await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                        break;
 
-                        case 1:
-                            await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
-                            break;
+                    case 1:
+                        await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
+                        break;
 
-                        case 2:
-                            await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} for PC and Build {buildM} for Mobile has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (client.GetRandomNumber(3))
-                    {
-                        default:
-                            await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
-                            break;
-
-                        case 1:
-                            await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {build} has just been released{type}! Yes! :mailbox_with_mail: :smiley_cat:\n{url}");
-                            break;
-
-                        case 2:
-                            await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
-                            break;
-                    }
+                    case 2:
+                        await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {build} has just been released{type}! :mailbox_with_mail: :smiley_cat:\n{url}");
+                        break;
                 }
 
                 // Revert mentionable setting.
                 if (mentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
                     await role.ModifyAsync((e) => e.Mentionable = false);
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1}): {ex}");
             }
 
@@ -410,27 +326,24 @@ namespace NinjaCatDiscordBot
             client.LogOutput($"SPOKEN IN SERVER: {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1})");
         }
 
-        private async void SendNewBuildToShard(DiscordSocketClient shard, string build, string buildM, string type, string url)
-        {
+        private async void SendNewBuildToShard(DiscordSocketClient shard, string build, string type, string url) {
             // If the MS server is in this shard, announce there first.
             var msGuild = shard.Guilds.SingleOrDefault(g => g.Id == Constants.MsGuildId);
             if (msGuild != null)
-                await SendBuildToGuild(shard, msGuild, build, buildM, type, url);
+                await SendBuildToGuild(shard, msGuild, build, type, url);
 
             // Announce in the specified channel of each guild.
-            foreach (var guild in shard.Guilds)
-            {
+            foreach (var guild in shard.Guilds) {
                 // Skip MS guild.
                 if (guild.Id == Constants.MsGuildId)
                     continue;
 
                 // Send to guild.
-                await SendBuildToGuild(shard, guild, build, buildM, type, url);
+                await SendBuildToGuild(shard, guild, build, type, url);
             }
         }
 
-        private async Task<bool> CheckBotGuild(SocketGuild guild)
-        {
+        private async Task<bool> CheckBotGuild(SocketGuild guild) {
             // If the server is the Discord bots server, ignore.
             if (guild.Id == Constants.BotsGuildId)
                 return false;
@@ -440,11 +353,9 @@ namespace NinjaCatDiscordBot
                 await guild.DownloadUsersAsync();
 
             // Is this a bot guild?
-            if (guild.MemberCount >= 50 && (guild.Users.Count(u => u.IsBot) / (double)guild.MemberCount) >= 0.9)
-            {
+            if (guild.MemberCount >= 50 && (guild.Users.Count(u => u.IsBot) / (double)guild.MemberCount) >= 0.9) {
                 client.LogOutput($"LEAVING BOT SERVER: {guild.Name}");
-                try
-                {
+                try {
                     // Bot is typing in default channel.
                     await guild.DefaultChannel.TriggerTypingAsync();
 

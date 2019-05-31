@@ -375,6 +375,24 @@ namespace NinjaCatDiscordBot
         }
 
         /// <summary>
+        /// Logs the specified error to the console and logfile.
+        /// </summary>
+        /// <param name="info">The information to log.</param>
+        public void LogError(string info) {
+            // Write to console.
+            Console.WriteLine($"ERROR: {DateTime.Now}: {info}");
+        }
+
+        /// <summary>
+        /// Logs the specified information to the console and logfile.
+        /// </summary>
+        /// <param name="info">The information to log.</param>
+        public void LogInfo(string info) {
+            // Write to console.
+            Console.WriteLine($"INFO: {DateTime.Now}: {info}");
+        }
+
+        /// <summary>
         /// Gets the latest build of the specified type.
         /// </summary>
         /// <param name="type">The type of build to get.</param>
@@ -402,10 +420,6 @@ namespace NinjaCatDiscordBot
                         post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && (!p.Desc.ToLowerInvariant().Contains("skip ahead") || p.Desc.ToLowerInvariant().Contains("fast ring"))).FirstOrDefault();
                         break;
 
-                    case BuildType.Mobile:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("mobile") && !p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
-                        break;
-
                     case BuildType.Server:
                         post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("server") && !p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
                         break;
@@ -423,7 +437,7 @@ namespace NinjaCatDiscordBot
                 return null;
 
             // Get build number.
-            var build = Regex.Match(post.Title, @"\d{5,}", type == BuildType.Mobile ? RegexOptions.RightToLeft : RegexOptions.None).Value;
+            var build = Regex.Match(post.Title, @"\d{5,}").Value;
 
             // Return info.
             return new Tuple<string, string>(build, post.Link);
@@ -466,7 +480,6 @@ namespace NinjaCatDiscordBot
     public enum BuildType
     {
         NormalPc,
-        Mobile,
         Server,
         SkipAheadPc
     }
