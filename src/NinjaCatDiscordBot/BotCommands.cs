@@ -156,21 +156,22 @@ namespace NinjaCatDiscordBot {
         /// </summary>
         [Command(Constants.InviteCommand)]
         private async Task GetInviteAsync() {
-            // Get client.
+            // Get client and build URL.
             var client = await StartTypingAndGetClient();
+            var inviteUrl = string.Format(Constants.InviteCommandUrl, client.CurrentUser.Id);
 
             // Select and send message with invite URL.
             switch (client.GetRandomNumber(3)) {
                 default:
-                    await ReplyAsync($"This link will let me be on *your* server:\n{Constants.InviteCommandUrl}");
+                    await ReplyAsync($"This link will let me be on *your* server:\n{inviteUrl}");
                     break;
 
                 case 1:
-                    await ReplyAsync($"So you want me in *your* server huh? Use this link:\n{Constants.InviteCommandUrl}");
+                    await ReplyAsync($"So you want me in *your* server huh? Use this link:\n{inviteUrl}");
                     break;
 
                 case 2:
-                    await ReplyAsync($"Use this link to add me to *your* server:\n{Constants.InviteCommandUrl}");
+                    await ReplyAsync($"Use this link to add me to *your* server:\n{inviteUrl}");
                     break;
             }
         }
@@ -284,8 +285,11 @@ namespace NinjaCatDiscordBot {
                 return;
             }
 
-            // Send.
-            await ReplyAsync($"The latest Windows 10 Skip Ahead build is **{data.Item1}**. :cat: :fast_forward:\n{data.Item2}");
+            // If the actual build returned is a normal build, skip ahead is probably closed and merged.
+            if (data.Item3 != BuildType.SkipAheadPc)
+                await ReplyAsync($"Skip Ahead is appears to be closed. The latest Windows 10 build for PCs is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
+            else
+                await ReplyAsync($"The latest Windows 10 Skip Ahead build is **{data.Item1}**. :cat: :fast_forward:\n{data.Item2}");
         }
 
         /// <summary>

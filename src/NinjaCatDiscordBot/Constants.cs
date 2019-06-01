@@ -45,17 +45,14 @@ namespace NinjaCatDiscordBot {
 
 #if PRIVATE
         public const string AppName = "Ninja Cat (Private)";
-        public const string InviteUrl = "<https://discordapp.com/oauth2/authorize?permissions=19456&client_id=232369430456172545&scope=bot>";
         public const string CommandPrefix = "$nj-";
         public const int ShardCount = 1;
 #elif RELEASE
         public const string AppName = "Ninja Cat";
-        public const string InviteUrl = "<https://discordapp.com/oauth2/authorize?permissions=19456&client_id=232369430456172545&scope=bot>";
         public const string CommandPrefix = "$nj-";
         public const int ShardCount = 6;
 #else
         public const string AppName = "Ninja Cat beta (DEBUG)";
-        public const string InviteUrl = "<https://discordapp.com/oauth2/authorize?permissions=19456&client_id=238475402937499648&scope=bot>";
         public const string CommandPrefix = "$njd-";
         public const int ShardCount = 2;
 #endif
@@ -69,7 +66,7 @@ namespace NinjaCatDiscordBot {
         public const string HomeCommandUrl = AppUrl;
         public const string InviteCommand = "invite";
         public const string InviteCommandDesc = "invite me to your server";
-        public const string InviteCommandUrl = InviteUrl;
+        public const string InviteCommandUrl = "<https://discordapp.com/oauth2/authorize?permissions=19456&client_id={0}&scope=bot>";
         public const string TrexCommand = "trex";
         public const string TrexCommandDesc = "shows the Windows 10 Skype emoticon";
         public const string LatestBuildCommand = "latest";

@@ -367,7 +367,7 @@ namespace NinjaCatDiscordBot {
         /// Gets the latest build of the specified type.
         /// </summary>
         /// <param name="type">The type of build to get.</param>
-        public async Task<Tuple<string, string>> GetLatestBuildNumberAsync(BuildType type = BuildType.NormalPc) {
+        public async Task<Tuple<string, string, BuildType>> GetLatestBuildNumberAsync(BuildType type = BuildType.NormalPc) {
             // Create HTTP client.
             var client = new HttpClient();
 
@@ -396,6 +396,11 @@ namespace NinjaCatDiscordBot {
 
                     case BuildType.SkipAheadPc:
                         post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
+                        if (post != null) {
+                            // If post indicates a merge of rings, just return the latest fast.
+                            if (post.Desc.ToLowerInvariant().Contains("fast ring"))
+                                return await GetLatestBuildNumberAsync(BuildType.NormalPc);
+                        }
                         break;
                 }
                 if (post != null)
@@ -410,7 +415,7 @@ namespace NinjaCatDiscordBot {
             var build = Regex.Match(post.Title, @"\d{5,}").Value;
 
             // Return info.
-            return new Tuple<string, string>(build, post.Link);
+            return new Tuple<string, string, BuildType>(build, post.Link, type);
         }
 
         /// <summary>
