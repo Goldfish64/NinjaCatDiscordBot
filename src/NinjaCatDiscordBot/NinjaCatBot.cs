@@ -116,6 +116,7 @@ namespace NinjaCatDiscordBot {
 
                         // Pause for realism and send message.
                         await Task.Delay(TimeSpan.FromSeconds(0.75));
+
                         await msg.Channel.SendMessageAsync($"I'm sorry, but something happened. Error: {result.ErrorReason}\n\nIf there are spaces in a parameter, make sure to surround it with quotes.");
                     }
                     return;
@@ -262,13 +263,13 @@ namespace NinjaCatDiscordBot {
 
             // If the channel is null, continue on to the next guild.
             if (channel == null) {
-                client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
+                client.LogInfo($"Rolling over {guild.Name} (disabled) ({shard.ShardId}/{client.Shards.Count - 1})");
                 return;
             }
 
             // Verify we have permission to speak.
             if (guild.CurrentUser?.GetPermissions(channel).SendMessages != true) {
-                client.LogOutput($"ROLLING OVER SERVER (NO PERMS) ({shard.ShardId}/{client.Shards.Count - 1}): {guild.Name}");
+                client.LogInfo($"Rolling over {guild.Name} (no perms) ({shard.ShardId}/{client.Shards.Count - 1})");
                 return;
             }
 
@@ -319,11 +320,11 @@ namespace NinjaCatDiscordBot {
                     await role.ModifyAsync((e) => e.Mentionable = false);
             }
             catch (Exception ex) {
-                client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1}): {ex}");
+                client.LogError($"Failed to speak in {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1}): {ex}");
             }
 
             // Log server.
-            client.LogOutput($"SPOKEN IN SERVER: {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1})");
+            client.LogInfo($"Spoke in {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1})");
         }
 
         private async void SendNewBuildToShard(DiscordSocketClient shard, string build, string type, string url) {
@@ -354,7 +355,7 @@ namespace NinjaCatDiscordBot {
 
             // Is this a bot guild?
             if (guild.MemberCount >= 50 && (guild.Users.Count(u => u.IsBot) / (double)guild.MemberCount) >= 0.9) {
-                client.LogOutput($"LEAVING BOT SERVER: {guild.Name}");
+                client.LogInfo($"Leaving bot server {guild.Name}");
                 try {
                     // Bot is typing in default channel.
                     await guild.DefaultChannel.TriggerTypingAsync();

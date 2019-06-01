@@ -56,13 +56,13 @@ namespace NinjaCatDiscordBot {
         /// </summary>
         public NinjaCatDiscordClient() : base(new DiscordSocketConfig() { TotalShards = Constants.ShardCount }) {
             // Write startup messages.
-            LogOutput($"{Constants.AppName} on {RuntimeInformation.FrameworkDescription} has started.");
-            LogOutput($"===============================================================");
+            LogInfo($"{Constants.AppName} on {RuntimeInformation.FrameworkDescription} has started.");
+            LogInfo($"===============================================================");
 
             // Listen for events.
             Log += (message) => {
                 // Log the output.
-                LogOutput(message.ToString());
+                LogInfo(message.ToString());
                 return Task.CompletedTask;
             };
 
@@ -346,15 +346,6 @@ namespace NinjaCatDiscordBot {
         }
 
         /// <summary>
-        /// Logs the specified information to the console and logfile.
-        /// </summary>
-        /// <param name="info">The information to log.</param>
-        public void LogOutput(string info) {
-            // Write to console.
-            Console.WriteLine($"{DateTime.Now}: {info}");
-        }
-
-        /// <summary>
         /// Logs the specified error to the console and logfile.
         /// </summary>
         /// <param name="info">The information to log.</param>
@@ -442,7 +433,7 @@ namespace NinjaCatDiscordBot {
             }
             catch (Exception ex) {
                 // Log failure.
-                LogOutput($"FAILURE IN GAME: {ex}");
+                LogError($"Failed to update game: {ex}");
 
                 // Reset game.
                 foreach (var shard in Shards)

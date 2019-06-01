@@ -385,12 +385,8 @@ namespace NinjaCatDiscordBot {
         /// </summary>
         [Command(Constants.AnnouncementCommand)]
         public async Task SendAnnouncementAsync(string message) {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            var client = await StartTypingAndGetClient();
 
             // Get the user.
             var user = Context.Message.Author as IUser;
@@ -422,7 +418,7 @@ namespace NinjaCatDiscordBot {
             await ReplyAsync($"I'll announce the following message to all my servers:\n{message}");
 
             // Log message.
-            client.LogOutput($"ANNOUNCING: {message}");
+            client.LogInfo($"Announcing {message}");
 
             // Send message to shards.
             foreach (var shard in client.Shards)
@@ -434,12 +430,8 @@ namespace NinjaCatDiscordBot {
         /// </summary>
         [Command(Constants.UpdateGameCommand)]
         public async Task UpdateGameAsync() {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            var client = await StartTypingAndGetClient();
 
             // Get the user.
             var user = Context.Message.Author as IUser;
@@ -479,12 +471,8 @@ namespace NinjaCatDiscordBot {
         /// </summary>
         [Command(Constants.TestPingCommand)]
         public async Task TestPingAsync() {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
+            var client = await StartTypingAndGetClient();
 
             // Get the user.
             var user = Context.User as IGuildUser;
@@ -545,13 +533,13 @@ namespace NinjaCatDiscordBot {
 
                 // If the channel is null, continue on to the next guild.
                 if (channel == null) {
-                    client.LogOutput($"ROLLING OVER SERVER (NO SPEAKING): {guild.Name}");
+                    client.LogInfo($"Rolling over server (disabled) {guild.Name}");
                     continue;
                 }
 
                 // Verify we have permission to speak.
                 if (!guild.CurrentUser.GetPermissions(channel).SendMessages) {
-                    client.LogOutput($"ROLLING OVER SERVER (NO PERMS): {guild.Name}");
+                    client.LogInfo($"Rolling over server (no perms) {guild.Name}");
                     continue;
                 }
 
@@ -567,12 +555,50 @@ namespace NinjaCatDiscordBot {
                     await channel.SendMessageAsync($"Announcement from **{Constants.OwnerName}** (bot owner):\n{message}");
                 }
                 catch (Exception ex) {
-                    client.LogOutput($"FAILURE IN SPEAKING FOR {guild.Name}: {ex}");
+                    client.LogError($"Failed to speak in {guild.Name}: {ex}");
                 }
-
-                // Log server.
-                client.LogOutput($"SPOKEN IN SERVER: {guild.Name}");
+                client.LogInfo($"Spoke in server {guild.Name}");
             }
+        }
+
+
+        /// <summary>
+        /// Test ping..
+        /// </summary>
+        [Command("restart")]
+        public async Task RestartAsync() {
+            // Get client.
+            var client = Context.Client as NinjaCatDiscordClient;
+
+            // Get the user.
+            var user = Context.Message.Author as IUser;
+
+            // If the user is not master, show error.
+            if (user?.Id != Constants.OwnerId) {
+                // Select and send message.
+                switch (client.GetRandomNumber(4)) {
+                    default:
+                        await ReplyAsync($"Sorry, but only my master can force-update my game.");
+                        break;
+
+                    case 1:
+                        await ReplyAsync($"No can do. You aren't my owner.");
+                        break;
+
+                    case 2:
+                        await ReplyAsync($"I'm sorry {Context.Message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
+                        break;
+
+                    case 3:
+                        await ReplyAsync($"Not happening. Only my owner can force-update my game.");
+                        break;
+                }
+                return;
+            }
+
+            // Shutdown bot.
+            await ReplyAsync($"Exiting...");
+            Environment.Exit(-1);
         }
 
         #endregion
