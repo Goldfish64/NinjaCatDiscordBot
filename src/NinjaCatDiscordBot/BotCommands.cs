@@ -287,7 +287,7 @@ namespace NinjaCatDiscordBot {
 
             // If the actual build returned is a normal build, skip ahead is probably closed and merged.
             if (data.Item3 != BuildType.SkipAheadPc)
-                await ReplyAsync($"Skip Ahead is appears to be closed. The latest Windows 10 build for PCs is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
+                await ReplyAsync($"Skip Ahead appears to be closed. The latest Windows 10 build for PCs is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
             else
                 await ReplyAsync($"The latest Windows 10 Skip Ahead build is **{data.Item1}**. :cat: :fast_forward:\n{data.Item2}");
         }
