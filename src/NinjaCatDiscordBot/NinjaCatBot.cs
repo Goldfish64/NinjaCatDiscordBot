@@ -44,8 +44,8 @@ namespace NinjaCatDiscordBot {
     public partial class NinjaCatBot {
         #region Private variables
 
-
         private NinjaCatDiscordClient client;
+        private Timer timerBuild;
 
         #endregion
 
@@ -144,99 +144,101 @@ namespace NinjaCatDiscordBot {
             var httpClient = new HttpClient();
 
             // Start checking for new builds.
-            var buildThread = new Thread(new ThreadStart(async () => {
-                while (true) {
-                    // Check for builds every minute.
-                    await Task.Delay(TimeSpan.FromMinutes(1));
+            timerBuild = new Timer(async (s) => {
+                client.LogInfo($"Checking for build...");
 
-                    // Attempt to get the latest post and skip if we cannot.
-                    BlogEntry post = null;
-                    try {
-                        // Get latest post.
-                        var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed"));
-                        var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                                      select new BlogEntry() {
-                                          Link = item.Elements().First(i => i.Name.LocalName == "link").Value,
-                                          Title = item.Elements().First(i => i.Name.LocalName == "title").Value,
-                                          Desc = item.Elements().First(i => i.Name.LocalName == "description").Value
-                                      };
-                        post = entries.ToList().Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build")).FirstOrDefault();
-                    }
-                    catch (HttpRequestException ex) {
-                        client.LogError($"Exception when getting post: {ex}");
-                        continue;
-                    }
-                    if (post == null) {
-                        client.LogError($"Unable to get new post");
-                        continue;
-                    }
+                // Attempt to get the latest post and skip if we cannot.
+                BlogEntry post = null;
+                try {
+                    // Get latest post.
+                    var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed"));
+                    var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                                  select new BlogEntry() {
+                                      Link = item.Elements().First(i => i.Name.LocalName == "link").Value,
+                                      Title = item.Elements().First(i => i.Name.LocalName == "title").Value,
+                                      Desc = item.Elements().First(i => i.Name.LocalName == "description").Value
+                                  };
+                    post = entries.ToList().Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build")).FirstOrDefault();
+                }
+                catch (HttpRequestException ex) {
+                    client.LogError($"Exception when getting post: {ex}");
+                    return;
+                }
+                if (post == null) {
+                    client.LogError($"Unable to get new post");
+                    return;
+                }
 
-                    // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
-                    if (string.IsNullOrWhiteSpace(client.CurrentUrl)) {
-                        client.CurrentUrl = post.Link;
-                        client.SaveSettings();
-                        client.LogInfo($"Saved post as new latest build: {post.Link}");
-                        continue;
-                    }
-
-                    // Is the latest post the same? If so, no need to announce it.
-                    if (client.CurrentUrl == post.Link)
-                        continue;
-
-                    // Get build numbers. If empty, ignore the post.
-                    var build = Regex.Match(post.Link, @"\d{5,}").Value;
-                    if (string.IsNullOrWhiteSpace(build)) {
-                        client.LogError($"Post build number is blank");
-                        continue;
-                    }
-
-                    // Log post.
-                    client.LogInfo($"New build received");
-
-                    // Save post.
+                // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
+                if (string.IsNullOrWhiteSpace(client.CurrentUrl)) {
                     client.CurrentUrl = post.Link;
                     client.SaveSettings();
-
-                    // Get first sentence of post. We'll parse the ring out of this.
-                    var description = post.Desc.ToLowerInvariant().Split('.').FirstOrDefault();
-                    if (description == null) {
-                        client.LogError($"Post description is blank");
-                        continue;
-                    }
-
-                    // Determine ring.
-                    var ring = string.Empty;
-                    var platform = string.Empty;
-                    if (description.Contains("skip ahead")) {
-                        // Skip ahead takes priority over other rings.
-                        ring = " to the Skip Ahead ring";
-                    }
-                    else {
-                        if (description.Contains("fast") && description.Contains("slow"))
-                            ring = " to both the Fast and Slow rings";
-                        else if (description.Contains("fast"))
-                            ring = " to the Fast ring";
-                        else if (description.Contains("slow"))
-                            ring = " to the Slow ring";
-                    }
-
-                    // Determine build platform.
-                    if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("server"))
-                        platform = " for both PC and Server";
-                    else if (post.Link.ToLowerInvariant().Contains("pc"))
-                        platform = " for PC";
-                    else if (post.Link.ToLowerInvariant().Contains("server"))
-                        platform = " for Server";
-
-                    // Send build to guilds.
-                    foreach (var shard in client.Shards)
-                        SendNewBuildToShard(shard, build, ring + platform, post.Link);
-
-                    // Update game.
-                    await client.UpdateGameAsync();
+                    client.LogInfo($"Saved post as new latest build: {post.Link}");
+                    return;
                 }
-            }));
-            buildThread.Start();
+
+                // Is the latest post the same? If so, no need to announce it.
+                if (client.CurrentUrl == post.Link)
+                    return;
+
+                // Get build numbers. If empty, ignore the post.
+                var build = Regex.Match(post.Link, @"\d{5,}").Value;
+                if (string.IsNullOrWhiteSpace(build)) {
+                    client.LogError($"Post build number is blank");
+                    return;
+                }
+
+                // Stop timer.
+                timerBuild.Change(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-1));
+
+                // Log post.
+                client.LogInfo($"New build received");
+
+                // Save post.
+                client.CurrentUrl = post.Link;
+                client.SaveSettings();
+
+                // Get first sentence of post. We'll parse the ring out of this.
+                var description = post.Desc.ToLowerInvariant().Split('.').FirstOrDefault();
+                if (description == null) {
+                    client.LogError($"Post description is blank");
+                    return;
+                }
+
+                // Determine ring.
+                var ring = string.Empty;
+                var platform = string.Empty;
+                if (description.Contains("skip ahead")) {
+                    // Skip ahead takes priority over other rings.
+                    ring = " to the Skip Ahead ring";
+                }
+                else {
+                    if (description.Contains("fast") && description.Contains("slow"))
+                        ring = " to both the Fast and Slow rings";
+                    else if (description.Contains("fast"))
+                        ring = " to the Fast ring";
+                    else if (description.Contains("slow"))
+                        ring = " to the Slow ring";
+                }
+
+                // Determine build platform.
+                if (post.Link.ToLowerInvariant().Contains("pc") && post.Link.ToLowerInvariant().Contains("server"))
+                    platform = " for both PC and Server";
+                else if (post.Link.ToLowerInvariant().Contains("pc"))
+                    platform = " for PC";
+                else if (post.Link.ToLowerInvariant().Contains("server"))
+                    platform = " for Server";
+
+                // Send build to guilds.
+                foreach (var shard in client.Shards)
+                    SendNewBuildToShard(shard, build, ring + platform, post.Link);
+
+                // Update game.
+                await client.UpdateGameAsync();
+
+                // Restart timer.
+                timerBuild.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+            }, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
 
             // Wait a minute for bot to start up.
             await Task.Delay(TimeSpan.FromMinutes(1));
