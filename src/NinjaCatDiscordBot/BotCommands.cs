@@ -210,7 +210,7 @@ namespace NinjaCatDiscordBot {
                 if (limit >= 2)
                     return;
 
-                try {
+               // try {
                     string emoteUrl = null;
 
                     if (Emote.TryParse(emote, out Emote found)) {
@@ -220,13 +220,13 @@ namespace NinjaCatDiscordBot {
                         int codepoint = Char.ConvertToUtf32(emote, 0);
                         string codepointHex = codepoint.ToString("X").ToLower();
 
-                        emoteUrl = $"https://raw.githubusercontent.com/twitter/twemoji/gh-pages/2/72x72/{codepointHex}.png";
+                        emoteUrl = $"https://raw.githubusercontent.com/twitter/twemoji/gh-pages/v/12.1.3/72x72/{codepointHex}.png";
                     }
 
                     var req = await _client.GetStreamAsync(emoteUrl);
                     await Context.Channel.SendFileAsync(req, Path.GetFileName(emoteUrl));
-                }
-                catch (HttpRequestException) { } // Failed to download emote, skip it
+              //  }
+                //catch (HttpRequestException) { } // Failed to download emote, skip it
 
                 limit++;
             }

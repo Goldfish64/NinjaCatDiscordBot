@@ -128,7 +128,7 @@ namespace NinjaCatDiscordBot {
             await client.StartAsync();
 
 #if !PRIVATE
-            // Check for bot guilds.
+            /*// Check for bot guilds.
             foreach (var shard in client.Shards) {
 #pragma warning disable 4014
                 shard.Connected += async () => {
@@ -137,7 +137,7 @@ namespace NinjaCatDiscordBot {
                     await Task.CompletedTask;
                 };
 #pragma warning restore 4014
-            }
+            }*/
 #endif
 
             // Create HTTP client.
