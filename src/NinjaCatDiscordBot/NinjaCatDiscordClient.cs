@@ -104,6 +104,17 @@ namespace NinjaCatDiscordBot {
                 SpeakingRolesSkip[entry.Key] = entry.Value;
 
             // Create temporary dictionary.
+            var rolesSlow = new Dictionary<ulong, ulong>();
+
+            // Does the roles file exist? If so, deserialize JSON.
+            if (File.Exists(Constants.RolesSlowFileName))
+                rolesSlow = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.RolesSlowFileName));
+
+            // Add each entry to the client.
+            foreach (var entry in rolesSlow)
+                SpeakingRolesSlow[entry.Key] = entry.Value;
+
+            // Create temporary dictionary.
             var rolesJumbo = new Dictionary<ulong, ulong>();
 
             // Does the roles file exist? If so, deserialize JSON.
@@ -136,6 +147,12 @@ namespace NinjaCatDiscordBot {
         /// </summary>
         /// <remarks>Guild is the key, role is the value.</remarks>
         public ConcurrentDictionary<ulong, ulong> SpeakingRolesSkip { get; } = new ConcurrentDictionary<ulong, ulong>();
+
+        /// <summary>
+        /// Gets the list of speaking roles for slow.
+        /// </summary>
+        /// <remarks>Guild is the key, role is the value.</remarks>
+        public ConcurrentDictionary<ulong, ulong> SpeakingRolesSlow { get; } = new ConcurrentDictionary<ulong, ulong>();
 
         /// <summary>
         /// Gets the list of jumbo roles.
@@ -298,6 +315,38 @@ namespace NinjaCatDiscordBot {
         }
 
         /// <summary>
+        /// Gets the speaking slow role for the specified guild.
+        /// </summary>
+        /// <param name="guild">The <see cref="IGuild"/> to get the role for.</param>
+        /// <returns>An <see cref="SocketTextRole"/> that should be used.</returns>
+        public IRole GetSpeakingRoleSlowForIGuild(IGuild guild) {
+            // If the guild is the Bots server, never speak.
+            if (guild.Id == Constants.BotsGuildId)
+                return null;
+
+            // Create role variable.
+            IRole role = null;
+
+            // Try to get the saved role.
+            if (SpeakingRolesSlow.ContainsKey(guild.Id)) {
+                // If it is zero, return null to not speak.
+                if (SpeakingRolesSlow[guild.Id] == 0)
+                    return null;
+                else
+                    role = guild.Roles.SingleOrDefault(g => g.Id == SpeakingRolesSlow[guild.Id]) as IRole;
+            }
+
+            // If the role is null, delete the entry from the dictionary and use the default one.
+            if (role == null) {
+                SpeakingRolesSlow.TryRemove(guild.Id, out ulong outVar);
+                SaveSettings();
+            }
+
+            // Return the role.
+            return role;
+        }
+
+        /// <summary>
         /// Gets the jumbo role for the specified guild.
         /// </summary>
         /// <param name="guild">The <see cref="IGuild"/> to get the role for.</param>
@@ -341,6 +390,7 @@ namespace NinjaCatDiscordBot {
                 File.WriteAllText(Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
                 File.WriteAllText(Constants.RolesFileName, JsonConvert.SerializeObject(SpeakingRoles));
                 File.WriteAllText(Constants.RolesSkipFileName, JsonConvert.SerializeObject(SpeakingRolesSkip));
+                File.WriteAllText(Constants.RolesSlowFileName, JsonConvert.SerializeObject(SpeakingRolesSlow));
                 File.WriteAllText(Constants.RolesJumboFileName, JsonConvert.SerializeObject(JumboRoles));
             }
         }
@@ -402,6 +452,10 @@ namespace NinjaCatDiscordBot {
                                 return await GetLatestBuildNumberAsync(BuildType.NormalPc);
                         }
                         break;
+
+                    case BuildType.SlowPc:
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Link.ToLowerInvariant().Contains("slow-ring") && !p.Title.ToLowerInvariant().Contains("server") && (!p.Desc.ToLowerInvariant().Contains("skip ahead") || p.Desc.ToLowerInvariant().Contains("fast ring"))).FirstOrDefault();
+                        break;
                 }
                 if (post != null)
                     break;
@@ -452,6 +506,7 @@ namespace NinjaCatDiscordBot {
     public enum BuildType {
         NormalPc,
         Server,
-        SkipAheadPc
+        SkipAheadPc,
+        SlowPc
     }
 }

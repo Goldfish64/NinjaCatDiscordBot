@@ -271,6 +271,25 @@ namespace NinjaCatDiscordBot {
         }
 
         /// <summary>
+        /// Gets the latest Insider slow build.
+        /// </summary>
+        [Command(Constants.LatestSlowBuildCommand)]
+        private async Task GetLatestSlowBuildAsync() {
+            // Get client.
+            var client = await StartTypingAndGetClient();
+
+            // Get build.
+            var data = await client.GetLatestBuildNumberAsync(BuildType.SlowPc);
+            if (data == null) {
+                await ReplyAsync($"The latest Windows 10 Slow ring build for PCs couldn't be found. :crying_cat_face: :desktop:");
+                return;
+            }
+
+            // Send.
+            await ReplyAsync($"The latest Windows 10 Slow ring build for PCs is **{data.Item1}**. :cat: :desktop:\n{data.Item2}");
+        }
+
+        /// <summary>
         /// Gets the latest Insider skip-ahead build.
         /// </summary>
         [Command(Constants.LatestSkipAheadBuildCommand)]

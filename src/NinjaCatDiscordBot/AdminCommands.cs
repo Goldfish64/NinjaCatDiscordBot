@@ -163,6 +163,36 @@ namespace NinjaCatDiscordBot {
         }
 
         /// <summary>
+        /// Gets the role the bot will ping when slow builds come out.
+        /// </summary>
+        [Command(Constants.RoleSlowCommand)]
+        public async Task GetRoleSlowAsync() {
+            // Get client.
+            var client = await StartTypingAndGetClient();
+
+            // Get guild. If null show error.
+            var guild = (Context.Channel as IGuildChannel)?.Guild;
+            if (guild == null) {
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
+                return;
+            }
+
+            // If the guild is the Bots server, never speak.
+            if (guild.Id == Constants.BotsGuildId) {
+                // Send message.
+                await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
+                return;
+            }
+
+            // Get role.
+            var role = client.GetSpeakingRoleSkipForIGuild(guild);
+            if (role == null)
+                await ReplyAsync($"I'm not pinging a special role when new Slow ring builds come out.");
+            else
+                await ReplyAsync($"The role I ping is **{role.Name}** when new Slow ring builds are released.");
+        }
+
+        /// <summary>
         /// Gets the role required for jumbo.
         /// </summary>
         [Command(Constants.RoleJumboCommand)]
@@ -329,7 +359,54 @@ namespace NinjaCatDiscordBot {
                 // Remove role.
                 client.SpeakingRolesSkip.TryRemove(guild.Id, out ulong outVar);
                 client.SaveSettings();
-                await ReplyAsync($"I'll no longer ping a role when new skip ahead builds come out.");
+                await ReplyAsync($"I'll no longer ping a special role when new skip ahead builds come out.");
+            }
+        }
+
+        /// <summary>
+        /// Sets the role that is pinged when new slow builds are released.
+        /// </summary>
+        /// <param name="role">The new role. A null value will disable role pinging.</param>
+        [Command(Constants.SetRoleSlowCommand)]
+        public async Task SetRoleSlowAsync(IRole role = null) {
+            // Get client.
+            var client = await StartTypingAndGetClient();
+
+            // Get guild. If null show error.
+            var guild = (Context.Channel as IGuildChannel)?.Guild;
+            if (guild == null) {
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
+                return;
+            }
+
+            // If the guild is the Bots server, never speak.
+            if (guild.Id == Constants.BotsGuildId) {
+                // Send message.
+                await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
+                return;
+            }
+
+            // Get the user.
+            var user = Context.User as IGuildUser;
+
+            // If the user is null, lacks the manage server permission, or is not master, show error.
+            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true) {
+                await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the role I ping.");
+                return;
+            }
+
+            // If role is valid, save it. Otherwise remove the role.
+            if (role != null) {
+                // Save role.
+                client.SpeakingRolesSlow[guild.Id] = role.Id;
+                client.SaveSettings();
+                await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new Slow ring builds are released.");
+            }
+            else {
+                // Remove role.
+                client.SpeakingRolesSlow.TryRemove(guild.Id, out ulong outVar);
+                client.SaveSettings();
+                await ReplyAsync($"I'll no longer ping a special role when new Slow ring builds come out.");
             }
         }
 

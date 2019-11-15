@@ -199,7 +199,7 @@ namespace NinjaCatDiscordBot {
                 client.SaveSettings();
 
                 // Get first sentence of post. We'll parse the ring out of this.
-                var description = post.Desc.ToLowerInvariant().Split('.').FirstOrDefault();
+                var description = post.Desc.ToLowerInvariant().Substring(0, post.Desc.ToLowerInvariant().IndexOf(". "));
                 if (description == null) {
                     client.LogError($"Post description is blank");
                     return;
@@ -278,7 +278,10 @@ namespace NinjaCatDiscordBot {
             // Get ping role.
             var role = client.GetSpeakingRoleForIGuild(guild);
             var roleSkip = client.GetSpeakingRoleSkipForIGuild(guild);
+            var roleSlow = client.GetSpeakingRoleSlowForIGuild(guild);
             if (type.ToLowerInvariant().Contains("skip ahead") && roleSkip != null)
+                role = roleSkip;
+            else if (type.ToLowerInvariant().Contains("slow") && roleSlow != null)
                 role = roleSkip;
             var roleText = string.Empty;
 

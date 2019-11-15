@@ -34,6 +34,7 @@ namespace NinjaCatDiscordBot {
         public const string ChannelsFileName = "nj-channels.json";
         public const string RolesFileName = "nj-roles.json";
         public const string RolesSkipFileName = "nj-roles-skip.json";
+        public const string RolesSlowFileName = "nj-roles-slow.json";
         public const string RolesJumboFileName = "nj-roles-jumbo.json";
 
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
@@ -75,6 +76,8 @@ namespace NinjaCatDiscordBot {
         public const string LatestServerBuildCommandDesc = "gets the latest Insider Server build";
         public const string LatestSkipAheadBuildCommand = "latestskip";
         public const string LatestSkipAheadBuildCommandDesc = "gets the latest Skip Ahead Insider build";
+        public const string LatestSlowBuildCommand = "latestslow";
+        public const string LatestSlowBuildCommandDesc = "gets the latest slow Insider build";
         public const string BotInfoCommand = "info";
         public const string BotInfoCommandDesc = "shows my info";
         public const string AnnouncementCommand = "announce"; // Bot owner only.
@@ -90,8 +93,12 @@ namespace NinjaCatDiscordBot {
         public const string SetRoleCommandDesc = "sets the role I ping when new builds are released; specify nothing to disable pings";
         public const string RoleSkipCommand = "skiprole";
         public const string RoleSkipCommandDesc = "gets the role I ping when new skip ahead builds are released";
+        public const string RoleSlowCommand = "slowrole";
+        public const string RoleSlowCommandDesc = "gets the role I ping when new Slow ring builds are released";
         public const string SetRoleSkipCommand = "setskiprole";
         public const string SetRoleSkipCommandDesc = "sets the role I ping when new skip ahead builds are released; specify nothing to disable pings";
+        public const string SetRoleSlowCommand = "setslowrole";
+        public const string SetRoleSlowCommandDesc = "sets the role I ping when new Slow ring builds are released; specify nothing to disable pings";
         public const string RoleJumboCommand = "jumborole";
         public const string SetRoleJumboCommand = "setjumborole";
         public const string TestPermsCommand = "testperms";
@@ -120,7 +127,8 @@ namespace NinjaCatDiscordBot {
             $"**{CommandPrefix}{TrexCommand}**: {TrexCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
             $"**{CommandPrefix}{LatestServerBuildCommand}**: {LatestServerBuildCommandDesc}.\n" +
-            $"**{CommandPrefix}{LatestSkipAheadBuildCommand}**: {LatestSkipAheadBuildCommandDesc}.\n\n" +
+            $"**{CommandPrefix}{LatestSkipAheadBuildCommand}**: {LatestSkipAheadBuildCommandDesc}.\n" +
+            $"**{CommandPrefix}{LatestSlowBuildCommand}**: {LatestSlowBuildCommandDesc}.\n\n" +
             $"Admin commands (manage server perm required):\n" +
             $"**{CommandPrefix}{ChannelCommand}**: {ChannelCommandDesc}.\n" +
             $"**{CommandPrefix}{SetChannelCommand}** *channel*: {SetChannelCommandDesc}.\n" +
@@ -128,6 +136,8 @@ namespace NinjaCatDiscordBot {
             $"**{CommandPrefix}{SetRoleCommand}** *role*: {SetRoleCommandDesc}.\n" +
             $"**{CommandPrefix}{RoleSkipCommand}**: {RoleSkipCommandDesc}.\n" +
             $"**{CommandPrefix}{SetRoleSkipCommand}** *role*: {SetRoleSkipCommandDesc}.\n" +
+            $"**{CommandPrefix}{RoleSlowCommand}**: {RoleSlowCommandDesc}.\n" +
+            $"**{CommandPrefix}{SetRoleSlowCommand}** *role*: {SetRoleSlowCommandDesc}.\n" +
             $"**{CommandPrefix}{TestPermsCommand}**: {TestPermsCommandDesc}.\n" +
             $"**{CommandPrefix}{TestPingCommand}**: {TestPingCommandDesc}.";
 
