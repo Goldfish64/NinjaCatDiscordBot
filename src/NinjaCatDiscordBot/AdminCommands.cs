@@ -185,7 +185,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Get role.
-            var role = client.GetSpeakingRoleSkipForIGuild(guild);
+            var role = client.GetSpeakingRoleSlowForIGuild(guild);
             if (role == null)
                 await ReplyAsync($"I'm not pinging a special role when new Slow ring builds come out.");
             else

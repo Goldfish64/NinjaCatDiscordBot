@@ -282,7 +282,7 @@ namespace NinjaCatDiscordBot {
             if (type.ToLowerInvariant().Contains("skip ahead") && roleSkip != null)
                 role = roleSkip;
             else if (type.ToLowerInvariant().Contains("slow") && roleSlow != null)
-                role = roleSkip;
+                role = roleSlow;
             var roleText = string.Empty;
 
             // Does the role exist, and should we ping?
