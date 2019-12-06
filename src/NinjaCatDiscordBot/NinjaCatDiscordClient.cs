@@ -454,7 +454,7 @@ namespace NinjaCatDiscordBot {
                         break;
 
                     case BuildType.SlowPc:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Link.ToLowerInvariant().Contains("slow-ring") && !p.Title.ToLowerInvariant().Contains("server") && (!p.Desc.ToLowerInvariant().Contains("skip ahead") || p.Desc.ToLowerInvariant().Contains("fast ring"))).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Desc.Contains("Slow") && !p.Title.ToLowerInvariant().Contains("server") && !p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
                         break;
                 }
                 if (post != null)

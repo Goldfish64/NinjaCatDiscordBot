@@ -27,6 +27,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -275,26 +276,35 @@ namespace NinjaCatDiscordBot {
                 return;
             }
 
-            // Get ping role.
-            var role = client.GetSpeakingRoleForIGuild(guild);
+            // Get ping roles.
+            var pingRoles = new List<IRole>();
+            var roleFast = client.GetSpeakingRoleForIGuild(guild);
             var roleSkip = client.GetSpeakingRoleSkipForIGuild(guild);
             var roleSlow = client.GetSpeakingRoleSlowForIGuild(guild);
-            if (type.ToLowerInvariant().Contains("skip ahead") && roleSkip != null)
-                role = roleSkip;
-            else if (type.ToLowerInvariant().Contains("slow") && roleSlow != null)
-                role = roleSlow;
-            var roleText = string.Empty;
+            if (type.ToLowerInvariant().Contains("skip ahead") && roleSkip != null) {
+                pingRoles.Add(roleSkip);
+            }
+            else {
+                // Can ping both roles if build is for both rings.
+                if (type.ToLowerInvariant().Contains("fast") && roleFast != null)
+                    pingRoles.Add(roleFast);
+                if (type.ToLowerInvariant().Contains("slow") && roleSlow != null)
+                    pingRoles.Add(roleSlow);
+            }
 
-            // Does the role exist, and should we ping?
-            if (!type.ToLowerInvariant().Contains("server") && role != null)
-                roleText = $"{role.Mention} ";
+            // If no roles added, and is not server, always ping fast.
+            if (!type.ToLowerInvariant().Contains("server") && pingRoles.Count == 0 && roleFast != null)
+                pingRoles.Add(roleFast);
+            var roleText = string.Empty;
 
             try {
                 // Check if the role is mentionable.
                 // If not, attempt to make it mentionable, and revert the setting after the message is sent.
-                var mentionable = role?.IsMentionable;
-                if (mentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
-                    await role.ModifyAsync((e) => e.Mentionable = true);
+                foreach (var role in pingRoles) {
+                    roleText += $"{role.Mention} ";
+                    if (role?.IsMentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
+                        await role.ModifyAsync((e) => e.Mentionable = true);
+                }
 
                 // Wait a second.
                 await Task.Delay(TimeSpan.FromSeconds(1));
@@ -321,8 +331,10 @@ namespace NinjaCatDiscordBot {
                 }
 
                 // Revert mentionable setting.
-                if (mentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
-                    await role.ModifyAsync((e) => e.Mentionable = false);
+                foreach (var role in pingRoles) {
+                    if (role?.IsMentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
+                        await role.ModifyAsync((e) => e.Mentionable = false);
+                }
             }
             catch (Exception ex) {
                 client.LogError($"Failed to speak in {guild.Name} ({shard.ShardId}/{client.Shards.Count - 1}): {ex}");
