@@ -146,7 +146,7 @@ namespace NinjaCatDiscordBot {
 
             // Start checking for new builds.
             timerBuild = new Timer(async (s) => {
-                client.LogInfo($"Checking for build...");
+                //client.LogInfo($"Checking for build...");
 
                 // Attempt to get the latest post and skip if we cannot.
                 BlogEntry post = null;
@@ -300,10 +300,13 @@ namespace NinjaCatDiscordBot {
             try {
                 // Check if the role is mentionable.
                 // If not, attempt to make it mentionable, and revert the setting after the message is sent.
+                var modifiedRoles = new List<IRole>();
                 foreach (var role in pingRoles) {
                     roleText += $"{role.Mention} ";
-                    if (role?.IsMentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
+                    if (role?.IsMentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position) {
                         await role.ModifyAsync((e) => e.Mentionable = true);
+                        modifiedRoles.Add(role);
+                    }
                 }
 
                 // Wait a second.
@@ -330,9 +333,9 @@ namespace NinjaCatDiscordBot {
                         break;
                 }
 
-                // Revert mentionable setting.
-                foreach (var role in pingRoles) {
-                    if (role?.IsMentionable == false && guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
+                // Revert mentionable setting for roles that had the setting changed.
+                foreach (var role in modifiedRoles) {
+                    if (guild.CurrentUser.GuildPermissions.ManageRoles && guild.CurrentUser.Hierarchy > role.Position)
                         await role.ModifyAsync((e) => e.Mentionable = false);
                 }
             }
