@@ -29,13 +29,8 @@ namespace NinjaCatDiscordBot {
     internal static class Constants {
         #region Constants
 
-        //public const string LogFileName = "nj-logfile.log";
         public const string LatestPostFileName = "nj-latestposturl.txt";
-        public const string ChannelsFileName = "nj-channels.json";
-        public const string RolesFileName = "nj-roles.json";
-        public const string RolesSkipFileName = "nj-roles-skip.json";
-        public const string RolesSlowFileName = "nj-roles-slow.json";
-        public const string RolesJumboFileName = "nj-roles-jumbo.json";
+        public const string SettingsFileName = "nj-settings.json";
 
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
         public const string UserName = "Ninja Cat";
@@ -44,11 +39,7 @@ namespace NinjaCatDiscordBot {
         public const ulong MsGuildId = 150662382874525696;
         public const string OwnerName = "Goldfish64";
 
-#if PRIVATE
-        public const string AppName = "Ninja Cat (Private)";
-        public const string CommandPrefix = "$nj-";
-        public const int ShardCount = 1;
-#elif RELEASE
+#if RELEASE
         public const string AppName = "Ninja Cat";
         public const string CommandPrefix = "$nj-";
         public const int ShardCount = 6;

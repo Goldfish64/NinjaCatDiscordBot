@@ -72,7 +72,7 @@ namespace NinjaCatDiscordBot {
                     speakingChannel = channel.Mention;
 
                 // Get ping role.
-                var role = client.GetSpeakingRoleForIGuild(guild);
+                var role = client.GetRoleForIGuild(guild, RoleType.InsiderPrimary);
 
                 // Get name of role if enabled.
                 if (role != null)
@@ -197,7 +197,7 @@ namespace NinjaCatDiscordBot {
 
             // Check perms if on server.
             if (Context.Guild != null) {
-                var role = client.GetJumboRoleForIGuild(Context.Guild);
+                var role = client.GetRoleForIGuild(Context.Guild, RoleType.Jumbo);
                 var user = Context.User as SocketGuildUser;
 
                 if (role != null && !user.Roles.Contains(role))

@@ -65,16 +65,11 @@ namespace NinjaCatDiscordBot {
         /// Starts the bot.
         /// </summary>
         private async Task Start() {
-            // Create Discord client.
             client = new NinjaCatDiscordClient();
 
-            // Create command service and map.
             var commands = new CommandService();
-
-            // Load commands from assembly.
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
 
-#if !PRIVATE
             // Certain things are to be done when the bot joins a guild.
             client.JoinedGuild += async (guild) => {
                 // Pause for 5 seconds.
@@ -84,19 +79,11 @@ namespace NinjaCatDiscordBot {
                 if (await CheckBotGuild(guild))
                     return;
 
-                // Update server count.
-                // await UpdateSiteServerCountAsync();
-
                 // Dev began Oct 2. 2016.
             };
 
-            // Update count on guild leave.
-            // client.LeftGuild += async (guild) => await UpdateSiteServerCountAsync();
-#endif
-
             // Listen for messages.
             client.MessageReceived += async (message) => {
-                // Get the message and check to see if it is a user message.
                 var msg = message as IUserMessage;
                 if (msg == null)
                     return;
@@ -108,14 +95,10 @@ namespace NinjaCatDiscordBot {
                 if (msg.HasStringPrefixLower(Constants.CommandPrefix, ref pos)) {
                     var result = await commands.ExecuteAsync(new CommandContext(client, msg), msg.Content.Substring(pos), null);
                     if (!result.IsSuccess) {
-                        // Is the command just unknown? If so, return.
                         if (result.Error == CommandError.UnknownCommand)
                             return;
 
-                        // Bot is typing.
                         await msg.Channel.TriggerTypingAsync();
-
-                        // Pause for realism and send message.
                         await Task.Delay(TimeSpan.FromSeconds(0.75));
 
                         await msg.Channel.SendMessageAsync($"I'm sorry, but something happened. Error: {result.ErrorReason}\n\nIf there are spaces in a parameter, make sure to surround it with quotes.");
@@ -128,20 +111,6 @@ namespace NinjaCatDiscordBot {
             await client.LoginAsync(TokenType.Bot, Credentials.DiscordToken);
             await client.StartAsync();
 
-#if !PRIVATE
-            /*// Check for bot guilds.
-            foreach (var shard in client.Shards) {
-#pragma warning disable 4014
-                shard.Connected += async () => {
-                    foreach (var guild in shard.Guilds)
-                        CheckBotGuild(guild);
-                    await Task.CompletedTask;
-                };
-#pragma warning restore 4014
-            }*/
-#endif
-
-            // Create HTTP client.
             var httpClient = new HttpClient();
 
             // Start checking for new builds.
@@ -191,8 +160,6 @@ namespace NinjaCatDiscordBot {
 
                 // Stop timer.
                 timerBuild.Change(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-1));
-
-                // Log post.
                 client.LogInfo($"New build received");
 
                 // Save post.
@@ -233,8 +200,6 @@ namespace NinjaCatDiscordBot {
                 // Send build to guilds.
                 foreach (var shard in client.Shards)
                     SendNewBuildToShard(shard, build, ring + platform, post.Link);
-
-                // Update game.
                 await client.UpdateGameAsync();
 
                 // Restart timer.
@@ -247,10 +212,7 @@ namespace NinjaCatDiscordBot {
             // Create thread for updating game.
             var serverCountThread = new Thread(new ThreadStart(async () => {
                 while (true) {
-                    // Update game.
                     await client.UpdateGameAsync();
-
-                    // Wait an hour.
                     await Task.Delay(TimeSpan.FromHours(1));
                 }
             }));
@@ -261,7 +223,6 @@ namespace NinjaCatDiscordBot {
         }
 
         private async Task SendBuildToGuild(DiscordSocketClient shard, SocketGuild guild, string build, string type, string url) {
-            // Get channel.
             var channel = client.GetSpeakingChannelForSocketGuild(guild);
 
             // If the channel is null, continue on to the next guild.
@@ -278,9 +239,9 @@ namespace NinjaCatDiscordBot {
 
             // Get ping roles.
             var pingRoles = new List<IRole>();
-            var roleFast = client.GetSpeakingRoleForIGuild(guild);
-            var roleSkip = client.GetSpeakingRoleSkipForIGuild(guild);
-            var roleSlow = client.GetSpeakingRoleSlowForIGuild(guild);
+            var roleFast = client.GetRoleForIGuild(guild, RoleType.InsiderPrimary);
+            var roleSkip = client.GetRoleForIGuild(guild, RoleType.InsiderSkip);
+            var roleSlow = client.GetRoleForIGuild(guild, RoleType.InsiderSlow);
             if (type.ToLowerInvariant().Contains("skip ahead") && roleSkip != null) {
                 pingRoles.Add(roleSkip);
             }

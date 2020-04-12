@@ -38,7 +38,42 @@ using System.Xml.Linq;
 
 namespace NinjaCatDiscordBot {
     /// <summary>
-    /// Represents a <see cref="DiscordSocketClient"/> with additional properties.
+    /// Represents the bot settings.
+    /// </summary>
+    public class NinjaCatSettings {
+        /// <summary>
+        /// Gets the list of Insider channels.
+        /// </summary>
+        /// <remarks>Guild is the key, channel is the value.</remarks>
+        public ConcurrentDictionary<ulong, ulong> InsiderChannels { get; } = new ConcurrentDictionary<ulong, ulong>();
+
+        /// <summary>
+        /// Gets the list of Insider roles.
+        /// </summary>
+        /// <remarks>Guild is the key, role is the value.</remarks>
+        public ConcurrentDictionary<ulong, ulong> InsiderRolesPrimary { get; } = new ConcurrentDictionary<ulong, ulong>();
+
+        /// <summary>
+        /// Gets the list of Insider roles for skip ahead.
+        /// </summary>
+        /// <remarks>Guild is the key, role is the value.</remarks>
+        public ConcurrentDictionary<ulong, ulong> InsiderRolesSkip { get; } = new ConcurrentDictionary<ulong, ulong>();
+
+        /// <summary>
+        /// Gets the list of Insider roles for slow.
+        /// </summary>
+        /// <remarks>Guild is the key, role is the value.</remarks>
+        public ConcurrentDictionary<ulong, ulong> InsiderRolesSlow { get; } = new ConcurrentDictionary<ulong, ulong>();
+
+        /// <summary>
+        /// Gets the list of jumbo roles.
+        /// </summary>
+        /// <remarks>Guild is the key, role is the value.</remarks>
+        public ConcurrentDictionary<ulong, ulong> JumboRoles { get; } = new ConcurrentDictionary<ulong, ulong>();
+    }
+
+    /// <summary>
+    /// Represents a <see cref="DiscordShardedClient"/> with additional properties.
     /// </summary>
     public sealed class NinjaCatDiscordClient : DiscordShardedClient {
         #region Private variables
@@ -70,95 +105,15 @@ namespace NinjaCatDiscordBot {
             if (File.Exists(Constants.LatestPostFileName))
                 CurrentUrl = File.ReadAllText(Constants.LatestPostFileName);
 
-            // Create temporary dictionary.
-            var channels = new Dictionary<ulong, ulong>();
-
-            // Does the channels file exist? If so, deserialize JSON.
-            if (File.Exists(Constants.ChannelsFileName))
-                channels = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.ChannelsFileName));
-
-            // Add each entry to the client.
-            foreach (var entry in channels)
-                SpeakingChannels[entry.Key] = entry.Value;
-
-            // Create temporary dictionary.
-            var roles = new Dictionary<ulong, ulong>();
-
-            // Does the roles file exist? If so, deserialize JSON.
-            if (File.Exists(Constants.RolesFileName))
-                roles = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.RolesFileName));
-
-            // Add each entry to the client.
-            foreach (var entry in roles)
-                SpeakingRoles[entry.Key] = entry.Value;
-
-            // Create temporary dictionary.
-            var rolesSkip = new Dictionary<ulong, ulong>();
-
-            // Does the roles file exist? If so, deserialize JSON.
-            if (File.Exists(Constants.RolesSkipFileName))
-                rolesSkip = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.RolesSkipFileName));
-
-            // Add each entry to the client.
-            foreach (var entry in rolesSkip)
-                SpeakingRolesSkip[entry.Key] = entry.Value;
-
-            // Create temporary dictionary.
-            var rolesSlow = new Dictionary<ulong, ulong>();
-
-            // Does the roles file exist? If so, deserialize JSON.
-            if (File.Exists(Constants.RolesSlowFileName))
-                rolesSlow = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.RolesSlowFileName));
-
-            // Add each entry to the client.
-            foreach (var entry in rolesSlow)
-                SpeakingRolesSlow[entry.Key] = entry.Value;
-
-            // Create temporary dictionary.
-            var rolesJumbo = new Dictionary<ulong, ulong>();
-
-            // Does the roles file exist? If so, deserialize JSON.
-            if (File.Exists(Constants.RolesJumboFileName))
-                rolesJumbo = JsonConvert.DeserializeObject<Dictionary<ulong, ulong>>(File.ReadAllText(Constants.RolesJumboFileName));
-
-            // Add each entry to the client.
-            foreach (var entry in rolesJumbo)
-                JumboRoles[entry.Key] = entry.Value;
+            if (File.Exists(Constants.SettingsFileName))
+                Settings = JsonConvert.DeserializeObject<NinjaCatSettings>(File.ReadAllText(Constants.SettingsFileName));
         }
 
         #endregion
 
         #region Properties
 
-        /// <summary>
-        /// Gets the list of speaking channels.
-        /// </summary>
-        /// <remarks>Guild is the key, channel is the value.</remarks>
-        public ConcurrentDictionary<ulong, ulong> SpeakingChannels { get; } = new ConcurrentDictionary<ulong, ulong>();
-
-        /// <summary>
-        /// Gets the list of speaking roles.
-        /// </summary>
-        /// <remarks>Guild is the key, role is the value.</remarks>
-        public ConcurrentDictionary<ulong, ulong> SpeakingRoles { get; } = new ConcurrentDictionary<ulong, ulong>();
-
-        /// <summary>
-        /// Gets the list of speaking roles for skip ahead.
-        /// </summary>
-        /// <remarks>Guild is the key, role is the value.</remarks>
-        public ConcurrentDictionary<ulong, ulong> SpeakingRolesSkip { get; } = new ConcurrentDictionary<ulong, ulong>();
-
-        /// <summary>
-        /// Gets the list of speaking roles for slow.
-        /// </summary>
-        /// <remarks>Guild is the key, role is the value.</remarks>
-        public ConcurrentDictionary<ulong, ulong> SpeakingRolesSlow { get; } = new ConcurrentDictionary<ulong, ulong>();
-
-        /// <summary>
-        /// Gets the list of jumbo roles.
-        /// </summary>
-        /// <remarks>Guild is the key, role is the value.</remarks>
-        public ConcurrentDictionary<ulong, ulong> JumboRoles { get; } = new ConcurrentDictionary<ulong, ulong>();
+        public NinjaCatSettings Settings;
 
         /// <summary>
         /// Gets the time the client started.
@@ -198,17 +153,17 @@ namespace NinjaCatDiscordBot {
             SocketTextChannel channel = null;
 
             // Try to get the saved channel.
-            if (SpeakingChannels.ContainsKey(guild.Id)) {
+            if (Settings.InsiderChannels.ContainsKey(guild.Id)) {
                 // If it is zero, return null to not speak.
-                if (SpeakingChannels[guild.Id] == 0)
+                if (Settings.InsiderChannels[guild.Id] == 0)
                     return null;
                 else
-                    channel = guild.Channels.SingleOrDefault(g => g.Id == SpeakingChannels[guild.Id]) as SocketTextChannel;
+                    channel = guild.Channels.SingleOrDefault(g => g.Id == Settings.InsiderChannels[guild.Id]) as SocketTextChannel;
             }
 
             // If the channel is null, delete the entry from the dictionary and use the default one.
             if (channel == null) {
-                SpeakingChannels.TryRemove(guild.Id, out ulong outVar);
+                Settings.InsiderChannels.TryRemove(guild.Id, out ulong outVar);
                 channel = guild.DefaultChannel;
                 SaveSettings();
             }
@@ -231,17 +186,17 @@ namespace NinjaCatDiscordBot {
             ITextChannel channel = null;
 
             // Try to get the saved channel.
-            if (SpeakingChannels.ContainsKey(guild.Id)) {
+            if (Settings.InsiderChannels.ContainsKey(guild.Id)) {
                 // If it is zero, return null to not speak.
-                if (SpeakingChannels[guild.Id] == 0)
+                if (Settings.InsiderChannels[guild.Id] == 0)
                     return null;
                 else
-                    channel = (await guild.GetChannelsAsync()).SingleOrDefault(g => g.Id == SpeakingChannels[guild.Id]) as ITextChannel;
+                    channel = (await guild.GetChannelsAsync()).SingleOrDefault(g => g.Id == Settings.InsiderChannels[guild.Id]) as ITextChannel;
             }
 
             // If the channel is null, delete the entry from the dictionary and use the default one.
             if (channel == null) {
-                SpeakingChannels.TryRemove(guild.Id, out ulong outVar);
+                Settings.InsiderChannels.TryRemove(guild.Id, out ulong outVar);
                 channel = (await guild.GetChannelsAsync()).SingleOrDefault(g => g.Id == guild.DefaultChannelId) as ITextChannel;
                 SaveSettings();
             }
@@ -251,130 +206,50 @@ namespace NinjaCatDiscordBot {
         }
 
         /// <summary>
-        /// Gets the speaking role for the specified guild.
+        /// Gets the desired role for the specified guild.
         /// </summary>
         /// <param name="guild">The <see cref="IGuild"/> to get the role for.</param>
-        /// <returns>An <see cref="SocketTextRole"/> that should be used.</returns>
-        public IRole GetSpeakingRoleForIGuild(IGuild guild) {
+        /// <returns>An <see cref="IRole"/> that should be used.</returns>
+        public IRole GetRoleForIGuild(IGuild guild, RoleType type) {
             // If the guild is the Bots server, never speak.
             if (guild.Id == Constants.BotsGuildId)
                 return null;
 
-            // Create role variable.
-            IRole role = null;
+            var roles = Settings.InsiderRolesPrimary;
+            switch (type) {
+                case RoleType.InsiderPrimary:
+                    break;
 
-            // Try to get the saved role.
-            if (SpeakingRoles.ContainsKey(guild.Id)) {
+                case RoleType.InsiderSlow:
+                    roles = Settings.InsiderRolesSlow;
+                    break;
+
+                case RoleType.InsiderSkip:
+                    roles = Settings.InsiderRolesSkip;
+                    break;
+
+                case RoleType.Jumbo:
+                    roles = Settings.JumboRoles;
+                    break;
+
+                default:
+                    return null;
+            }
+
+            IRole role = null;
+            if (roles.ContainsKey(guild.Id)) {
                 // If it is zero, return null to not speak.
-                if (SpeakingRoles[guild.Id] == 0)
+                if (roles[guild.Id] == 0)
                     return null;
                 else
-                    role = guild.Roles.SingleOrDefault(g => g.Id == SpeakingRoles[guild.Id]) as IRole;
+                    role = guild.Roles.SingleOrDefault(g => g.Id == roles[guild.Id]) as IRole;
             }
 
             // If the role is null, delete the entry from the dictionary and use the default one.
             if (role == null) {
-                SpeakingRoles.TryRemove(guild.Id, out ulong outVar);
+                roles.TryRemove(guild.Id, out ulong outVar);
                 SaveSettings();
             }
-
-            // Return the role.
-            return role;
-        }
-
-        /// <summary>
-        /// Gets the speaking skip ahead role for the specified guild.
-        /// </summary>
-        /// <param name="guild">The <see cref="IGuild"/> to get the role for.</param>
-        /// <returns>An <see cref="SocketTextRole"/> that should be used.</returns>
-        public IRole GetSpeakingRoleSkipForIGuild(IGuild guild) {
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId)
-                return null;
-
-            // Create role variable.
-            IRole role = null;
-
-            // Try to get the saved role.
-            if (SpeakingRolesSkip.ContainsKey(guild.Id)) {
-                // If it is zero, return null to not speak.
-                if (SpeakingRolesSkip[guild.Id] == 0)
-                    return null;
-                else
-                    role = guild.Roles.SingleOrDefault(g => g.Id == SpeakingRolesSkip[guild.Id]) as IRole;
-            }
-
-            // If the role is null, delete the entry from the dictionary and use the default one.
-            if (role == null) {
-                SpeakingRolesSkip.TryRemove(guild.Id, out ulong outVar);
-                SaveSettings();
-            }
-
-            // Return the role.
-            return role;
-        }
-
-        /// <summary>
-        /// Gets the speaking slow role for the specified guild.
-        /// </summary>
-        /// <param name="guild">The <see cref="IGuild"/> to get the role for.</param>
-        /// <returns>An <see cref="SocketTextRole"/> that should be used.</returns>
-        public IRole GetSpeakingRoleSlowForIGuild(IGuild guild) {
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId)
-                return null;
-
-            // Create role variable.
-            IRole role = null;
-
-            // Try to get the saved role.
-            if (SpeakingRolesSlow.ContainsKey(guild.Id)) {
-                // If it is zero, return null to not speak.
-                if (SpeakingRolesSlow[guild.Id] == 0)
-                    return null;
-                else
-                    role = guild.Roles.SingleOrDefault(g => g.Id == SpeakingRolesSlow[guild.Id]) as IRole;
-            }
-
-            // If the role is null, delete the entry from the dictionary and use the default one.
-            if (role == null) {
-                SpeakingRolesSlow.TryRemove(guild.Id, out ulong outVar);
-                SaveSettings();
-            }
-
-            // Return the role.
-            return role;
-        }
-
-        /// <summary>
-        /// Gets the jumbo role for the specified guild.
-        /// </summary>
-        /// <param name="guild">The <see cref="IGuild"/> to get the role for.</param>
-        /// <returns>An <see cref="SocketTextRole"/> that should be used.</returns>
-        public IRole GetJumboRoleForIGuild(IGuild guild) {
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId)
-                return null;
-
-            // Create role variable.
-            IRole role = null;
-
-            // Try to get the saved role.
-            if (JumboRoles.ContainsKey(guild.Id)) {
-                // If it is zero, return null to not speak.
-                if (JumboRoles[guild.Id] == 0)
-                    return null;
-                else
-                    role = guild.Roles.SingleOrDefault(g => g.Id == JumboRoles[guild.Id]) as IRole;
-            }
-
-            // If the role is null, delete the entry from the dictionary and use the default one.
-            if (role == null) {
-                JumboRoles.TryRemove(guild.Id, out ulong outVar);
-                SaveSettings();
-            }
-
-            // Return the role.
             return role;
         }
 
@@ -383,15 +258,8 @@ namespace NinjaCatDiscordBot {
         /// </summary>
         public void SaveSettings() {
             lock (lockObject) {
-                // Save latest post URL.
                 File.WriteAllText(Constants.LatestPostFileName, CurrentUrl);
-
-                // Serialize settings to JSON.
-                File.WriteAllText(Constants.ChannelsFileName, JsonConvert.SerializeObject(SpeakingChannels));
-                File.WriteAllText(Constants.RolesFileName, JsonConvert.SerializeObject(SpeakingRoles));
-                File.WriteAllText(Constants.RolesSkipFileName, JsonConvert.SerializeObject(SpeakingRolesSkip));
-                File.WriteAllText(Constants.RolesSlowFileName, JsonConvert.SerializeObject(SpeakingRolesSlow));
-                File.WriteAllText(Constants.RolesJumboFileName, JsonConvert.SerializeObject(JumboRoles));
+                File.WriteAllText(Constants.SettingsFileName, JsonConvert.SerializeObject(Settings));
             }
         }
 
@@ -400,7 +268,6 @@ namespace NinjaCatDiscordBot {
         /// </summary>
         /// <param name="info">The information to log.</param>
         public void LogError(string info) {
-            // Write to console.
             Console.WriteLine($"ERROR: {DateTime.Now}: {info}");
         }
 
@@ -409,7 +276,6 @@ namespace NinjaCatDiscordBot {
         /// </summary>
         /// <param name="info">The information to log.</param>
         public void LogInfo(string info) {
-            // Write to console.
             Console.WriteLine($"INFO: {DateTime.Now}: {info}");
         }
 
@@ -465,10 +331,7 @@ namespace NinjaCatDiscordBot {
             if (post == null)
                 return null;
 
-            // Get build number.
             var build = Regex.Match(post.Title, @"\d{5,}").Value;
-
-            // Return info.
             return new Tuple<string, string, BuildType>(build, post.Link, type);
         }
 
@@ -478,23 +341,16 @@ namespace NinjaCatDiscordBot {
         /// <returns></returns>
         public async Task UpdateGameAsync() {
             try {
-                // Get build.
                 var build = await GetLatestBuildNumberAsync();
                 if (build == null)
                     return;
 
-                // Create string.
                 var game = $"on {build.Item1} | {Constants.CommandPrefix}{Constants.HelpCommand}";
-
-                // Update game.
                 foreach (var shard in Shards)
                     await shard?.SetGameAsync(game);
             }
             catch (Exception ex) {
-                // Log failure.
                 LogError($"Failed to update game: {ex}");
-
-                // Reset game.
                 foreach (var shard in Shards)
                     await shard?.SetGameAsync("on Windows 10");
             }
@@ -508,5 +364,12 @@ namespace NinjaCatDiscordBot {
         Server,
         SkipAheadPc,
         SlowPc
+    }
+
+    public enum RoleType {
+        InsiderPrimary,
+        InsiderSkip,
+        InsiderSlow,
+        Jumbo
     }
 }

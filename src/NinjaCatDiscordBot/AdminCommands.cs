@@ -61,7 +61,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Check role permissions to toggle mentionable flag on/off.
-            var role = client.GetSpeakingRoleForIGuild(Context.Guild);
+            var role = client.GetRoleForIGuild(Context.Guild, RoleType.InsiderPrimary);
             var roleText = "";
             if (role?.IsMentionable == false && (!currentUser.GuildPermissions.ManageRoles || currentUser.Hierarchy <= role.Position))
                 roleText = $"\n\nHowever, I cannot manage the **{role.Name}** role. Please ensure I'm above that role and have permission to manage roles.";
@@ -125,7 +125,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Get role.
-            var role = client.GetSpeakingRoleForIGuild(guild);
+            var role = client.GetRoleForIGuild(guild, RoleType.InsiderPrimary);
             if (role == null)
                 await ReplyAsync($"I'm not pinging a role when new builds come out.");
             else
@@ -155,7 +155,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Get role.
-            var role = client.GetSpeakingRoleSkipForIGuild(guild);
+            var role = client.GetRoleForIGuild(guild, RoleType.InsiderSkip);
             if (role == null)
                 await ReplyAsync($"I'm not pinging a special role when new skip ahead builds come out.");
             else
@@ -185,7 +185,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Get role.
-            var role = client.GetSpeakingRoleSlowForIGuild(guild);
+            var role = client.GetRoleForIGuild(guild, RoleType.InsiderSlow);
             if (role == null)
                 await ReplyAsync($"I'm not pinging a special role when new Slow ring builds come out.");
             else
@@ -215,7 +215,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Get role.
-            var role = client.GetJumboRoleForIGuild(guild);
+            var role = client.GetRoleForIGuild(guild, RoleType.Jumbo);
             if (role == null)
                 await ReplyAsync($"I don't require a special role for the jumbo command.");
             else
@@ -257,13 +257,13 @@ namespace NinjaCatDiscordBot {
             // If channel is valid, enable announcements.
             if (channel != null) {
                 // Save channel.
-                client.SpeakingChannels[guild.Id] = channel.Id;
+                client.Settings.InsiderChannels[guild.Id] = channel.Id;
                 client.SaveSettings();
                 await ReplyAsync($"When new builds are released, I'll now announce them in {channel.Mention}.");
             }
             else {
                 // Set channel to 0.
-                client.SpeakingChannels[guild.Id] = 0;
+                client.Settings.InsiderChannels[guild.Id] = 0;
                 client.SaveSettings();
                 await ReplyAsync($"When new builds are released, I'll now keep quiet.");
             }
@@ -304,13 +304,13 @@ namespace NinjaCatDiscordBot {
             // If role is valid, save it. Otherwise remove the role.
             if (role != null) {
                 // Save role.
-                client.SpeakingRoles[guild.Id] = role.Id;
+                client.Settings.InsiderRolesPrimary[guild.Id] = role.Id;
                 client.SaveSettings();
                 await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new builds are released.");
             }
             else {
                 // Remove role.
-                client.SpeakingRoles.TryRemove(guild.Id, out ulong outVar);
+                client.Settings.InsiderRolesPrimary.TryRemove(guild.Id, out ulong outVar);
                 client.SaveSettings();
                 await ReplyAsync($"I'll no longer ping a role when new builds come out.");
             }
@@ -351,13 +351,13 @@ namespace NinjaCatDiscordBot {
             // If role is valid, save it. Otherwise remove the role.
             if (role != null) {
                 // Save role.
-                client.SpeakingRolesSkip[guild.Id] = role.Id;
+                client.Settings.InsiderRolesSkip[guild.Id] = role.Id;
                 client.SaveSettings();
                 await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new skip ahead builds are released.");
             }
             else {
                 // Remove role.
-                client.SpeakingRolesSkip.TryRemove(guild.Id, out ulong outVar);
+                client.Settings.InsiderRolesSkip.TryRemove(guild.Id, out ulong outVar);
                 client.SaveSettings();
                 await ReplyAsync($"I'll no longer ping a special role when new skip ahead builds come out.");
             }
@@ -398,13 +398,13 @@ namespace NinjaCatDiscordBot {
             // If role is valid, save it. Otherwise remove the role.
             if (role != null) {
                 // Save role.
-                client.SpeakingRolesSlow[guild.Id] = role.Id;
+                client.Settings.InsiderRolesSlow[guild.Id] = role.Id;
                 client.SaveSettings();
                 await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new Slow ring builds are released.");
             }
             else {
                 // Remove role.
-                client.SpeakingRolesSlow.TryRemove(guild.Id, out ulong outVar);
+                client.Settings.InsiderRolesSlow.TryRemove(guild.Id, out ulong outVar);
                 client.SaveSettings();
                 await ReplyAsync($"I'll no longer ping a special role when new Slow ring builds come out.");
             }
@@ -445,13 +445,13 @@ namespace NinjaCatDiscordBot {
             // If role is valid, save it. Otherwise remove the role.
             if (role != null) {
                 // Save role.
-                client.JumboRoles[guild.Id] = role.Id;
+                client.Settings.JumboRoles[guild.Id] = role.Id;
                 client.SaveSettings();
                 await ReplyAsync($"I'll now require users to have **{role.Name}** in order to use the jumbo command.");
             }
             else {
                 // Remove role.
-                client.JumboRoles.TryRemove(guild.Id, out ulong outVar);
+                client.Settings.JumboRoles.TryRemove(guild.Id, out ulong outVar);
                 client.SaveSettings();
                 await ReplyAsync($"I'll no longer require a role for the jumbo command.");
             }
@@ -565,7 +565,7 @@ namespace NinjaCatDiscordBot {
 
             // Check if the role is mentionable.
             // If not, attempt to make it mentionable, and revert the setting after the message is sent.
-            var role = client.GetSpeakingRoleForIGuild(Context.Guild);
+            var role = client.GetRoleForIGuild(Context.Guild, RoleType.InsiderPrimary);
             if (role != null) {
                 var mentionable = role?.IsMentionable;
                 if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
@@ -584,7 +584,7 @@ namespace NinjaCatDiscordBot {
 
             // Check if the skip role is mentionable.
             // If not, attempt to make it mentionable, and revert the setting after the message is sent.
-            var roleSkip = client.GetSpeakingRoleSkipForIGuild(Context.Guild);
+            var roleSkip = client.GetRoleForIGuild(Context.Guild, RoleType.InsiderSkip);
             if (roleSkip != null) {
                 var mentionableSkip = roleSkip?.IsMentionable;
                 if (mentionableSkip == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > roleSkip.Position)
