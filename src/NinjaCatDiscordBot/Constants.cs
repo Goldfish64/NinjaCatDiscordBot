@@ -58,17 +58,17 @@ namespace NinjaCatDiscordBot {
         public const string HomeCommandUrl = AppUrl;
         public const string InviteCommand = "invite";
         public const string InviteCommandDesc = "invite me to your server";
-        public const string InviteCommandUrl = "<https://discordapp.com/oauth2/authorize?permissions=19456&client_id={0}&scope=bot>";
+        public const string InviteCommandUrl = "<https://discordapp.com/oauth2/authorize?permissions=444480&client_id={0}&scope=bot>";
         public const string TrexCommand = "trex";
         public const string TrexCommandDesc = "shows the Windows 10 Skype emoticon";
-        public const string LatestBuildCommand = "latest";
-        public const string LatestBuildCommandDesc = "gets the latest Insider PC build";
+        public const string LatestDevBuildCommand = "latest";
+        public const string LatestDevBuildCommandDesc = "gets the latest Dev Insider PC build";
+        public const string LatestBetaBuildCommand = "latestbeta";
+        public const string LatestBetaBuildCommandDesc = "gets the latest Beta Insider build";
+        public const string LatestReleasePreviewBuildCommand = "latestrp";
+        public const string LatestReleasePreviewBuildCommandDesc = "gets the latest Release Preview Insider build";
         public const string LatestServerBuildCommand = "latestserver";
         public const string LatestServerBuildCommandDesc = "gets the latest Insider Server build";
-        public const string LatestSkipAheadBuildCommand = "latestskip";
-        public const string LatestSkipAheadBuildCommandDesc = "gets the latest Skip Ahead Insider build";
-        public const string LatestSlowBuildCommand = "latestslow";
-        public const string LatestSlowBuildCommandDesc = "gets the latest slow Insider build";
         public const string BotInfoCommand = "info";
         public const string BotInfoCommandDesc = "shows my info";
         public const string AnnouncementCommand = "announce"; // Bot owner only.
@@ -116,10 +116,10 @@ namespace NinjaCatDiscordBot {
             $"**{CommandPrefix}{HomeCommand}**: {HomeCommandDesc}.\n" +
             $"**{CommandPrefix}{InviteCommand}**: {InviteCommandDesc}.\n" +
             $"**{CommandPrefix}{TrexCommand}**: {TrexCommandDesc}.\n" +
-            $"**{CommandPrefix}{LatestBuildCommand}**: {LatestBuildCommandDesc}.\n" +
-            $"**{CommandPrefix}{LatestServerBuildCommand}**: {LatestServerBuildCommandDesc}.\n" +
-            $"**{CommandPrefix}{LatestSkipAheadBuildCommand}**: {LatestSkipAheadBuildCommandDesc}.\n" +
-            $"**{CommandPrefix}{LatestSlowBuildCommand}**: {LatestSlowBuildCommandDesc}.\n\n" +
+            $"**{CommandPrefix}{LatestDevBuildCommand}**: {LatestDevBuildCommandDesc}.\n" +
+            $"**{CommandPrefix}{LatestBetaBuildCommand}**: {LatestBetaBuildCommandDesc}.\n" +
+            $"**{CommandPrefix}{LatestReleasePreviewBuildCommand}**: {LatestReleasePreviewBuildCommandDesc}.\n" +
+            $"**{CommandPrefix}{LatestServerBuildCommand}**: {LatestServerBuildCommandDesc}.\n\n" +
             $"Admin commands (manage server perm required):\n" +
             $"**{CommandPrefix}{ChannelCommand}**: {ChannelCommandDesc}.\n" +
             $"**{CommandPrefix}{SetChannelCommand}** *channel*: {SetChannelCommandDesc}.\n" +

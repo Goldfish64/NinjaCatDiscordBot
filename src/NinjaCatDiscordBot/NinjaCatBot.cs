@@ -64,9 +64,6 @@ namespace NinjaCatDiscordBot {
         private async Task Start() {
             client = new NinjaCatDiscordClient();
 
-            var commands = new CommandService();
-            await commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
-
             // Certain things are to be done when the bot joins a guild.
             client.JoinedGuild += async (guild) => {
                 // Pause for 5 seconds.
@@ -77,31 +74,6 @@ namespace NinjaCatDiscordBot {
                     return;
 
                 // Dev began Oct 2. 2016.
-            };
-
-            // Listen for messages.
-            client.MessageReceived += async (message) => {
-                var msg = message as IUserMessage;
-                if (msg == null)
-                    return;
-
-                // Keeps track of where the command begins.
-                var pos = 0;
-
-                // Attempt to parse a command.
-                if (msg.HasStringPrefixLower(Constants.CommandPrefix, ref pos)) {
-                    var result = await commands.ExecuteAsync(new CommandContext(client, msg), msg.Content.Substring(pos), null);
-                    if (!result.IsSuccess) {
-                        if (result.Error == CommandError.UnknownCommand)
-                            return;
-
-                        await msg.Channel.TriggerTypingAsync();
-                        await Task.Delay(TimeSpan.FromSeconds(0.75));
-
-                        await msg.Channel.SendMessageAsync($"I'm sorry, but something happened. Error: {result.ErrorReason}\n\nIf there are spaces in a parameter, make sure to surround it with quotes.");
-                    }
-                    return;
-                }
             };
 
             // Log in to Discord. Token is stored in the Credentials class.
@@ -236,9 +208,9 @@ namespace NinjaCatDiscordBot {
 
             // Get ping roles.
             var pingRoles = new List<IRole>();
-            var roleFast = client.GetRoleForIGuild(guild, RoleType.InsiderPrimary);
-            var roleSkip = client.GetRoleForIGuild(guild, RoleType.InsiderSkip);
-            var roleSlow = client.GetRoleForIGuild(guild, RoleType.InsiderSlow);
+            var roleFast = client.GetRoleForIGuild(guild, RoleType.InsiderDev);
+            var roleSkip = client.GetRoleForIGuild(guild, RoleType.InsiderBeta);
+            var roleSlow = client.GetRoleForIGuild(guild, RoleType.InsiderReleasePreview);
             if (type.ToLowerInvariant().Contains("skip ahead") && roleSkip != null) {
                 pingRoles.Add(roleSkip);
             }

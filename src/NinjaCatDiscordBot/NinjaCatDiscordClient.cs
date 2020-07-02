@@ -23,6 +23,7 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using System;
@@ -30,6 +31,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -106,6 +108,34 @@ namespace NinjaCatDiscordBot {
 
             if (File.Exists(Constants.SettingsFileName))
                 Settings = JsonConvert.DeserializeObject<NinjaCatSettings>(File.ReadAllText(Constants.SettingsFileName));
+
+            // Initialize commands.
+            Commands.AddModulesAsync(Assembly.GetEntryAssembly(), null).Wait();
+
+            // Listen for messages.
+            MessageReceived += async (message) => {
+                var msg = message as SocketUserMessage;
+                if (msg == null)
+                    return;
+
+                // Keeps track of where the command begins.
+                var pos = 0;
+
+                // Attempt to parse a command. Silently ignore unknown commanads.
+                if (msg.HasStringPrefixLower(Constants.CommandPrefix, ref pos)) {
+                    var result = await Commands.ExecuteAsync(new NinjaCatCommandContext(this, msg), msg.Content.Substring(pos), null);
+                    if (!result.IsSuccess) {
+                        if (result.Error == CommandError.UnknownCommand)
+                            return;
+
+                        await msg.Channel.TriggerTypingAsync();
+                        await Task.Delay(TimeSpan.FromSeconds(0.5));
+
+                        await msg.Channel.SendMessageAsync($"I'm sorry, but something happened. Error: {result.ErrorReason}\n\nIf there are spaces in a parameter, make sure to surround it with quotes.");
+                    }
+                    return;
+                }
+            };
         }
 
         #endregion
@@ -113,6 +143,8 @@ namespace NinjaCatDiscordBot {
         #region Properties
 
         public NinjaCatSettings Settings;
+
+        public CommandService Commands { get; } = new CommandService();
 
         /// <summary>
         /// Gets the time the client started.
@@ -216,14 +248,14 @@ namespace NinjaCatDiscordBot {
 
             var roles = Settings.InsiderRolesPrimary;
             switch (type) {
-                case RoleType.InsiderPrimary:
+                case RoleType.InsiderDev:
                     break;
 
-                case RoleType.InsiderSlow:
+                case RoleType.InsiderBeta:
                     roles = Settings.InsiderRolesSlow;
                     break;
 
-                case RoleType.InsiderSkip:
+                case RoleType.InsiderReleasePreview:
                     roles = Settings.InsiderRolesSkip;
                     break;
 
@@ -282,7 +314,7 @@ namespace NinjaCatDiscordBot {
         /// Gets the latest build of the specified type.
         /// </summary>
         /// <param name="type">The type of build to get.</param>
-        public async Task<Tuple<string, string, BuildType>> GetLatestBuildNumberAsync(BuildType type = BuildType.NormalPc) {
+        public async Task<Tuple<string, string, BuildType>> GetLatestBuildNumberAsync(BuildType type) {
             // Create HTTP client.
             var client = new HttpClient();
 
@@ -300,26 +332,24 @@ namespace NinjaCatDiscordBot {
                 var list = entries.ToList();
 
                 // Get post.
+                //
+                // TODO: Validate wording when beta/release preview channels see first post.
+                //
                 switch (type) {
-                    case BuildType.NormalPc:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && (!p.Desc.ToLowerInvariant().Contains("skip ahead") || p.Desc.ToLowerInvariant().Contains("fast ring"))).FirstOrDefault();
+                    case BuildType.DevPc:
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && p.Desc.ToLowerInvariant().Contains("dev channel")).FirstOrDefault();
+                        break;
+
+                    case BuildType.BetaPc:
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && p.Desc.ToLowerInvariant().Contains("beta channel")).FirstOrDefault();
+                        break;
+
+                    case BuildType.ReleasePreviewPc:
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && p.Desc.ToLowerInvariant().Contains("release preview channel")).FirstOrDefault();
                         break;
 
                     case BuildType.Server:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("server") && !p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
-                        break;
-
-                    case BuildType.SkipAheadPc:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
-                        if (post != null) {
-                            // If post indicates a merge of rings, just return the latest fast.
-                            if (post.Desc.ToLowerInvariant().Contains("fast ring"))
-                                return await GetLatestBuildNumberAsync(BuildType.NormalPc);
-                        }
-                        break;
-
-                    case BuildType.SlowPc:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Desc.Contains("Slow") && !p.Title.ToLowerInvariant().Contains("server") && !p.Desc.ToLowerInvariant().Contains("skip ahead")).FirstOrDefault();
+                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("server")).FirstOrDefault();
                         break;
                 }
                 if (post != null)
@@ -340,7 +370,7 @@ namespace NinjaCatDiscordBot {
         /// <returns></returns>
         public async Task UpdateGameAsync() {
             try {
-                var build = await GetLatestBuildNumberAsync();
+                var build = await GetLatestBuildNumberAsync(BuildType.DevPc);
                 if (build == null)
                     return;
 
@@ -359,16 +389,16 @@ namespace NinjaCatDiscordBot {
     }
 
     public enum BuildType {
-        NormalPc,
-        Server,
-        SkipAheadPc,
-        SlowPc
+        DevPc,
+        BetaPc,
+        ReleasePreviewPc,
+        Server
     }
 
     public enum RoleType {
-        InsiderPrimary,
-        InsiderSkip,
-        InsiderSlow,
+        InsiderDev,
+        InsiderBeta,
+        InsiderReleasePreview,
         Jumbo
     }
 }

@@ -32,8 +32,17 @@ namespace NinjaCatDiscordBot {
     /// <summary>
     /// Contains commands for the bot.
     /// </summary>
-    public sealed partial class CommandModule : ModuleBase {
+    public class AdminCommandModule : ModuleBase<CommandContext> {
         #region Methods
+
+        private async Task<NinjaCatDiscordClient> StartTypingAndGetClient() {
+            // Bot is typing, with added pause for realism.
+            await Context.Channel.TriggerTypingAsync();
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Get client.
+            return Context.Client as NinjaCatDiscordClient;
+        }
 
         /// <summary>
         /// Tests the permissions.
@@ -61,7 +70,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Check role permissions to toggle mentionable flag on/off.
-            var role = client.GetRoleForIGuild(Context.Guild, RoleType.InsiderPrimary);
+            var role = client.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
             var roleText = "";
             if (role?.IsMentionable == false && (!currentUser.GuildPermissions.ManageRoles || currentUser.Hierarchy <= role.Position))
                 roleText = $"\n\nHowever, I cannot manage the **{role.Name}** role. Please ensure I'm above that role and have permission to manage roles.";
@@ -125,7 +134,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Get role.
-            var role = client.GetRoleForIGuild(guild, RoleType.InsiderPrimary);
+            var role = client.GetRoleForIGuild(guild, RoleType.InsiderDev);
             if (role == null)
                 await ReplyAsync($"I'm not pinging a role when new builds come out.");
             else
@@ -155,7 +164,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Get role.
-            var role = client.GetRoleForIGuild(guild, RoleType.InsiderSkip);
+            var role = client.GetRoleForIGuild(guild, RoleType.InsiderDev);
             if (role == null)
                 await ReplyAsync($"I'm not pinging a special role when new skip ahead builds come out.");
             else
@@ -185,7 +194,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Get role.
-            var role = client.GetRoleForIGuild(guild, RoleType.InsiderSlow);
+            var role = client.GetRoleForIGuild(guild, RoleType.InsiderDev);
             if (role == null)
                 await ReplyAsync($"I'm not pinging a special role when new Slow ring builds come out.");
             else
@@ -565,18 +574,18 @@ namespace NinjaCatDiscordBot {
 
             // Check if the role is mentionable.
             // If not, attempt to make it mentionable, and revert the setting after the message is sent.
-            var role = client.GetRoleForIGuild(Context.Guild, RoleType.InsiderPrimary);
+            var role = client.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
             if (role != null) {
-                var mentionable = role?.IsMentionable;
-                if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
-                    await role.ModifyAsync((e) => e.Mentionable = true);
+               // var mentionable = role?.IsMentionable;
+             //   if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
+                 //   await role.ModifyAsync((e) => e.Mentionable = true);
 
                 // Send message.
-                await ReplyAsync($"Insiders role: {role.Mention}");
+                await ReplyAsync($"Insiders role: {role.Mention}", allowedMentions : new AllowedMentions() { RoleIds = new System.Collections.Generic.List<ulong> { role.Id } });
 
                 // Revert mentionable setting.
-                if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
-                    await role.ModifyAsync((e) => e.Mentionable = false);
+               // if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
+                //    await role.ModifyAsync((e) => e.Mentionable = false);
             }
             else {
                 await ReplyAsync($"Insiders role: No role configured.");
@@ -584,18 +593,18 @@ namespace NinjaCatDiscordBot {
 
             // Check if the skip role is mentionable.
             // If not, attempt to make it mentionable, and revert the setting after the message is sent.
-            var roleSkip = client.GetRoleForIGuild(Context.Guild, RoleType.InsiderSkip);
+            var roleSkip = client.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
             if (roleSkip != null) {
                 var mentionableSkip = roleSkip?.IsMentionable;
-                if (mentionableSkip == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > roleSkip.Position)
-                    await roleSkip.ModifyAsync((e) => e.Mentionable = true);
+              //  if (mentionableSkip == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > roleSkip.Position)
+               //     await roleSkip.ModifyAsync((e) => e.Mentionable = true);
 
                 // Send message.
                 await ReplyAsync($"Skip ahead role: {roleSkip.Mention}");
 
                 // Revert mentionable setting.
-                if (mentionableSkip == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > roleSkip.Position)
-                    await roleSkip.ModifyAsync((e) => e.Mentionable = false);
+              //  if (mentionableSkip == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > roleSkip.Position)
+              //      await roleSkip.ModifyAsync((e) => e.Mentionable = false);
             }
             else {
                 await ReplyAsync($"Skip ahead role: No role configured.");
