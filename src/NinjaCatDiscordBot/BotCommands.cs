@@ -29,6 +29,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot {
@@ -273,7 +274,7 @@ namespace NinjaCatDiscordBot {
             // Build embed.
             var embed = new EmbedBuilder();
             embed.Author = new EmbedAuthorBuilder();
-            embed.Author.IconUrl = Context.Client.CurrentUser.GetAvatarUrl();
+            embed.Author.IconUrl = Context.Client.CurrentUser?.GetAvatarUrl();
 
             // If in a guild, make color.
             if (Context.Guild != null) {
@@ -301,6 +302,7 @@ namespace NinjaCatDiscordBot {
             var shardId = Context.Guild != null ? (Context.Client.GetShardIdFor(Context.Guild) + 1) : 0;
             embed.AddField((e) => { e.Name = "Servers"; e.Value = Context.Client.Guilds.Count.ToString(); e.IsInline = true; });
             embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{shardId} of {Context.Client.Shards.Count}"; e.IsInline = true; });
+            embed.AddField((e) => { e.Name = "Version"; e.Value = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion; });
             embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
 
             // Select and send message with embed.
