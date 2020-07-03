@@ -111,6 +111,10 @@ namespace NinjaCatDiscordBot {
             Context.StartTyping().Wait();
         }
 
+        protected override Task<IUserMessage> ReplyAsync(string message = null, bool isTTS = false, Embed embed = null, RequestOptions options = null, AllowedMentions allowedMentions = null) {
+            return base.ReplyAsync(message, isTTS, embed, options, allowedMentions ?? new AllowedMentions(AllowedMentionTypes.None));
+        }
+
         protected Task<IUserMessage> ReplyRandomAsync(Embed embed, params string[] messages) {
             if (messages == null)
                 throw new ArgumentNullException();

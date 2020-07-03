@@ -49,6 +49,10 @@ namespace NinjaCatDiscordBot {
         public const int ShardCount = 2;
 #endif
 
+        public const string RemarkGeneral = "GeneralCommand";
+        public const string RemarkAdmin = "AdminCommand";
+        public const string RemarkInternal = "InternalCommand";
+
         public const string AboutCommand = "about";
         public const string AboutCommandDesc = "get to know me";
         public const string HelpCommand = "help";

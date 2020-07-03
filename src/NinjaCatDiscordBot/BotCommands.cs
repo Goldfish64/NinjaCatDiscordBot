@@ -30,6 +30,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot {
@@ -44,7 +45,8 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Gets the about message.
         /// </summary>
-        [Command(Constants.AboutCommand)]
+        [Command("about")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task GetAboutAsync() {
             // Create variable for speaking channel mention.
             var speakingChannel = string.Empty;
@@ -95,28 +97,43 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Gets help.
         /// </summary>
-        [Command(Constants.HelpCommand)]
+        [Command("help")]
+        [Summary("show help")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task GetHelpAsync() {
+            var sb = new StringBuilder();
+
             // Select and send message.
             switch (Context.Client.GetRandomNumber(2)) {
                 default:
-                    await ReplyAsync($"So you need help huh? You've come to the right place. :cat::question:\n\n" +
-                        $"My set of commands include:\n" +
-                        Constants.HelpBody);
+                    sb.AppendLine("So you need help huh? You've come to the right place. :cat::question:\n\n" +
+                        $"My set of commands include:");
                     break;
 
                 case 1:
-                    await ReplyAsync($"You need help? Why didn't you just say so? :cat::question:\n\n" +
-                        $"My set of commands are as follows:\n" +
-                        Constants.HelpBody);
+                    sb.AppendLine("You need help? Why didn't you just say so? :cat::question:\n\n" +
+                        $"My set of commands are as follows:");
                     break;
             }
+
+            foreach (var c in Context.Client.Commands.Commands.Where(p => p.Remarks != Constants.RemarkInternal).OrderBy(p => p.Name)) {
+                sb.Append($"**{Constants.CommandPrefix}{c.Name}**");
+                foreach (var p in c.Parameters) {
+                    sb.Append($" [{p.Name}]");
+                }
+                sb.AppendLine($": {c.Summary}");
+            }
+
+            await ReplyAsync(sb.ToString());
         }
 
         /// <summary>
         /// Gets the homepage URL.
         /// </summary>
-        [Command(Constants.HomeCommand)]
+        [Command("source")]
+        [Alias("home")]
+        [Summary("go to my source code")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task GetHomeAsync() {
             await ReplyRandomAsync(null,
                 $"My source code is here:\n{Constants.HomeCommandUrl}",
@@ -128,7 +145,9 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Gets the invite URL.
         /// </summary>
-        [Command(Constants.InviteCommand)]
+        [Command("invite")]
+        [Summary("invite me to your server")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task GetInviteAsync() {
             var inviteUrl = string.Format(Constants.InviteCommandUrl, Context.Client.CurrentUser.Id);
             await ReplyRandomAsync(null,
@@ -141,7 +160,9 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Gets the T-Rex.
         /// </summary>
-        [Command(Constants.TrexCommand)]
+        [Command("trex")]
+        [Summary("shows the Windows 10 Skype emoticon")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task GetTrexAsync() {
             await ReplyAsync("<a:trexa:393897398881222656>");
         }
@@ -149,8 +170,10 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Jumbo.
         /// </summary>
-        [Command(Constants.JumboCommand)]
-        [Alias(Constants.JumboCommandAlias)]
+        [Command("jumbo")]
+        [Alias("j")]
+        [Summary("jumboify emotes")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task SendJumboAsync(params string[] emotes) {
             // Check perms if on server.
             if (Context.Guild != null) {
@@ -192,7 +215,10 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Gets the latest Insider PC build for the Dev Channel.
         /// </summary>
-        [Command(Constants.LatestDevBuildCommand)]
+        [Command("latestdev")]
+        [Alias("latest")]
+        [Summary("shows the latest Dev Channel Insider build")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task GetLatestDevBuildAsync() {
             // Get build.
             var data = await Context.Client.GetLatestBuildNumberAsync(BuildType.DevPc);
@@ -208,7 +234,9 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Gets the latest Insider PC build for the Beta Channel.
         /// </summary>
-        [Command(Constants.LatestBetaBuildCommand)]
+        [Command("latestbeta")]
+        [Summary("shows the latest Beta Channel Insider build")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task GetLatestBetaBuildAsync() {
             // Get build.
             var data = await Context.Client.GetLatestBuildNumberAsync(BuildType.BetaPc);
@@ -224,7 +252,9 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Gets the latest Insider PC build for the Release Preview Channel.
         /// </summary>
-        [Command(Constants.LatestReleasePreviewBuildCommand)]
+        [Command("latestrp")]
+        [Summary("shows the latest Release Preview Channel Insider build")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task GetLatestReleasePreviewBuildAsync() {
             // Get build.
             var data = await Context.Client.GetLatestBuildNumberAsync(BuildType.ReleasePreviewPc);
@@ -240,7 +270,9 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Gets the latest Insider server build.
         /// </summary>
-        [Command(Constants.LatestServerBuildCommand)]
+        [Command("latestserver")]
+        [Summary("shows the latest Server Insider build")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task GetLatestServerBuildAsync() {
             // Get build.
             var data = await Context.Client.GetLatestBuildNumberAsync(BuildType.Server);
@@ -256,7 +288,9 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Replies with the bot's info.
         /// </summary>
-        [Command(Constants.BotInfoCommand)]
+        [Command("info")]
+        [Summary("shows my info")]
+        [Remarks(Constants.RemarkGeneral)]
         public async Task GetBotInfoAsync() {
             // Get passed time.
             var timeSpan = DateTime.Now.ToLocalTime() - Context.Client.StartTime.ToLocalTime();
@@ -272,9 +306,20 @@ namespace NinjaCatDiscordBot {
             var timeString = string.Join(", ", parts.Select(p => string.Format("{0} {1}{2}", p.Item2, p.Item1, p.Item2 > 1 ? "s" : string.Empty)));
 
             // Build embed.
-            var embed = new EmbedBuilder();
-            embed.Author = new EmbedAuthorBuilder();
+            var embed = new EmbedBuilder {
+                Author = new EmbedAuthorBuilder(),
+                Footer = new EmbedFooterBuilder()
+            };
             embed.Author.IconUrl = Context.Client.CurrentUser?.GetAvatarUrl();
+            embed.Footer.Text = $"Version: {Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion}";
+
+            // Add general overview fields.
+            var shardId = Context.Guild != null ? (Context.Client.GetShardIdFor(Context.Guild) + 1) : 0;
+            embed.AddField((e) => { e.Name = "Servers"; e.Value = Context.Client.Guilds.Count.ToString(); e.IsInline = true; });
+            embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{shardId} of {Context.Client.Shards.Count}"; e.IsInline = true; });
+            if (Context.Guild != null)
+                embed.AddField((e) => { e.Name = "Join date"; e.Value = Context.Guild.CurrentUser.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
+            embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
 
             // If in a guild, make color.
             if (Context.Guild != null) {
@@ -291,19 +336,21 @@ namespace NinjaCatDiscordBot {
                 // Set color, username, and join date.
                 embed.Color = highestrole.Color;
                 embed.Author.Name = guildUser.Nickname ?? guildUser.Username;
-                embed.AddField((e) => { e.Name = "Join date"; e.Value = guildUser.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
+
+                // Add channel and roles.
+                var channel = Context.Client.GetSpeakingChannelForSocketGuild(Context.Guild);
+                var roleDev = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
+                var roleBeta = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
+                var roleReleasePreview = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
+                embed.AddField((e) => { e.Name = "Insider channel"; e.Value = channel?.Mention ?? "None"; });
+                embed.AddField((e) => { e.Name = "Insider Dev role"; e.Value = roleDev?.Mention ?? "None"; e.IsInline = true; });
+                embed.AddField((e) => { e.Name = "Insider Beta role"; e.Value = roleBeta?.Mention ?? "None"; e.IsInline = true; });
+                embed.AddField((e) => { e.Name = "Insider Release Preview role"; e.Value = roleReleasePreview?.Mention ?? "None"; e.IsInline = true; });
             }
             else {
                 // Set username.
                 embed.Author.Name = Context.Client.CurrentUser.Username;
             }
-
-            // Add final fields.
-            var shardId = Context.Guild != null ? (Context.Client.GetShardIdFor(Context.Guild) + 1) : 0;
-            embed.AddField((e) => { e.Name = "Servers"; e.Value = Context.Client.Guilds.Count.ToString(); e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{shardId} of {Context.Client.Shards.Count}"; e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Version"; e.Value = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion; });
-            embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
 
             // Select and send message with embed.
             await ReplyRandomAsync(embed.Build(),

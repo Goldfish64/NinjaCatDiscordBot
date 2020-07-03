@@ -49,22 +49,22 @@ namespace NinjaCatDiscordBot {
         public ConcurrentDictionary<ulong, ulong> InsiderChannels { get; } = new ConcurrentDictionary<ulong, ulong>();
 
         /// <summary>
-        /// Gets the list of Insider roles.
+        /// Gets the list of Dev Channel Insider roles.
         /// </summary>
         /// <remarks>Guild is the key, role is the value.</remarks>
-        public ConcurrentDictionary<ulong, ulong> InsiderRolesPrimary { get; } = new ConcurrentDictionary<ulong, ulong>();
+        public ConcurrentDictionary<ulong, ulong> InsiderRolesDev { get; } = new ConcurrentDictionary<ulong, ulong>();
 
         /// <summary>
-        /// Gets the list of Insider roles for skip ahead.
+        /// Gets the list of Beta Channel Insider roles.
         /// </summary>
         /// <remarks>Guild is the key, role is the value.</remarks>
-        public ConcurrentDictionary<ulong, ulong> InsiderRolesSkip { get; } = new ConcurrentDictionary<ulong, ulong>();
+        public ConcurrentDictionary<ulong, ulong> InsiderRolesBeta { get; } = new ConcurrentDictionary<ulong, ulong>();
 
         /// <summary>
-        /// Gets the list of Insider roles for slow.
+        /// Gets the list of Release Preview Insider roles.
         /// </summary>
         /// <remarks>Guild is the key, role is the value.</remarks>
-        public ConcurrentDictionary<ulong, ulong> InsiderRolesSlow { get; } = new ConcurrentDictionary<ulong, ulong>();
+        public ConcurrentDictionary<ulong, ulong> InsiderRolesReleasePreview { get; } = new ConcurrentDictionary<ulong, ulong>();
 
         /// <summary>
         /// Gets the list of jumbo roles.
@@ -246,17 +246,18 @@ namespace NinjaCatDiscordBot {
             if (guild.Id == Constants.BotsGuildId)
                 return null;
 
-            var roles = Settings.InsiderRolesPrimary;
+            ConcurrentDictionary<ulong, ulong> roles;
             switch (type) {
                 case RoleType.InsiderDev:
+                    roles = Settings.InsiderRolesDev;
                     break;
 
                 case RoleType.InsiderBeta:
-                    roles = Settings.InsiderRolesSlow;
+                    roles = Settings.InsiderRolesBeta;
                     break;
 
                 case RoleType.InsiderReleasePreview:
-                    roles = Settings.InsiderRolesSkip;
+                    roles = Settings.InsiderRolesReleasePreview;
                     break;
 
                 case RoleType.Jumbo:
@@ -282,6 +283,41 @@ namespace NinjaCatDiscordBot {
                 SaveSettings();
             }
             return role;
+        }
+
+        public void SetInsiderChannel(IGuild guild, ITextChannel channel) {
+            Settings.InsiderChannels[guild.Id] = channel?.Id ?? 0;
+            SaveSettings();
+        }
+
+        public void SetInsiderRole(IGuild guild, IRole role, RoleType roleType) {
+            ConcurrentDictionary<ulong, ulong> roles;
+            switch (roleType) {
+                case RoleType.InsiderDev:
+                    roles = Settings.InsiderRolesDev;
+                    break;
+
+                case RoleType.InsiderBeta:
+                    roles = Settings.InsiderRolesBeta;
+                    break;
+
+                case RoleType.InsiderReleasePreview:
+                    roles = Settings.InsiderRolesReleasePreview;
+                    break;
+
+                case RoleType.Jumbo:
+                    roles = Settings.JumboRoles;
+                    break;
+
+                default:
+                    return;
+            }
+
+            if (role != null)
+                roles[guild.Id] = role.Id;
+            else
+                roles.TryRemove(guild.Id, out _);
+            SaveSettings();
         }
 
         /// <summary>
