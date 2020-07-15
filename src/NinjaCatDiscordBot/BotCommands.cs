@@ -25,6 +25,7 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using NinjaCatDiscordBot.Properties;
 using System;
 using System.IO;
 using System.Linq;
@@ -123,7 +124,8 @@ namespace NinjaCatDiscordBot {
         [Summary("shows the Windows 10 Skype emoticon")]
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetTrexAsync() {
-            await ReplyAsync("<a:trexa:393897398881222656>");
+            using (var stream = new MemoryStream(Resources.trex))
+                await Context.Channel.SendFileAsync(stream, Path.GetFileName(Constants.TrexUrl));
         }
 
         /// <summary>
