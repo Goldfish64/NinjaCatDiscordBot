@@ -14,10 +14,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="trex.gif" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Discord.Net.Commands" Version="2.3.0-dev-20200627.3" />
     <PackageReference Include="Discord.Net.WebSocket" Version="2.3.0-dev-20200627.3" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
