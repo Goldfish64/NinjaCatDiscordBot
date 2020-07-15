@@ -125,7 +125,7 @@ namespace NinjaCatDiscordBot {
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetTrexAsync() {
             using (var stream = new MemoryStream(Resources.trex))
-                await Context.Channel.SendFileAsync(stream, Path.GetFileName(Constants.TrexUrl));
+                await Context.Channel.SendFileAsync(stream, "trex.gif");
         }
 
         /// <summary>
