@@ -79,9 +79,10 @@ namespace NinjaCatDiscordBot {
     public sealed class NinjaCatDiscordClient : DiscordShardedClient {
         #region Private variables
 
-        // private StreamWriter logStreamWriter;
         private Random random = new Random();
         private object lockObject = new object();
+
+        private HttpClient httpClient = new HttpClient();
 
         #endregion
 
@@ -347,57 +348,133 @@ namespace NinjaCatDiscordBot {
         }
 
         /// <summary>
-        /// Gets the latest build of the specified type.
+        /// Sends typing feedback.
         /// </summary>
-        /// <param name="type">The type of build to get.</param>
-        public async Task<Tuple<string, string, BuildType>> GetLatestBuildNumberAsync(BuildType type) {
-            // Create HTTP client.
-            var client = new HttpClient();
+        public async Task StartTyping(IMessageChannel channel) {
+            await channel.TriggerTypingAsync();
+            await Task.Delay(TimeSpan.FromSeconds(0.5));
+        }
 
-            // Get most recent build post..
+        /// <summary>
+        /// Gets the latest blog post of the specified type.
+        /// </summary>
+        /// <param name="type">The type of build to get. Specify <see cref="BuildType.Unknown"/> to get the latest build regardless of type.</param>
+        /// <returns>A <see cref="BlogEntry"/> representing the build blog post or null if no build was found.</returns>
+        public async Task<BlogEntry> GetLatestBuildPostAsync(BuildType type = BuildType.Unknown) {
             BlogEntry post = null;
-            for (int page = 1; page <= 10; page++) {
-                // Get page.
-                var doc = XDocument.Parse(await client.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged={page}"));
-                var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                              select new BlogEntry() {
-                                  Link = item.Elements().First(i => i.Name.LocalName == "link").Value,
-                                  Title = item.Elements().First(i => i.Name.LocalName == "title").Value,
-                                  Desc = item.Elements().First(i => i.Name.LocalName == "description").Value
-                              };
-                var list = entries.ToList();
+            try {
+                for (int page = 1; page <= 10; page++) {
+                    // Get page.
+                    var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged={page}"));
+                    var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                                  where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().Contains("insider-preview")
+                                  select new BlogEntry(
+                                      item.Elements().First(i => i.Name.LocalName == "title").Value,
+                                      item.Elements().First(i => i.Name.LocalName == "link").Value,
+                                      item.Elements().First(i => i.Name.LocalName == "description").Value
+                                  );
 
-                // Get post.
-                //
-                // TODO: Validate wording when beta/release preview channels see first post.
-                //
-                switch (type) {
-                    case BuildType.DevPc:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && p.Desc.ToLowerInvariant().Contains("dev channel")).FirstOrDefault();
-                        break;
-
-                    case BuildType.BetaPc:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && p.Desc.ToLowerInvariant().Contains("beta channel")).FirstOrDefault();
-                        break;
-
-                    case BuildType.ReleasePreviewPc:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && !p.Title.ToLowerInvariant().Contains("server") && p.Desc.ToLowerInvariant().Contains("release preview channel")).FirstOrDefault();
-                        break;
-
-                    case BuildType.Server:
-                        post = list.Where(p => p.Link.ToLowerInvariant().Contains("insider-preview-build") && p.Title.ToLowerInvariant().Contains("server")).FirstOrDefault();
-                        break;
+                    // Get first post of desired type if a type was specified.
+                    if (type == BuildType.Unknown)
+                        post = entries.ToList().FirstOrDefault();
+                    else
+                        post = entries.ToList().Where(p => p.BuildType == type).FirstOrDefault();
+                    if (post != null)
+                        return post;
                 }
-                if (post != null)
+            }
+            catch (HttpRequestException ex) {
+                LogError($"Exception when getting post for type {type}: {ex}");
+                return null;
+            }
+            
+            LogError($"Unable to get new post for type {type}");
+            return null;
+        }
+
+        private async Task SendBuildToGuild(DiscordSocketClient shard, SocketGuild guild, BlogEntry blogEntry) {
+            var channel = GetSpeakingChannelForSocketGuild(guild);
+            if (channel == null) {
+                LogInfo($"Rolling over {guild.Name} (disabled) ({shard.ShardId}/{Shards.Count - 1})");
+                return;
+            }
+
+            // Verify we have permission to speak.
+            if (guild.CurrentUser?.GetPermissions(channel).SendMessages != true) {
+                LogInfo($"Rolling over {guild.Name} (no perms) ({shard.ShardId}/{Shards.Count - 1})");
+                return;
+            }
+
+            // Get all roles.
+            var roleDev = GetRoleForIGuild(guild, RoleType.InsiderDev);
+            var roleBeta = GetRoleForIGuild(guild, RoleType.InsiderBeta);
+            var roleReleasePreview = GetRoleForIGuild(guild, RoleType.InsiderReleasePreview);
+
+            var roleText = string.Empty;
+            var typeText = string.Empty;
+            var emotesText = ":smiley_cat:";
+            switch (blogEntry.BuildType) {
+                case BuildType.DevPc:
+                    roleText = roleDev?.Mention;
+                    typeText = " to the Dev Channel";
+                    emotesText += " :tools:";
+                    break;
+
+                case BuildType.BetaPc:
+                    roleText = roleBeta?.Mention;
+                    typeText = " to the Beta Channel";
+                    emotesText += " :paintbrush:";
+                    break;
+
+                case BuildType.ReleasePreviewPc:
+                    roleText = roleReleasePreview?.Mention;
+                    typeText = " to the Release Preview Channel";
+                    emotesText += " :package:";
+                    break;
+
+                case BuildType.Server:
+                    typeText = " for Server";
+                    emotesText += " :desktop:";
                     break;
             }
 
-            // If post is still null, no build was found.
-            if (post == null)
-                return null;
+            try {
+                await StartTyping(channel);
+                switch (GetRandomNumber(3)) {
+                    default:
+                        await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {blogEntry.BuildNumber} has just been released{typeText}! {emotesText}\n{blogEntry.Link}");
+                        break;
 
-            var build = Regex.Match(post.Title, @"\d{5,}").Value;
-            return new Tuple<string, string, BuildType>(build, post.Link, type);
+                    case 1:
+                        await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {blogEntry.BuildNumber} has just been released{typeText}! Yes! {emotesText}\n{blogEntry.Link}");
+                        break;
+
+                    case 2:
+                        await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {blogEntry.BuildNumber} has just been released{typeText}! {emotesText}\n{blogEntry.Link}");
+                        break;
+                }
+            }
+            catch (Exception ex) {
+                LogError($"Failed to speak in {guild.Name} ({shard.ShardId}/{Shards.Count - 1}): {ex}");
+            }
+
+            // Log server.
+            LogInfo($"Spoke in {guild.Name} ({shard.ShardId}/{Shards.Count - 1})");
+        }
+
+        public async void SendNewBuildToShard(DiscordSocketClient shard, BlogEntry blogEntry) {
+            // If the MS server is in this shard, announce there first.
+            var msGuild = shard.Guilds.SingleOrDefault(g => g.Id == Constants.MsGuildId);
+            if (msGuild != null)
+                await SendBuildToGuild(shard, msGuild, blogEntry);
+
+            foreach (var guild in shard.Guilds) {
+                // Skip MS guild.
+                if (guild.Id == Constants.MsGuildId)
+                    continue;
+
+                await SendBuildToGuild(shard, guild, blogEntry);
+            }
         }
 
         /// <summary>
@@ -406,11 +483,11 @@ namespace NinjaCatDiscordBot {
         /// <returns></returns>
         public async Task UpdateGameAsync() {
             try {
-                var build = await GetLatestBuildNumberAsync(BuildType.DevPc);
+                var build = await GetLatestBuildPostAsync(BuildType.DevPc);
                 if (build == null)
                     return;
 
-                var game = $"on {build.Item1} | {Constants.CommandPrefix}{Constants.HelpCommand}";
+                var game = $"on {build.BuildNumber} | {Constants.CommandPrefix}{Constants.HelpCommand}";
                 foreach (var shard in Shards)
                     await shard?.SetGameAsync(game);
             }
@@ -424,7 +501,88 @@ namespace NinjaCatDiscordBot {
         #endregion
     }
 
+    /// <summary>
+    /// Represents a blog entry.
+    /// </summary>
+    public class BlogEntry {
+        #region Constructor
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BlogEntry"/> class.
+        /// </summary>
+        /// <param name="title">The blog post title.</param>
+        /// <param name="link">The blog post link.</param>
+        /// <param name="description">The blog post description.</param>
+        public BlogEntry(string title, string link, string description) {
+            Title = title;
+            Link = link;
+            Description = description;
+
+            // Parse build number.
+            try {
+                BuildNumber = Regex.Match(Title, @"\d{5,}\.?\d*").Value;
+            }
+            catch (ArgumentException) { }
+
+            // Parse build type.
+            if (Link.ToLowerInvariant().Contains("server"))
+                BuildType = BuildType.Server;
+            else {
+                // Parse only first sentence.
+                var desc = Description.ToLowerInvariant().Substring(0, Description.ToLowerInvariant().IndexOf(". "));
+                if (desc.Contains("dev channel"))
+                    BuildType = BuildType.DevPc;
+                else if (desc.Contains("beta channel"))
+                    BuildType = BuildType.BetaPc;
+                else if (desc.Contains("release preview channel"))
+                    BuildType = BuildType.ReleasePreviewPc;
+                else
+                    BuildType = BuildType.Unknown;
+            }
+        }
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// Gets the blog post title.
+        /// </summary>
+        public string Title { get; }
+
+        /// <summary>
+        /// Gets the blog post link.
+        /// </summary>
+        public string Link { get; }
+
+        /// <summary>
+        /// Gets the blog post description.
+        /// </summary>
+        public string Description { get; }
+
+        /// <summary>
+        /// Gets the build number.
+        /// </summary>
+        public string BuildNumber { get; }
+
+        /// <summary>
+        /// Gets the build type.
+        /// </summary>
+        public BuildType BuildType { get; }
+
+        #endregion
+    }
+
+    public class BuildResult {
+        public BlogEntry BlogPost { get; }
+
+        public BuildType Type { get; }
+
+        public string Number { get; }
+    }
+
     public enum BuildType {
+        Unknown,
         DevPc,
         BetaPc,
         ReleasePreviewPc,

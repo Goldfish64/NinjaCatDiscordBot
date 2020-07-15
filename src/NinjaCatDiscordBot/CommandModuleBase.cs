@@ -89,18 +89,6 @@ namespace NinjaCatDiscordBot {
         IUserMessage ICommandContext.Message => Message;
 
         #endregion
-
-        #region Methods
-
-        /// <summary>
-        /// Sends typing feedback.
-        /// </summary>
-        public async Task StartTyping() {
-            await Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(0.5));
-        }
-
-        #endregion
     }
 
     public abstract class CommandModuleBase : ModuleBase<NinjaCatCommandContext> {
@@ -108,7 +96,7 @@ namespace NinjaCatDiscordBot {
             base.BeforeExecute(command);
 
             // Start typing.
-            Context.StartTyping().Wait();
+            Context.Client.StartTyping(Context.Channel).Wait();
         }
 
         protected override Task<IUserMessage> ReplyAsync(string message = null, bool isTTS = false, Embed embed = null, RequestOptions options = null, AllowedMentions allowedMentions = null) {

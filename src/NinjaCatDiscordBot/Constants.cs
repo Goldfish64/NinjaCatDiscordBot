@@ -104,9 +104,9 @@ namespace NinjaCatDiscordBot {
         public const string JumboCommand = "jumbo";
         public const string JumboCommandAlias = "j";
 
-        public static readonly string AboutMessage1 =
+        public static readonly string AboutMessage =
             $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
-            $"I was created by **{OwnerName}** with the purpose of letting you know about the latest in Windows Insider builds, but I can do other things too.\n\n" +
+            $"I was created by **{OwnerName}** with the purpose of letting you know about the latest in Windows Insider builds\n\n" +
             $"For help on what I can do, type **{CommandPrefix}{HelpCommand}**.";
         public static readonly string AboutMessage2 =
             $"Greetings! I am the {UserName}, a bot built using the Discord.Net and Tweetinvi libraries!\n" +

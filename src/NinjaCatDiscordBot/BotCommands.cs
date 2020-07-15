@@ -43,58 +43,6 @@ namespace NinjaCatDiscordBot {
         #region Command methods
 
         /// <summary>
-        /// Gets the about message.
-        /// </summary>
-        [Command("about")]
-        [Remarks(Constants.RemarkGeneral)]
-        public async Task GetAboutAsync() {
-            // Create variable for speaking channel mention.
-            var speakingChannel = string.Empty;
-            var speakingRole = string.Empty;
-
-            // Get guild. If null, ignore it.
-            var guild = (Context.Channel as IGuildChannel)?.Guild as SocketGuild;
-            if (guild != null) {
-                // Get speaking channel.
-                var channel = Context.Client.GetSpeakingChannelForSocketGuild(guild);
-
-                // Get the mention if speaking is enabled.
-                if (channel != null)
-                    speakingChannel = channel.Mention;
-
-                // Get ping role.
-                var role = Context.Client.GetRoleForIGuild(guild, RoleType.InsiderDev);
-
-                // Get name of role if enabled.
-                if (role != null)
-                    speakingRole = role.Name;
-            }
-
-            // Dev began Oct 2. 2016.
-
-            // Create speaking channel string.
-            var channelText = string.Empty;
-            if (!string.IsNullOrEmpty(speakingChannel))
-                channelText = $"\n\nI'm currently speaking in {speakingChannel}, but that can be changed with the **{Constants.CommandPrefix}{Constants.SetChannelCommand}** command.";
-
-            // Create role string.
-            var roleText = string.Empty;
-            if (!string.IsNullOrEmpty(speakingRole))
-                roleText = $"\n\nWhen a new build releases, I will ping the **{speakingRole}** role, but that can be changed with the **{Constants.CommandPrefix}{Constants.SetRoleCommand}** command.";
-
-            // Select and send message.
-            switch (Context.Client.GetRandomNumber(2)) {
-                default:
-                    await ReplyAsync($"{Constants.AboutMessage1}" + channelText + roleText);
-                    break;
-
-                case 1:
-                    await ReplyAsync($"{Constants.AboutMessage2}" + channelText + roleText);
-                    break;
-            }
-        }
-
-        /// <summary>
         /// Gets help.
         /// </summary>
         [Command("help")]
@@ -107,16 +55,27 @@ namespace NinjaCatDiscordBot {
             switch (Context.Client.GetRandomNumber(2)) {
                 default:
                     sb.AppendLine("So you need help huh? You've come to the right place. :cat::question:\n\n" +
-                        $"My set of commands include:");
+                        $"__My set of commands include:__");
                     break;
 
                 case 1:
                     sb.AppendLine("You need help? Why didn't you just say so? :cat::question:\n\n" +
-                        $"My set of commands are as follows:");
+                        $"__My set of commands are as follows:__");
                     break;
             }
 
-            foreach (var c in Context.Client.Commands.Commands.Where(p => p.Remarks != Constants.RemarkInternal).OrderBy(p => p.Name)) {
+            // General commands.
+            foreach (var c in Context.Client.Commands.Commands.Where(p => p.Remarks == Constants.RemarkGeneral).OrderBy(p => p.Name)) {
+                sb.Append($"**{Constants.CommandPrefix}{c.Name}**");
+                foreach (var p in c.Parameters) {
+                    sb.Append($" [{p.Name}]");
+                }
+                sb.AppendLine($": {c.Summary}");
+            }
+
+            // Admin commands.
+            sb.AppendLine("\n__Admin commands:__");
+            foreach (var c in Context.Client.Commands.Commands.Where(p => p.Remarks == Constants.RemarkAdmin).OrderBy(p => p.Name)) {
                 sb.Append($"**{Constants.CommandPrefix}{c.Name}**");
                 foreach (var p in c.Parameters) {
                     sb.Append($" [{p.Name}]");
@@ -221,14 +180,14 @@ namespace NinjaCatDiscordBot {
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetLatestDevBuildAsync() {
             // Get build.
-            var data = await Context.Client.GetLatestBuildNumberAsync(BuildType.DevPc);
-            if (data == null) {
-                await ReplyAsync($"The latest Windows 10 Dev Channel build couldn't be found. :crying_cat_face: :computer:");
+            var post = await Context.Client.GetLatestBuildPostAsync(BuildType.DevPc);
+            if (post == null) {
+                await ReplyAsync($"The latest Windows 10 Dev Channel build couldn't be found. :crying_cat_face: :tools:");
                 return;
             }
 
             // Send.
-            await ReplyAsync($"The latest Windows 10 Dev Channel build is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
+            await ReplyAsync($"The latest Windows 10 Dev Channel build is **{post.BuildNumber}**. :cat: :tools:\n<{post.Link}>");
         }
 
         /// <summary>
@@ -239,14 +198,14 @@ namespace NinjaCatDiscordBot {
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetLatestBetaBuildAsync() {
             // Get build.
-            var data = await Context.Client.GetLatestBuildNumberAsync(BuildType.BetaPc);
-            if (data == null) {
-                await ReplyAsync($"The latest Windows 10 Beta Channel build couldn't be found. :crying_cat_face: :computer:");
+            var post = await Context.Client.GetLatestBuildPostAsync(BuildType.BetaPc);
+            if (post == null) {
+                await ReplyAsync($"The latest Windows 10 Beta Channel build couldn't be found. :crying_cat_face: :paintbrush:");
                 return;
             }
 
             // Send.
-            await ReplyAsync($"The latest Windows 10 Beta Channel build is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
+            await ReplyAsync($"The latest Windows 10 Beta Channel build is **{post.BuildNumber}**. :cat: :paintbrush:\n<{post.Link}>");
         }
 
         /// <summary>
@@ -257,14 +216,14 @@ namespace NinjaCatDiscordBot {
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetLatestReleasePreviewBuildAsync() {
             // Get build.
-            var data = await Context.Client.GetLatestBuildNumberAsync(BuildType.ReleasePreviewPc);
-            if (data == null) {
-                await ReplyAsync($"The latest Windows 10 Release Preview Channel build couldn't be found. :crying_cat_face: :computer:");
+            var post = await Context.Client.GetLatestBuildPostAsync(BuildType.ReleasePreviewPc);
+            if (post == null) {
+                await ReplyAsync($"The latest Windows 10 Release Preview Channel build couldn't be found. :crying_cat_face: :package:");
                 return;
             }
 
             // Send.
-            await ReplyAsync($"The latest Windows 10 Release Preview Channel build is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
+            await ReplyAsync($"The latest Windows 10 Release Preview Channel build is **{post.BuildNumber}**. :cat: :package:\n<{post.Link}>");
         }
 
         /// <summary>
@@ -275,20 +234,21 @@ namespace NinjaCatDiscordBot {
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetLatestServerBuildAsync() {
             // Get build.
-            var data = await Context.Client.GetLatestBuildNumberAsync(BuildType.Server);
-            if (data == null) {
+            var post = await Context.Client.GetLatestBuildPostAsync(BuildType.Server);
+            if (post == null) {
                 await ReplyAsync($"The latest Windows Insider Server build couldn't be found. :crying_cat_face: :desktop:");
                 return;
             }
 
             // Send.
-            await ReplyAsync($"The latest Windows Insider Server build is **{data.Item1}**. :cat: :desktop:\n{data.Item2}");
+            await ReplyAsync($"The latest Windows Insider Server build is **{post.BuildNumber}**. :cat: :desktop:\n<{post.Link}>");
         }
 
         /// <summary>
         /// Replies with the bot's info.
         /// </summary>
         [Command("info")]
+        [Alias("about")]
         [Summary("shows my info")]
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetBotInfoAsync() {
@@ -313,13 +273,15 @@ namespace NinjaCatDiscordBot {
             embed.Author.IconUrl = Context.Client.CurrentUser?.GetAvatarUrl();
             embed.Footer.Text = $"Version: {Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion}";
 
+            embed.AddField(e => { e.Name = "About"; e.Value = Constants.AboutMessage; });
+
             // Add general overview fields.
             var shardId = Context.Guild != null ? (Context.Client.GetShardIdFor(Context.Guild) + 1) : 1;
-            embed.AddField((e) => { e.Name = "Servers"; e.Value = Context.Client.Guilds.Count.ToString(); e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{shardId} of {Context.Client.Shards.Count}"; e.IsInline = true; });
+            embed.AddField(e => { e.Name = "Servers"; e.Value = Context.Client.Guilds.Count.ToString(); e.IsInline = true; });
+            embed.AddField(e => { e.Name = "Shard"; e.Value = $"{shardId} of {Context.Client.Shards.Count}"; e.IsInline = true; });
             if (Context.Guild != null)
-                embed.AddField((e) => { e.Name = "Join date"; e.Value = Context.Guild.CurrentUser.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
+                embed.AddField(e => { e.Name = "Join date"; e.Value = Context.Guild.CurrentUser.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
+            embed.AddField(e => { e.Name = "Uptime"; e.Value = timeString; });
 
             // If in a guild, make color.
             if (Context.Guild != null) {
@@ -342,10 +304,10 @@ namespace NinjaCatDiscordBot {
                 var roleDev = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
                 var roleBeta = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
                 var roleReleasePreview = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
-                embed.AddField((e) => { e.Name = "Insider channel"; e.Value = channel?.Mention ?? "None"; });
-                embed.AddField((e) => { e.Name = "Insider Dev role"; e.Value = roleDev?.Mention ?? "None"; e.IsInline = true; });
-                embed.AddField((e) => { e.Name = "Insider Beta role"; e.Value = roleBeta?.Mention ?? "None"; e.IsInline = true; });
-                embed.AddField((e) => { e.Name = "Insider Release Preview role"; e.Value = roleReleasePreview?.Mention ?? "None"; e.IsInline = true; });
+                embed.AddField(e => { e.Name = "Insider channel"; e.Value = channel?.Mention ?? "None"; });
+                embed.AddField(e => { e.Name = "Insider Dev role"; e.Value = roleDev?.Mention ?? "None"; e.IsInline = true; });
+                embed.AddField(e => { e.Name = "Insider Beta role"; e.Value = roleBeta?.Mention ?? "None"; e.IsInline = true; });
+                embed.AddField(e => { e.Name = "Insider Release Preview role"; e.Value = roleReleasePreview?.Mention ?? "None"; e.IsInline = true; });
             }
             else {
                 // Set username.
