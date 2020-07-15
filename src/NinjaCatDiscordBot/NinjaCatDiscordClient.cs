@@ -415,19 +415,19 @@ namespace NinjaCatDiscordBot {
             var emotesText = ":smiley_cat:";
             switch (blogEntry.BuildType) {
                 case BuildType.DevPc:
-                    roleText = roleDev?.Mention;
+                    roleText = $"{roleDev?.Mention} ";
                     typeText = " to the Dev Channel";
                     emotesText += " :tools:";
                     break;
 
                 case BuildType.BetaPc:
-                    roleText = roleBeta?.Mention;
+                    roleText = $"{roleBeta?.Mention} ";
                     typeText = " to the Beta Channel";
                     emotesText += " :paintbrush:";
                     break;
 
                 case BuildType.ReleasePreviewPc:
-                    roleText = roleReleasePreview?.Mention;
+                    roleText = $"{roleReleasePreview?.Mention} ";
                     typeText = " to the Release Preview Channel";
                     emotesText += " :package:";
                     break;
