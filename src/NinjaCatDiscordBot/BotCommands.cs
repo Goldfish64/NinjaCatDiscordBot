@@ -45,7 +45,7 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Gets help.
         /// </summary>
-        [Command("help")]
+        [Command(Constants.HelpCommand)]
         [Summary("show help")]
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetHelpAsync() {
@@ -141,6 +141,11 @@ namespace NinjaCatDiscordBot {
 
                 if (role != null && !user.Roles.Contains(role))
                     return;
+            }
+
+            if (emotes.Length == 0) {
+                await ReplyAsync("No emotes passed!");
+                return;
             }
 
             // Iterate through each emote and jumbo it, up to the max of 2.
