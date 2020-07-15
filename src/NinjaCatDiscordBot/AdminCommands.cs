@@ -361,7 +361,7 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Force-update the bot's game.
         /// </summary>
-        [Command(Constants.UpdateGameCommand)]
+        [Command("updategame")]
         [Remarks(Constants.RemarkInternal)]
         public async Task UpdateGameAsync() {
             var user = Context.Message.Author as IUser;
@@ -378,7 +378,7 @@ namespace NinjaCatDiscordBot {
         /// Tests permissions.
         /// </summary>
         /// <returns></returns>
-        [Command(Constants.TestPermsCommand)]
+        [Command("testperms")]
         [Summary("test permissions")]
         [Remarks(Constants.RemarkAdmin)]
         public async Task TestPermsAsync() {
@@ -423,7 +423,7 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Test ping.
         /// </summary>
-        [Command(Constants.TestPingCommand)]
+        [Command("testping")]
         [Summary("test ping all roles")]
         [Remarks(Constants.RemarkAdmin)]
         public async Task TestPingAsync() {

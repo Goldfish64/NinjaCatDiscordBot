@@ -95,9 +95,9 @@ namespace NinjaCatDiscordBot {
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetHomeAsync() {
             await ReplyRandomAsync(null,
-                $"My source code is here:\n{Constants.HomeCommandUrl}",
-                $"Here are where my source code is stored:\n{Constants.HomeCommandUrl}",
-                $"My source:\n{Constants.HomeCommandUrl}"
+                $"My source code is here:\n{Constants.AppUrl}",
+                $"Here are where my source code is stored:\n{Constants.AppUrl}",
+                $"My source:\n{Constants.AppUrl}"
             );
         }
 
@@ -108,7 +108,7 @@ namespace NinjaCatDiscordBot {
         [Summary("invite me to your server")]
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetInviteAsync() {
-            var inviteUrl = string.Format(Constants.InviteCommandUrl, Context.Client.CurrentUser.Id);
+            var inviteUrl = string.Format(Constants.InviteUrl, Context.Client.CurrentUser.Id);
             await ReplyRandomAsync(null,
                 $"This link will let me be on *your* server:\n{inviteUrl}",
                 $"So you want me in *your* server huh? Use this link:\n{inviteUrl}",
