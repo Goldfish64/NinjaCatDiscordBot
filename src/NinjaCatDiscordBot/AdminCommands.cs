@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: AdminCommands.cs
 * 
-* Copyright (c) 2016-2019 John Davis
+* Copyright (c) 2016 - 2020 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -26,170 +26,213 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot {
     /// <summary>
     /// Contains commands for the bot.
     /// </summary>
-    public sealed partial class CommandModule : ModuleBase {
-        #region Methods
+    public class AdminCommandModule : CommandModuleBase {
+        #region Private methods
 
-        /// <summary>
-        /// Tests the permissions.
-        /// </summary>
-        /// <returns></returns>
-        [Command(Constants.TestPermsCommand)]
-        public async Task TestPermsAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get channel.
-            var channel = await client.GetSpeakingChannelForIGuildAsync(Context.Guild);
-            var currentUser = client.GetGuild(Context.Guild.Id).CurrentUser;
-
-            // If the channel is null, return message saying that speaking is disabled.
-            if (channel == null) {
-                await ReplyAsync($"I'm not currently speaking in any channels.");
-                return;
-            }
-
-            // Verify we have permission to speak.
-            if (!currentUser.GetPermissions(channel).SendMessages) {
-                await ReplyAsync($"I don't have permission to send messages in {channel.Mention}. Please give me that permission.");
-                return;
-            }
-
-            // Check role permissions to toggle mentionable flag on/off.
-            var role = client.GetSpeakingRoleForIGuild(Context.Guild);
-            var roleText = "";
-            if (role?.IsMentionable == false && (!currentUser.GuildPermissions.ManageRoles || currentUser.Hierarchy <= role.Position))
-                roleText = $"\n\nHowever, I cannot manage the **{role.Name}** role. Please ensure I'm above that role and have permission to manage roles.";
-
-            await ReplyAsync($"I'm all set to speak in {channel.Mention}!{roleText}");
-            return;
+        private bool IsStringNone(string text) {
+            return (text.ToLowerInvariant() == "none" || text.ToLowerInvariant() == "off");
         }
 
-        /// <summary>
-        /// Gets the channel the bot will speak in.
-        /// </summary>
+        private async Task<bool> CheckIfGuild() {
+            // Get guild. If null show error.
+            var guild = (Context.Channel as IGuildChannel)?.Guild;
+            if (guild == null) {
+                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
+                return false;
+            }
+
+            // If the guild is the Bots server, never speak.
+            if (guild.Id == Constants.BotsGuildId) {
+                // Send message.
+                await ReplyAsync($"Because this is the bots server, this command can't be used here.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task<bool> CheckManagerPerms() {
+            // Bot settings require the Manager Server permission, or owner ID override.
+            var user = Context.User as IGuildUser;
+            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true) {
+                await ReplyAsync($"Sorry, but only those who have the **Manage Server** permission can modify bot settings.");
+                return false;
+            }
+            return true;
+        }
+
+        private async Task ProcessRoleCommand(string role, RoleType roleType) {
+            if (!await CheckIfGuild())
+                return;
+
+            IRole insiderRole;
+            string roleTypeName = "";
+            switch (roleType) {
+                case RoleType.InsiderDev:
+                    roleTypeName = "Dev Channel";
+                    break;
+
+                case RoleType.InsiderBeta:
+                    roleTypeName = "Beta Channel";
+                    break;
+
+                case RoleType.InsiderReleasePreview:
+                    roleTypeName = "Release Preview Channel";
+                    break;
+            }
+
+            //
+            // Ensure a channel is setup.
+            //
+            var insiderChannel = Context.Client.GetSpeakingChannelForSocketGuild(Context.Guild);
+            if (insiderChannel == null) {
+                await ReplyAsync($"I'm not currently announcing Insider builds when they are released. Please set up a channel using **{Constants.CommandPrefix}{Constants.ChannelCommand}* *.");
+                return;
+            }
+
+            //
+            // Get current role setting. No stored setting means there are no role pings for this channel.
+            //
+            if (string.IsNullOrWhiteSpace(role)) {
+                insiderRole = Context.Client.GetRoleForIGuild(Context.Guild, roleType);
+                if (insiderRole == null)
+                    await ReplyAsync($"When new **{roleTypeName}** Insider builds are released, I'm not mentioning a role.");
+                else
+                    await ReplyAsync($"When new **{roleTypeName}** Insider builds are released, I'll mention {insiderRole.Mention}.");
+                return;
+            }
+
+            if (!await CheckManagerPerms())
+                return;
+
+            //
+            // Disable role if none or off is passed.
+            //
+            if (IsStringNone(role)) {
+                Context.Client.SetInsiderRole(Context.Guild, null, roleType);
+                await ReplyAsync($"When new **{roleTypeName}** Insider builds are released, I'll no longer mention a role.");
+                return;
+            }
+
+            //
+            // Role was passed, attempt to parse.
+            //
+            var roleReaderResult = await new RoleTypeReader<IRole>().ReadAsync(Context, role, null);
+            if (!roleReaderResult.IsSuccess) {
+                await ReplyAsync($"That role couldn't be found.");
+                return;
+            }
+            insiderRole = roleReaderResult.BestMatch as IRole;
+
+            //
+            // Validate and set channel.
+            //
+            if (!insiderRole.IsMentionable && !Context.Guild.CurrentUser.GetPermissions(insiderChannel).MentionEveryone) {
+                await ReplyAsync($"I can't mention this role. Please ensure I have the **Mention Everyone** permission in the {insiderChannel.Mention} channel, or make the role mentionable.");
+                return;
+            }
+            Context.Client.SetInsiderRole(Context.Guild, insiderRole, roleType);
+            await ReplyAsync($"When new **{roleTypeName}** Insider builds are released, I'll now mention {insiderRole.Mention}.");
+        }
+
+        #endregion
+
+        #region Command methods
+
         [Command(Constants.ChannelCommand)]
-        public async Task GetChannelAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
+        [Summary("When no channel is passed, gets the current setting. Otherwise, sets the channel used for Insider builds; specify *none* to disable build announcements.")]
+        [Remarks(Constants.RemarkAdmin)]
+        public async Task ChannelAsync([Remainder()] string channel = null) {
+            ITextChannel insiderChannel;
 
-            // Get guild. If null show error.
-            var guild = (Context.Channel as IGuildChannel)?.Guild;
-            if (guild == null) {
-                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
+            if (!await CheckIfGuild())
+                return;
+
+            //
+            // Get current channel setting. No stored setting means announcements are disabled.
+            //
+            if (string.IsNullOrWhiteSpace(channel)) {
+                insiderChannel = Context.Client.GetSpeakingChannelForSocketGuild(Context.Guild);
+                if (insiderChannel == null)
+                    await ReplyAsync($"When new Insider builds are released, I'm keeping quiet.");
+                else
+                    await ReplyAsync($"When new Insider builds are released, I'll announce them in {insiderChannel.Mention}.");
                 return;
             }
 
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId) {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't announce builds.");
+            if (!await CheckManagerPerms())
+                return;
+
+            //
+            // Disable announcements if none or off is passed.
+            //
+            if (IsStringNone(channel)) {
+                Context.Client.SetInsiderChannel(Context.Guild, null);
+                await ReplyAsync($"When new Insider builds are released, I'll now keep quiet.");
                 return;
             }
 
-            // Get channel.
-            var channel = await client.GetSpeakingChannelForIGuildAsync(guild);
+            //
+            // Channel was passed, attempt to parse.
+            //
+            var channelReaderResult = await new ChannelTypeReader<ITextChannel>().ReadAsync(Context, channel, null);
+            if (!channelReaderResult.IsSuccess) {
+                await ReplyAsync($"That channel couldn't be found.");
+                return;
+            }
+            insiderChannel = channelReaderResult.BestMatch as ITextChannel;
 
-            // If the channel is still null, that means no announcements.
-            if (channel == null)
-                await ReplyAsync($"When new builds are released, I'm keeping quiet.");
-            else
-                await ReplyAsync($"When new builds are released, I'll announce them in {channel.Mention}.");
+            //
+            // Validate and set channel.
+            //
+            if (!Context.Guild.CurrentUser.GetPermissions(insiderChannel).SendMessages) {
+                await ReplyAsync($"I can't send messages there. Please ensure I have the **Send Messages** permission in that channel.");
+                return;
+            }
+            Context.Client.SetInsiderChannel(Context.Guild, insiderChannel);
+            await ReplyAsync($"When new Insider builds are released, I'll now announce them in {insiderChannel.Mention}.");
         }
 
-        /// <summary>
-        /// Gets the role the bot will ping when builds come out.
-        /// </summary>
-        [Command(Constants.RoleCommand)]
-        public async Task GetRoleAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get guild. If null show error.
-            var guild = (Context.Channel as IGuildChannel)?.Guild;
-            if (guild == null) {
-                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
-                return;
-            }
-
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId) {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
-                return;
-            }
-
-            // Get role.
-            var role = client.GetSpeakingRoleForIGuild(guild);
-            if (role == null)
-                await ReplyAsync($"I'm not pinging a role when new builds come out.");
-            else
-                await ReplyAsync($"The role I ping is **{role.Name}** when new builds are released.");
+        [Command("roledev")]
+        [Alias("devrole")]
+        [Summary("When no role is passed, gets the current setting. Otherwise, sets the role used for Dev Channel Insider builds; specify *none* to disable role mentions.")]
+        [Remarks(Constants.RemarkAdmin)]
+        public async Task RoleDevAsync([Remainder()] string role = null) {
+            await ProcessRoleCommand(role, RoleType.InsiderDev);
         }
 
-        /// <summary>
-        /// Gets the role the bot will ping when skip ahead builds come out.
-        /// </summary>
-        [Command(Constants.RoleSkipCommand)]
-        public async Task GetRoleSkipAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get guild. If null show error.
-            var guild = (Context.Channel as IGuildChannel)?.Guild;
-            if (guild == null) {
-                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
-                return;
-            }
-
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId) {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
-                return;
-            }
-
-            // Get role.
-            var role = client.GetSpeakingRoleSkipForIGuild(guild);
-            if (role == null)
-                await ReplyAsync($"I'm not pinging a special role when new skip ahead builds come out.");
-            else
-                await ReplyAsync($"The role I ping is **{role.Name}** when new skip ahead builds are released.");
+        [Command("rolebeta")]
+        [Alias("betarole")]
+        [Summary("When no role is passed, gets the current setting. Otherwise, sets the role used for Beta Channel Insider builds; specify *none* to disable role mentions.")]
+        [Remarks(Constants.RemarkAdmin)]
+        public async Task RoleBetaAsync([Remainder()] string role = null) {
+            await ProcessRoleCommand(role, RoleType.InsiderBeta);
         }
 
-        /// <summary>
-        /// Gets the role the bot will ping when slow builds come out.
-        /// </summary>
-        [Command(Constants.RoleSlowCommand)]
-        public async Task GetRoleSlowAsync() {
+        [Command("rolerp")]
+        [Alias("rprole", "releasepreviewrole", "rolereleasepreview")]
+        [Summary("When no role is passed, gets the current setting. Otherwise, sets the role used for Release Preview Channel Insider builds; specify *none* to disable role mentions.")]
+        [Remarks(Constants.RemarkAdmin)]
+        public async Task RoleReleasePreviewAsync([Remainder()] string role = null) {
+            await ProcessRoleCommand(role, RoleType.InsiderReleasePreview);
+        }
+
+        private async Task<NinjaCatDiscordClient> StartTypingAndGetClient() {
+            // Bot is typing, with added pause for realism.
+            await Context.Channel.TriggerTypingAsync();
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
             // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get guild. If null show error.
-            var guild = (Context.Channel as IGuildChannel)?.Guild;
-            if (guild == null) {
-                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
-                return;
-            }
-
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId) {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
-                return;
-            }
-
-            // Get role.
-            var role = client.GetSpeakingRoleSlowForIGuild(guild);
-            if (role == null)
-                await ReplyAsync($"I'm not pinging a special role when new Slow ring builds come out.");
-            else
-                await ReplyAsync($"The role I ping is **{role.Name}** when new Slow ring builds are released.");
+            return Context.Client as NinjaCatDiscordClient;
         }
 
         /// <summary>
@@ -215,199 +258,11 @@ namespace NinjaCatDiscordBot {
             }
 
             // Get role.
-            var role = client.GetJumboRoleForIGuild(guild);
+            var role = client.GetRoleForIGuild(guild, RoleType.Jumbo);
             if (role == null)
                 await ReplyAsync($"I don't require a special role for the jumbo command.");
             else
                 await ReplyAsync($"To use the jumbo command, you must have **{role.Name}**.");
-        }
-
-        /// <summary>
-        /// Sets the bot's speaking channel.
-        /// </summary>
-        /// <param name="channel">The new channel.</param>
-        [Command(Constants.SetChannelCommand)]
-        public async Task SetChannelAsync(ITextChannel channel = null) {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get guild. If null show error.
-            var guild = (Context.Channel as IGuildChannel)?.Guild;
-            if (guild == null) {
-                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
-                return;
-            }
-
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId) {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't make announcements.");
-                return;
-            }
-
-            // Get the user.
-            var user = Context.User as IGuildUser;
-
-            // If the user is null, lacks the manage server permission, or is not master, show error.
-            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true) {
-                await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the channel I speak in.");
-                return;
-            }
-
-            // If channel is valid, enable announcements.
-            if (channel != null) {
-                // Save channel.
-                client.SpeakingChannels[guild.Id] = channel.Id;
-                client.SaveSettings();
-                await ReplyAsync($"When new builds are released, I'll now announce them in {channel.Mention}.");
-            }
-            else {
-                // Set channel to 0.
-                client.SpeakingChannels[guild.Id] = 0;
-                client.SaveSettings();
-                await ReplyAsync($"When new builds are released, I'll now keep quiet.");
-            }
-        }
-
-        /// <summary>
-        /// Sets the role that is pinged when new builds are released.
-        /// </summary>
-        /// <param name="role">The new role. A null value will disable role pinging.</param>
-        [Command(Constants.SetRoleCommand)]
-        public async Task SetRoleAsync(IRole role = null) {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get guild. If null show error.
-            var guild = (Context.Channel as IGuildChannel)?.Guild;
-            if (guild == null) {
-                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
-                return;
-            }
-
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId) {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
-                return;
-            }
-
-            // Get the user.
-            var user = Context.User as IGuildUser;
-
-            // If the user is null, lacks the manage server permission, or is not master, show error.
-            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true) {
-                await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the role I ping.");
-                return;
-            }
-
-            // If role is valid, save it. Otherwise remove the role.
-            if (role != null) {
-                // Save role.
-                client.SpeakingRoles[guild.Id] = role.Id;
-                client.SaveSettings();
-                await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new builds are released.");
-            }
-            else {
-                // Remove role.
-                client.SpeakingRoles.TryRemove(guild.Id, out ulong outVar);
-                client.SaveSettings();
-                await ReplyAsync($"I'll no longer ping a role when new builds come out.");
-            }
-        }
-
-        /// <summary>
-        /// Sets the role that is pinged when new skip ahead builds are released.
-        /// </summary>
-        /// <param name="role">The new role. A null value will disable role pinging.</param>
-        [Command(Constants.SetRoleSkipCommand)]
-        public async Task SetRoleSkipAsync(IRole role = null) {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get guild. If null show error.
-            var guild = (Context.Channel as IGuildChannel)?.Guild;
-            if (guild == null) {
-                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
-                return;
-            }
-
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId) {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
-                return;
-            }
-
-            // Get the user.
-            var user = Context.User as IGuildUser;
-
-            // If the user is null, lacks the manage server permission, or is not master, show error.
-            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true) {
-                await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the role I ping.");
-                return;
-            }
-
-            // If role is valid, save it. Otherwise remove the role.
-            if (role != null) {
-                // Save role.
-                client.SpeakingRolesSkip[guild.Id] = role.Id;
-                client.SaveSettings();
-                await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new skip ahead builds are released.");
-            }
-            else {
-                // Remove role.
-                client.SpeakingRolesSkip.TryRemove(guild.Id, out ulong outVar);
-                client.SaveSettings();
-                await ReplyAsync($"I'll no longer ping a special role when new skip ahead builds come out.");
-            }
-        }
-
-        /// <summary>
-        /// Sets the role that is pinged when new slow builds are released.
-        /// </summary>
-        /// <param name="role">The new role. A null value will disable role pinging.</param>
-        [Command(Constants.SetRoleSlowCommand)]
-        public async Task SetRoleSlowAsync(IRole role = null) {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get guild. If null show error.
-            var guild = (Context.Channel as IGuildChannel)?.Guild;
-            if (guild == null) {
-                await ReplyAsync($"This command can't be used here. Run this command again from a server channel.");
-                return;
-            }
-
-            // If the guild is the Bots server, never speak.
-            if (guild.Id == Constants.BotsGuildId) {
-                // Send message.
-                await ReplyAsync($"Because this is the bots server, I can't ping anyone.");
-                return;
-            }
-
-            // Get the user.
-            var user = Context.User as IGuildUser;
-
-            // If the user is null, lacks the manage server permission, or is not master, show error.
-            if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true) {
-                await ReplyAsync($"Sorry, but only those who have permission to manage this server can change the role I ping.");
-                return;
-            }
-
-            // If role is valid, save it. Otherwise remove the role.
-            if (role != null) {
-                // Save role.
-                client.SpeakingRolesSlow[guild.Id] = role.Id;
-                client.SaveSettings();
-                await ReplyAsync($"The role I'll ping from now on is **{role.Name}** when new Slow ring builds are released.");
-            }
-            else {
-                // Remove role.
-                client.SpeakingRolesSlow.TryRemove(guild.Id, out ulong outVar);
-                client.SaveSettings();
-                await ReplyAsync($"I'll no longer ping a special role when new Slow ring builds come out.");
-            }
         }
 
         /// <summary>
@@ -445,13 +300,13 @@ namespace NinjaCatDiscordBot {
             // If role is valid, save it. Otherwise remove the role.
             if (role != null) {
                 // Save role.
-                client.JumboRoles[guild.Id] = role.Id;
+                client.Settings.JumboRoles[guild.Id] = role.Id;
                 client.SaveSettings();
                 await ReplyAsync($"I'll now require users to have **{role.Name}** in order to use the jumbo command.");
             }
             else {
                 // Remove role.
-                client.JumboRoles.TryRemove(guild.Id, out ulong outVar);
+                client.Settings.JumboRoles.TryRemove(guild.Id, out ulong outVar);
                 client.SaveSettings();
                 await ReplyAsync($"I'll no longer require a role for the jumbo command.");
             }
@@ -461,6 +316,7 @@ namespace NinjaCatDiscordBot {
         /// Send an announcement.
         /// </summary>
         [Command(Constants.AnnouncementCommand)]
+        [Remarks(Constants.RemarkInternal)]
         public async Task SendAnnouncementAsync(string message) {
             // Get client.
             var client = await StartTypingAndGetClient();
@@ -505,101 +361,89 @@ namespace NinjaCatDiscordBot {
         /// <summary>
         /// Force-update the bot's game.
         /// </summary>
-        [Command(Constants.UpdateGameCommand)]
+        [Command("updategame")]
+        [Remarks(Constants.RemarkInternal)]
         public async Task UpdateGameAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get the user.
             var user = Context.Message.Author as IUser;
-
-            // If the user is not master, show error.
             if (user?.Id != Constants.OwnerId) {
-                // Select and send message.
-                switch (client.GetRandomNumber(4)) {
-                    default:
-                        await ReplyAsync($"Sorry, but only my master can force-update my game.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You aren't my owner.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.Message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. Only my owner can force-update my game.");
-                        break;
-                }
+                await ReplyAsync($"This command is owner-only.");
                 return;
             }
 
-            // Send message.
             await ReplyAsync($"Forcing game update now...");
-
-            // Update game.
-            await client.UpdateGameAsync();
+            await Context.Client.UpdateGameAsync();
         }
 
         /// <summary>
-        /// Test ping..
+        /// Tests permissions.
         /// </summary>
-        [Command(Constants.TestPingCommand)]
+        /// <returns></returns>
+        [Command("testperms")]
+        [Summary("test permissions")]
+        [Remarks(Constants.RemarkAdmin)]
+        public async Task TestPermsAsync() {
+            var channel = Context.Client.GetSpeakingChannelForSocketGuild(Context.Guild);
+            var currentUser = Context.Client.GetGuild(Context.Guild.Id).CurrentUser;
+
+            if (channel == null) {
+                await ReplyAsync($"When new Insider builds are released, I'm keeping quiet.");
+                return;
+            }
+            await ReplyAsync($"Channel: {channel.Mention}; can speak: {currentUser.GetPermissions(channel).SendMessages}");
+
+            // Get all roles.
+            var roleDev = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
+            var roleBeta = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
+            var roleReleasePreview = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
+
+            var mentionability = true;
+            if (roleDev != null) {
+                var devMentionability = roleDev.IsMentionable || Context.Guild.CurrentUser.GetPermissions(channel).MentionEveryone;
+                mentionability &= devMentionability;
+                await ReplyAsync($"Dev role: {roleDev.Mention}; can mention: {devMentionability}");
+            }
+            if (roleBeta != null) {
+                var betaMentionability = roleBeta.IsMentionable || Context.Guild.CurrentUser.GetPermissions(channel).MentionEveryone;
+                mentionability &= betaMentionability;
+                await ReplyAsync($"Beta role: {roleBeta.Mention}; can mention: {betaMentionability}");
+            }
+            if (roleReleasePreview != null) {
+                var rpMentionability = roleReleasePreview.IsMentionable || Context.Guild.CurrentUser.GetPermissions(channel).MentionEveryone;
+                mentionability &= rpMentionability;
+                await ReplyAsync($"Release Preview role: {roleReleasePreview.Mention}; can mention: {rpMentionability}");
+            }
+
+            if (!currentUser.GetPermissions(channel).SendMessages) {
+                await ReplyAsync($"I can't send messages in {channel.Mention}. Please ensure I have the **Send Messages** permission in that channel.");
+            }
+            if (!mentionability)
+                await ReplyAsync($"One or more roles cannot be mentioned. Please ensure I have the **Mention Everyone** permission in the {channel.Mention} channel, or make the role(s) mentionable.");
+        }
+
+        /// <summary>
+        /// Test ping.
+        /// </summary>
+        [Command("testping")]
+        [Summary("test ping all roles")]
+        [Remarks(Constants.RemarkAdmin)]
         public async Task TestPingAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get the user.
             var user = Context.User as IGuildUser;
-
-            // If the user is null, lacks the manage server permission, or is not master, show error.
             if (user?.Id != Constants.OwnerId && user?.GuildPermissions.ManageGuild != true) {
                 await ReplyAsync($"Sorry, but only those who have permission to manage this server can send a test ping.");
                 return;
             }
 
-            // Get current guild user.
-            var currentUser = client.GetGuild(Context.Guild.Id).CurrentUser;
+            // Get all roles.
+            var roleDev = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
+            var roleBeta = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
+            var roleReleasePreview = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
 
-            // Check if the role is mentionable.
-            // If not, attempt to make it mentionable, and revert the setting after the message is sent.
-            var role = client.GetSpeakingRoleForIGuild(Context.Guild);
-            if (role != null) {
-                var mentionable = role?.IsMentionable;
-                if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
-                    await role.ModifyAsync((e) => e.Mentionable = true);
-
-                // Send message.
-                await ReplyAsync($"Insiders role: {role.Mention}");
-
-                // Revert mentionable setting.
-                if (mentionable == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > role.Position)
-                    await role.ModifyAsync((e) => e.Mentionable = false);
-            }
-            else {
-                await ReplyAsync($"Insiders role: No role configured.");
-            }
-
-            // Check if the skip role is mentionable.
-            // If not, attempt to make it mentionable, and revert the setting after the message is sent.
-            var roleSkip = client.GetSpeakingRoleSkipForIGuild(Context.Guild);
-            if (roleSkip != null) {
-                var mentionableSkip = roleSkip?.IsMentionable;
-                if (mentionableSkip == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > roleSkip.Position)
-                    await roleSkip.ModifyAsync((e) => e.Mentionable = true);
-
-                // Send message.
-                await ReplyAsync($"Skip ahead role: {roleSkip.Mention}");
-
-                // Revert mentionable setting.
-                if (mentionableSkip == false && currentUser.GuildPermissions.ManageRoles && currentUser.Hierarchy > roleSkip.Position)
-                    await roleSkip.ModifyAsync((e) => e.Mentionable = false);
-            }
-            else {
-                await ReplyAsync($"Skip ahead role: No role configured.");
-            }
+            if (roleDev != null)
+                await ReplyAsync($"Dev role: {roleDev.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleDev.Id } });
+            if (roleBeta != null)
+                await ReplyAsync($"Beta role: {roleBeta.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleBeta.Id } });
+            if (roleReleasePreview != null)
+                await ReplyAsync($"Release Preview role: {roleReleasePreview.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleReleasePreview.Id } });
         }
 
         private async void SendMessageShardAsync(NinjaCatDiscordClient client, DiscordSocketClient shard, string message) {
@@ -640,41 +484,20 @@ namespace NinjaCatDiscordBot {
 
 
         /// <summary>
-        /// Test ping..
+        /// Restarts the bot.
         /// </summary>
         [Command("restart")]
+        [Alias("exit")]
+        [Remarks(Constants.RemarkInternal)]
         public async Task RestartAsync() {
-            // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
-
-            // Get the user.
             var user = Context.Message.Author as IUser;
-
-            // If the user is not master, show error.
             if (user?.Id != Constants.OwnerId) {
-                // Select and send message.
-                switch (client.GetRandomNumber(4)) {
-                    default:
-                        await ReplyAsync($"Sorry, but only my master can force-update my game.");
-                        break;
-
-                    case 1:
-                        await ReplyAsync($"No can do. You aren't my owner.");
-                        break;
-
-                    case 2:
-                        await ReplyAsync($"I'm sorry {Context.Message.Author.Mention}, I'm afraid I can't do that. You aren't my master.");
-                        break;
-
-                    case 3:
-                        await ReplyAsync($"Not happening. Only my owner can force-update my game.");
-                        break;
-                }
+                await ReplyAsync($"This command is owner-only.");
                 return;
             }
 
             // Shutdown bot.
-            await ReplyAsync($"Exiting...");
+            await ReplyAsync($"Restarting...");
             Environment.Exit(-1);
         }
 

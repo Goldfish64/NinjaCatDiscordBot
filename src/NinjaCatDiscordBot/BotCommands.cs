@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: BotCommands.cs
 * 
-* Copyright (c) 2016-2019 John Davis
+* Copyright (c) 2016 - 2020 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -25,183 +25,129 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using NinjaCatDiscordBot.Properties;
 using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot {
     /// <summary>
     /// Contains commands for the bot.
     /// </summary>
-    public sealed partial class CommandModule : ModuleBase {
+    public partial class BotCommandsModule : CommandModuleBase {
         private HttpClient _client = new HttpClient();
 
-        #region Methods
-
-        private async Task<NinjaCatDiscordClient> StartTypingAndGetClient() {
-            // Bot is typing, with added pause for realism.
-            await Context.Channel.TriggerTypingAsync();
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Get client.
-            return Context.Client as NinjaCatDiscordClient;
-        }
-
-        /// <summary>
-        /// Gets the about message.
-        /// </summary>
-        [Command(Constants.AboutCommand)]
-        private async Task GetAboutAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Create variable for speaking channel mention.
-            var speakingChannel = string.Empty;
-            var speakingRole = string.Empty;
-
-            // Get guild. If null, ignore it.
-            var guild = (Context.Channel as IGuildChannel)?.Guild as SocketGuild;
-            if (guild != null) {
-                // Get speaking channel.
-                var channel = client.GetSpeakingChannelForSocketGuild(guild);
-
-                // Get the mention if speaking is enabled.
-                if (channel != null)
-                    speakingChannel = channel.Mention;
-
-                // Get ping role.
-                var role = client.GetSpeakingRoleForIGuild(guild);
-
-                // Get name of role if enabled.
-                if (role != null)
-                    speakingRole = role.Name;
-            }
-
-            // Dev began Oct 2. 2016.
-
-            // Create speaking channel string.
-            var channelText = string.Empty;
-            if (!string.IsNullOrEmpty(speakingChannel))
-                channelText = $"\n\nI'm currently speaking in {speakingChannel}, but that can be changed with the **{Constants.CommandPrefix}{Constants.SetChannelCommand}** command.";
-
-            // Create role string.
-            var roleText = string.Empty;
-            if (!string.IsNullOrEmpty(speakingRole))
-                roleText = $"\n\nWhen a new build releases, I will ping the **{speakingRole}** role, but that can be changed with the **{Constants.CommandPrefix}{Constants.SetRoleCommand}** command.";
-
-            // Select and send message.
-            switch (client.GetRandomNumber(2)) {
-                default:
-                    await ReplyAsync($"{Constants.AboutMessage1}" + channelText + roleText);
-                    break;
-
-                case 1:
-                    await ReplyAsync($"{Constants.AboutMessage2}" + channelText + roleText);
-                    break;
-            }
-        }
+        #region Command methods
 
         /// <summary>
         /// Gets help.
         /// </summary>
         [Command(Constants.HelpCommand)]
-        private async Task GetHelpAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
+        [Summary("show help")]
+        [Remarks(Constants.RemarkGeneral)]
+        public async Task GetHelpAsync() {
+            var sb = new StringBuilder();
 
             // Select and send message.
-            switch (client.GetRandomNumber(2)) {
+            switch (Context.Client.GetRandomNumber(2)) {
                 default:
-                    await ReplyAsync($"So you need help huh? You've come to the right place. :cat::question:\n\n" +
-                        $"My set of commands include:\n" +
-                        Constants.HelpBody);
+                    sb.AppendLine("So you need help huh? You've come to the right place. :cat::question:\n\n" +
+                        $"__My set of commands include:__");
                     break;
 
                 case 1:
-                    await ReplyAsync($"You need help? Why didn't you just say so? :cat::question:\n\n" +
-                        $"My set of commands are as follows:\n" +
-                        Constants.HelpBody);
+                    sb.AppendLine("You need help? Why didn't you just say so? :cat::question:\n\n" +
+                        $"__My set of commands are as follows:__");
                     break;
             }
+
+            // General commands.
+            foreach (var c in Context.Client.Commands.Commands.Where(p => p.Remarks == Constants.RemarkGeneral).OrderBy(p => p.Name)) {
+                sb.Append($"**{Constants.CommandPrefix}{c.Name}**");
+                foreach (var p in c.Parameters) {
+                    sb.Append($" [{p.Name}]");
+                }
+                sb.AppendLine($": {c.Summary}");
+            }
+
+            // Admin commands.
+            sb.AppendLine("\n__Admin commands:__");
+            foreach (var c in Context.Client.Commands.Commands.Where(p => p.Remarks == Constants.RemarkAdmin).OrderBy(p => p.Name)) {
+                sb.Append($"**{Constants.CommandPrefix}{c.Name}**");
+                foreach (var p in c.Parameters) {
+                    sb.Append($" [{p.Name}]");
+                }
+                sb.AppendLine($": {c.Summary}");
+            }
+
+            await ReplyAsync(sb.ToString());
         }
 
         /// <summary>
         /// Gets the homepage URL.
         /// </summary>
-        [Command(Constants.HomeCommand)]
-        private async Task GetHomeAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Select and send message with URL.
-            switch (client.GetRandomNumber(3)) {
-                default:
-                    await ReplyAsync($"My source code is here:\n{Constants.HomeCommandUrl}");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"Here are where my source code is stored:\n{Constants.HomeCommandUrl}");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"My source:\n{Constants.HomeCommandUrl}");
-                    break;
-            }
+        [Command("source")]
+        [Alias("home")]
+        [Summary("go to my source code")]
+        [Remarks(Constants.RemarkGeneral)]
+        public async Task GetHomeAsync() {
+            await ReplyRandomAsync(null,
+                $"My source code is here:\n{Constants.AppUrl}",
+                $"Here are where my source code is stored:\n{Constants.AppUrl}",
+                $"My source:\n{Constants.AppUrl}"
+            );
         }
 
         /// <summary>
         /// Gets the invite URL.
         /// </summary>
-        [Command(Constants.InviteCommand)]
-        private async Task GetInviteAsync() {
-            // Get client and build URL.
-            var client = await StartTypingAndGetClient();
-            var inviteUrl = string.Format(Constants.InviteCommandUrl, client.CurrentUser.Id);
-
-            // Select and send message with invite URL.
-            switch (client.GetRandomNumber(3)) {
-                default:
-                    await ReplyAsync($"This link will let me be on *your* server:\n{inviteUrl}");
-                    break;
-
-                case 1:
-                    await ReplyAsync($"So you want me in *your* server huh? Use this link:\n{inviteUrl}");
-                    break;
-
-                case 2:
-                    await ReplyAsync($"Use this link to add me to *your* server:\n{inviteUrl}");
-                    break;
-            }
+        [Command("invite")]
+        [Summary("invite me to your server")]
+        [Remarks(Constants.RemarkGeneral)]
+        public async Task GetInviteAsync() {
+            var inviteUrl = string.Format(Constants.InviteUrl, Context.Client.CurrentUser.Id);
+            await ReplyRandomAsync(null,
+                $"This link will let me be on *your* server:\n{inviteUrl}",
+                $"So you want me in *your* server huh? Use this link:\n{inviteUrl}",
+                $"Use this link to add me to *your* server:\n{inviteUrl}"
+            );
         }
 
         /// <summary>
         /// Gets the T-Rex.
         /// </summary>
-        [Command(Constants.TrexCommand)]
-        private async Task GetTrexAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-            await ReplyAsync("<a:trexa:393897398881222656>");
+        [Command("trex")]
+        [Summary("shows the Windows 10 Skype emoticon")]
+        [Remarks(Constants.RemarkGeneral)]
+        public async Task GetTrexAsync() {
+            using (var stream = new MemoryStream(Resources.trex))
+                await Context.Channel.SendFileAsync(stream, "trex.gif");
         }
 
         /// <summary>
         /// Jumbo.
         /// </summary>
-        [Command(Constants.JumboCommand)]
-        [Alias(Constants.JumboCommandAlias)]
-        private async Task SendJumboAsync(params string[] emotes) {
-            // Get client.
-            var client = Context.Client as NinjaCatDiscordClient;
-
+        [Command("jumbo")]
+        [Alias("j")]
+        [Summary("jumboify emotes")]
+        [Remarks(Constants.RemarkGeneral)]
+        public async Task SendJumboAsync(params string[] emotes) {
             // Check perms if on server.
             if (Context.Guild != null) {
-                var role = client.GetJumboRoleForIGuild(Context.Guild);
+                var role = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.Jumbo);
                 var user = Context.User as SocketGuildUser;
 
                 if (role != null && !user.Roles.Contains(role))
                     return;
+            }
+
+            if (emotes.Length == 0) {
+                await ReplyAsync("No emotes passed!");
+                return;
             }
 
             // Iterate through each emote and jumbo it, up to the max of 2.
@@ -233,94 +179,88 @@ namespace NinjaCatDiscordBot {
         }
 
         /// <summary>
-        /// Gets the latest Insider PC build.
+        /// Gets the latest Insider PC build for the Dev Channel.
         /// </summary>
-        [Command(Constants.LatestBuildCommand)]
-        private async Task GetLatestBuildAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
+        [Command("latestdev")]
+        [Alias("latest")]
+        [Summary("shows the latest Dev Channel Insider build")]
+        [Remarks(Constants.RemarkGeneral)]
+        public async Task GetLatestDevBuildAsync() {
             // Get build.
-            var data = await client.GetLatestBuildNumberAsync();
-            if (data == null) {
-                await ReplyAsync($"The latest Windows 10 build for PCs couldn't be found. :crying_cat_face: :computer:");
+            var post = await Context.Client.GetLatestBuildPostAsync(BuildType.DevPc);
+            if (post == null) {
+                await ReplyAsync($"The latest Windows 10 Dev Channel build couldn't be found. :crying_cat_face: :tools:");
                 return;
             }
 
             // Send.
-            await ReplyAsync($"The latest Windows 10 build for PCs is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
+            await ReplyAsync($"The latest Windows 10 Dev Channel build is **{post.BuildNumber}**. :cat: :tools:\n<{post.Link}>");
+        }
+
+        /// <summary>
+        /// Gets the latest Insider PC build for the Beta Channel.
+        /// </summary>
+        [Command("latestbeta")]
+        [Summary("shows the latest Beta Channel Insider build")]
+        [Remarks(Constants.RemarkGeneral)]
+        public async Task GetLatestBetaBuildAsync() {
+            // Get build.
+            var post = await Context.Client.GetLatestBuildPostAsync(BuildType.BetaPc);
+            if (post == null) {
+                await ReplyAsync($"The latest Windows 10 Beta Channel build couldn't be found. :crying_cat_face: :paintbrush:");
+                return;
+            }
+
+            // Send.
+            await ReplyAsync($"The latest Windows 10 Beta Channel build is **{post.BuildNumber}**. :cat: :paintbrush:\n<{post.Link}>");
+        }
+
+        /// <summary>
+        /// Gets the latest Insider PC build for the Release Preview Channel.
+        /// </summary>
+        [Command("latestrp")]
+        [Summary("shows the latest Release Preview Channel Insider build")]
+        [Remarks(Constants.RemarkGeneral)]
+        public async Task GetLatestReleasePreviewBuildAsync() {
+            // Get build.
+            var post = await Context.Client.GetLatestBuildPostAsync(BuildType.ReleasePreviewPc);
+            if (post == null) {
+                await ReplyAsync($"The latest Windows 10 Release Preview Channel build couldn't be found. :crying_cat_face: :package:");
+                return;
+            }
+
+            // Send.
+            await ReplyAsync($"The latest Windows 10 Release Preview Channel build is **{post.BuildNumber}**. :cat: :package:\n<{post.Link}>");
         }
 
         /// <summary>
         /// Gets the latest Insider server build.
         /// </summary>
-        [Command(Constants.LatestServerBuildCommand)]
-        private async Task GetLatestServerBuildAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
+        [Command("latestserver")]
+        [Summary("shows the latest Server Insider build")]
+        [Remarks(Constants.RemarkGeneral)]
+        public async Task GetLatestServerBuildAsync() {
             // Get build.
-            var data = await client.GetLatestBuildNumberAsync(BuildType.Server);
-            if (data == null) {
-                await ReplyAsync($"The latest Windows Server build couldn't be found. :crying_cat_face: :desktop:");
+            var post = await Context.Client.GetLatestBuildPostAsync(BuildType.Server);
+            if (post == null) {
+                await ReplyAsync($"The latest Windows Insider Server build couldn't be found. :crying_cat_face: :desktop:");
                 return;
             }
 
             // Send.
-            await ReplyAsync($"The latest Windows Server build is **{data.Item1}**. :cat: :desktop:\n{data.Item2}");
-        }
-
-        /// <summary>
-        /// Gets the latest Insider slow build.
-        /// </summary>
-        [Command(Constants.LatestSlowBuildCommand)]
-        private async Task GetLatestSlowBuildAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get build.
-            var data = await client.GetLatestBuildNumberAsync(BuildType.SlowPc);
-            if (data == null) {
-                await ReplyAsync($"The latest Windows 10 Slow ring build for PCs couldn't be found. :crying_cat_face: :desktop:");
-                return;
-            }
-
-            // Send.
-            await ReplyAsync($"The latest Windows 10 Slow ring build for PCs is **{data.Item1}**. :cat: :desktop:\n{data.Item2}");
-        }
-
-        /// <summary>
-        /// Gets the latest Insider skip-ahead build.
-        /// </summary>
-        [Command(Constants.LatestSkipAheadBuildCommand)]
-        private async Task GetLatestSkipAheadBuildAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
-            // Get build.
-            var data = await client.GetLatestBuildNumberAsync(BuildType.SkipAheadPc);
-            if (data == null) {
-                await ReplyAsync($"The latest Windows 10 Skip Ahead build couldn't be found. :crying_cat_face: :desktop:");
-                return;
-            }
-
-            // If the actual build returned is a normal build, skip ahead is probably closed and merged.
-            if (data.Item3 != BuildType.SkipAheadPc)
-                await ReplyAsync($"Skip Ahead appears to be closed. The latest Windows 10 build for PCs is **{data.Item1}**. :cat: :computer:\n{data.Item2}");
-            else
-                await ReplyAsync($"The latest Windows 10 Skip Ahead build is **{data.Item1}**. :cat: :fast_forward:\n{data.Item2}");
+            await ReplyAsync($"The latest Windows Insider Server build is **{post.BuildNumber}**. :cat: :desktop:\n<{post.Link}>");
         }
 
         /// <summary>
         /// Replies with the bot's info.
         /// </summary>
-        [Command(Constants.BotInfoCommand)]
-        private async Task GetBotInfoAsync() {
-            // Get client.
-            var client = await StartTypingAndGetClient();
-
+        [Command("info")]
+        [Alias("about")]
+        [Summary("shows my info")]
+        [Remarks(Constants.RemarkGeneral)]
+        public async Task GetBotInfoAsync() {
             // Get passed time.
-            var timeSpan = DateTime.Now.ToLocalTime() - client.StartTime.ToLocalTime();
+            var timeSpan = DateTime.Now.ToLocalTime() - Context.Client.StartTime.ToLocalTime();
 
             // Create string. From http://stackoverflow.com/questions/1138723/timespan-to-friendly-string-library-c.
             var parts = new[]
@@ -333,53 +273,60 @@ namespace NinjaCatDiscordBot {
             var timeString = string.Join(", ", parts.Select(p => string.Format("{0} {1}{2}", p.Item2, p.Item1, p.Item2 > 1 ? "s" : string.Empty)));
 
             // Build embed.
-            var embed = new EmbedBuilder();
-            embed.Author = new EmbedAuthorBuilder();
-            embed.Author.IconUrl = client.CurrentUser.GetAvatarUrl();
+            var embed = new EmbedBuilder {
+                Author = new EmbedAuthorBuilder(),
+                Footer = new EmbedFooterBuilder()
+            };
+            embed.Author.IconUrl = Context.Client.CurrentUser?.GetAvatarUrl();
+            embed.Footer.Text = $"Version: {Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion}";
+
+            embed.AddField(e => { e.Name = "About"; e.Value = Constants.AboutMessage; });
+
+            // Add general overview fields.
+            var shardId = Context.Guild != null ? (Context.Client.GetShardIdFor(Context.Guild) + 1) : 1;
+            embed.AddField(e => { e.Name = "Servers"; e.Value = Context.Client.Guilds.Count.ToString(); e.IsInline = true; });
+            embed.AddField(e => { e.Name = "Shard"; e.Value = $"{shardId} of {Context.Client.Shards.Count}"; e.IsInline = true; });
+            if (Context.Guild != null)
+                embed.AddField(e => { e.Name = "Join date"; e.Value = Context.Guild.CurrentUser.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
+            embed.AddField(e => { e.Name = "Uptime"; e.Value = timeString; });
 
             // If in a guild, make color.
             if (Context.Guild != null) {
-                // Get current user.
-                var guildUser = await Context.Guild.GetCurrentUserAsync();
+                // Get current guild user.
+                var guildUser = Context.Guild.CurrentUser;
 
                 // Get highest role with color.
                 var highestrole = Context.Guild.EveryoneRole;
-                foreach (var role in guildUser.RoleIds) {
-                    var newRole = Context.Guild.GetRole(role);
-                    if (newRole.Position > highestrole.Position && newRole.Color.RawValue != 0)
-                        highestrole = newRole;
+                foreach (var role in guildUser.Roles) {
+                    if (role.Position > highestrole.Position && role.Color.RawValue != 0)
+                        highestrole = role;
                 }
 
                 // Set color, username, and join date.
                 embed.Color = highestrole.Color;
                 embed.Author.Name = guildUser.Nickname ?? guildUser.Username;
-                embed.AddField((e) => { e.Name = "Join date"; e.Value = guildUser.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
+
+                // Add channel and roles.
+                var channel = Context.Client.GetSpeakingChannelForSocketGuild(Context.Guild);
+                var roleDev = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
+                var roleBeta = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
+                var roleReleasePreview = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
+                embed.AddField(e => { e.Name = "Insider channel"; e.Value = channel?.Mention ?? "None"; });
+                embed.AddField(e => { e.Name = "Insider Dev role"; e.Value = roleDev?.Mention ?? "None"; e.IsInline = true; });
+                embed.AddField(e => { e.Name = "Insider Beta role"; e.Value = roleBeta?.Mention ?? "None"; e.IsInline = true; });
+                embed.AddField(e => { e.Name = "Insider Release Preview role"; e.Value = roleReleasePreview?.Mention ?? "None"; e.IsInline = true; });
             }
             else {
                 // Set username.
-                embed.Author.Name = client.CurrentUser.Username;
+                embed.Author.Name = Context.Client.CurrentUser.Username;
             }
-
-            // Add final fields.
-            var shardId = Context.Guild != null ? (client.GetShardIdFor(Context.Guild) + 1) : 0;
-            embed.AddField((e) => { e.Name = "Servers"; e.Value = client.Guilds.Count.ToString(); e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Shard"; e.Value = $"{shardId.ToString()} of {client.Shards.Count.ToString()}"; e.IsInline = true; });
-            embed.AddField((e) => { e.Name = "Uptime"; e.Value = timeString; });
 
             // Select and send message with embed.
-            switch (client.GetRandomNumber(3)) {
-                default:
-                    await ReplyAsync("Here are my stats:", embed: embed.Build());
-                    break;
-
-                case 1:
-                    await ReplyAsync("Here you go:", embed: embed.Build());
-                    break;
-
-                case 2:
-                    await ReplyAsync("My information awaits:", embed: embed.Build());
-                    break;
-            }
+            await ReplyRandomAsync(embed.Build(),
+                "Here are my stats:",
+                "Here you go:",
+                "My information awaits:"
+            );
         }
 
         #endregion

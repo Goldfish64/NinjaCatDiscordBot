@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: AssemblyInfo.cs
 * 
-* Copyright (c) 2016-2018 John Davis
+* Copyright (c) 2016 - 2020 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,6 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following
@@ -31,8 +30,10 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("NinjaCatDiscordBot")]
+[assembly: AssemblyProduct("Ninja Cat Bot")]
 [assembly: AssemblyTrademark("")]
+[assembly: AssemblyVersion("1.5")]
+[assembly: AssemblyInformationalVersion("1.5-{chash:6}-{c:ymd}")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
