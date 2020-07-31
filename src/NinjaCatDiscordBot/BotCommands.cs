@@ -97,7 +97,7 @@ namespace NinjaCatDiscordBot {
         public async Task GetHomeAsync() {
             await ReplyRandomAsync(null,
                 $"My source code is here:\n{Constants.AppUrl}",
-                $"Here are where my source code is stored:\n{Constants.AppUrl}",
+                $"Here is where my source code is stored:\n{Constants.AppUrl}",
                 $"My source:\n{Constants.AppUrl}"
             );
         }
