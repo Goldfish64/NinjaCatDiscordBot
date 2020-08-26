@@ -365,7 +365,7 @@ namespace NinjaCatDiscordBot {
             try {
                 for (int page = 1; page <= 10; page++) {
                     // Get page.
-                    var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windowsexperience/tag/windows-insider-program/feed/?paged={page}"));
+                    var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windows-insider/feed/?paged={page}"));
                     var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
                                   where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().Contains("insider-preview")
                                   select new BlogEntry(
@@ -529,7 +529,11 @@ namespace NinjaCatDiscordBot {
                 BuildType = BuildType.Server;
             else {
                 // Parse only first sentence.
-                var desc = Description.ToLowerInvariant().Substring(0, Description.ToLowerInvariant().IndexOf(". "));
+                var endIndex = Description.ToLowerInvariant().IndexOf(". ");
+                if (endIndex == -1) {
+                    endIndex = Description.ToLowerInvariant().IndexOf(".");
+                }
+                var desc = Description.ToLowerInvariant().Substring(0, endIndex);
                 if (desc.Contains("dev channel"))
                     BuildType = BuildType.DevPc;
                 else if (desc.Contains("beta channel"))
