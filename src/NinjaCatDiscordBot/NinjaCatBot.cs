@@ -98,13 +98,6 @@ namespace NinjaCatDiscordBot {
                 client.CurrentUrl = post.Link;
                 client.SaveSettings();
 
-                // Get first sentence of post. We'll parse the ring out of this.
-                var description = post.Description.ToLowerInvariant().Substring(0, post.Description.ToLowerInvariant().IndexOf(". "));
-                if (description == null) {
-                    client.LogError($"Post description is blank");
-                    return;
-                }
-
                 // Send build to guilds.
                 foreach (var shard in client.Shards)
                     client.SendNewBuildToShard(shard, post);
