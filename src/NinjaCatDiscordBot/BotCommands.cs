@@ -166,7 +166,7 @@ namespace NinjaCatDiscordBot {
                         int codepoint = Char.ConvertToUtf32(emote, 0);
                         string codepointHex = codepoint.ToString("X").ToLower();
 
-                        emoteUrl = $"https://raw.githubusercontent.com/twitter/twemoji/gh-pages/v/12.1.3/72x72/{codepointHex}.png";
+                        emoteUrl = $"https://raw.githubusercontent.com/twitter/twemoji/gh-pages/v/13.0.1/72x72/{codepointHex}.png";
                     }
 
                     var req = await _client.GetStreamAsync(emoteUrl);
