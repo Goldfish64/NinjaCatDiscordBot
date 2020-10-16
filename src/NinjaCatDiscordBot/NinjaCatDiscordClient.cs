@@ -24,6 +24,7 @@
 
 using Discord;
 using Discord.Commands;
+using Discord.Net;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using System;
@@ -160,6 +161,28 @@ namespace NinjaCatDiscordBot {
         #endregion
 
         #region Methods
+
+        /// <summary>
+        /// Starts the bot.
+        /// </summary>
+        /// <returns></returns>
+        public async Task StartBotAsync() {
+            for (int i = 0; i < 5; i++) {
+                try {
+                    await LoginAsync(TokenType.Bot, Credentials.DiscordToken);
+                    await StartAsync();
+
+                    return;
+                }
+                catch (HttpException ex) {
+                    LogError($"Exception when logging in, waiting 5: {ex}");
+                }
+
+                await Task.Delay(TimeSpan.FromMinutes(5));
+            }
+
+            throw new InvalidOperationException();
+        }
 
         /// <summary>
         /// Gets a random number.
@@ -432,6 +455,12 @@ namespace NinjaCatDiscordBot {
                     emotesText += " :package:";
                     break;
 
+                case BuildType.BetaReleasePreviewPc:
+                    roleText = $"{roleBeta?.Mention} {roleReleasePreview?.Mention} ";
+                    typeText = " to the Beta and Release Preview Channels";
+                    emotesText += " :paintbrush: :package:";
+                    break;
+
                 case BuildType.Server:
                     typeText = " for Server";
                     emotesText += " :desktop:";
@@ -540,6 +569,8 @@ namespace NinjaCatDiscordBot {
                     BuildType = BuildType.BetaPc;
                 else if (desc.Contains("release preview channel"))
                     BuildType = BuildType.ReleasePreviewPc;
+                else if (desc.Contains("beta and the release preview channels"))
+                    BuildType = BuildType.BetaReleasePreviewPc;
                 else
                     BuildType = BuildType.Unknown;
             }
@@ -590,6 +621,7 @@ namespace NinjaCatDiscordBot {
         DevPc,
         BetaPc,
         ReleasePreviewPc,
+        BetaReleasePreviewPc,
         Server
     }
 

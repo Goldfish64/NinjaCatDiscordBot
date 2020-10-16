@@ -71,12 +71,18 @@ namespace NinjaCatDiscordBot {
             };
 
             // Log in to Discord. Token is stored in the Credentials class.
-            await client.LoginAsync(TokenType.Bot, Credentials.DiscordToken);
-            await client.StartAsync();
+            await client.StartBotAsync();
 
             // Start checking for new builds.
             timerBuild = new Timer(async (s) => {
+                // Builds generally relase between 10AM and 5PM PST. Do not check outside these times.
+                if (DateTime.UtcNow.Hour < 17 && !string.IsNullOrWhiteSpace(client.CurrentUrl))
+                    return;
+
+                // If we cannot get the new post, try again later.
                 var post = await client.GetLatestBuildPostAsync();
+                if (post == null)
+                    return;
 
                 // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
                 if (string.IsNullOrWhiteSpace(client.CurrentUrl)) {
@@ -114,7 +120,7 @@ namespace NinjaCatDiscordBot {
             var serverCountThread = new Thread(new ThreadStart(async () => {
                 while (true) {
                     await client.UpdateGameAsync();
-                    await Task.Delay(TimeSpan.FromHours(1));
+                    await Task.Delay(TimeSpan.FromHours(24));
                 }
             }));
             serverCountThread.Start();
