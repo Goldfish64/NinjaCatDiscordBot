@@ -400,6 +400,10 @@ namespace NinjaCatDiscordBot {
                     // Get first post of desired type if a type was specified.
                     if (type == BuildType.Unknown)
                         post = entries.ToList().FirstOrDefault();
+                    else if (type == BuildType.BetaPc)
+                        post = entries.ToList().Where(p => p.BuildType == BuildType.BetaPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
+                    else if (type == BuildType.ReleasePreviewPc)
+                        post = entries.ToList().Where(p => p.BuildType == BuildType.ReleasePreviewPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
                     else
                         post = entries.ToList().Where(p => p.BuildType == type).FirstOrDefault();
                     if (post != null)
@@ -558,19 +562,20 @@ namespace NinjaCatDiscordBot {
                 BuildType = BuildType.Server;
             else {
                 // Parse only first sentence.
-                var endIndex = Description.ToLowerInvariant().IndexOf(". ");
-                if (endIndex == -1) {
-                    endIndex = Description.ToLowerInvariant().IndexOf(".");
-                }
-                var desc = Description.ToLowerInvariant().Substring(0, endIndex);
+                /* var endIndex = Description.ToLowerInvariant().IndexOf(". ");
+                 if (endIndex == -1) {
+                     endIndex = Description.ToLowerInvariant().IndexOf(".");
+                 }
+                 var desc = Description.ToLowerInvariant().Substring(0, endIndex);*/
+                var desc = Description.ToLowerInvariant();
                 if (desc.Contains("dev channel"))
                     BuildType = BuildType.DevPc;
+                else if (desc.Contains("beta and release preview channels") || desc.Contains("beta and the release preview channels"))
+                    BuildType = BuildType.BetaReleasePreviewPc;
                 else if (desc.Contains("beta channel"))
                     BuildType = BuildType.BetaPc;
                 else if (desc.Contains("release preview channel"))
                     BuildType = BuildType.ReleasePreviewPc;
-                else if (desc.Contains("beta and the release preview channels"))
-                    BuildType = BuildType.BetaReleasePreviewPc;
                 else
                     BuildType = BuildType.Unknown;
             }
