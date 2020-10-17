@@ -391,21 +391,25 @@ namespace NinjaCatDiscordBot {
                     var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windows-insider/feed/?paged={page}"));
                     var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
                                   where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().Contains("insider-preview")
-                                  select new BlogEntry(
-                                      item.Elements().First(i => i.Name.LocalName == "title").Value,
-                                      item.Elements().First(i => i.Name.LocalName == "link").Value,
-                                      item.Elements().First(i => i.Name.LocalName == "description").Value
-                                  );
+                                  select item;
+                    var posts = entries.Select(async item => await BlogEntry.Create(
+                            httpClient,
+                            item.Elements().First(i => i.Name.LocalName == "title").Value,
+                            item.Elements().First(i => i.Name.LocalName == "link").Value,
+                            item.Elements().First(i => i.Name.LocalName == "description").Value))
+                        .Select(t => t.Result)
+                        .Where(i => i != null)
+                        .ToList();
 
                     // Get first post of desired type if a type was specified.
                     if (type == BuildType.Unknown)
-                        post = entries.ToList().FirstOrDefault();
+                        post = posts.FirstOrDefault();
                     else if (type == BuildType.BetaPc)
-                        post = entries.ToList().Where(p => p.BuildType == BuildType.BetaPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
+                        post = posts.Where(p => p.BuildType == BuildType.BetaPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
                     else if (type == BuildType.ReleasePreviewPc)
-                        post = entries.ToList().Where(p => p.BuildType == BuildType.ReleasePreviewPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
+                        post = posts.Where(p => p.BuildType == BuildType.ReleasePreviewPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
                     else
-                        post = entries.ToList().Where(p => p.BuildType == type).FirstOrDefault();
+                        post = posts.Where(p => p.BuildType == type).FirstOrDefault();
                     if (post != null)
                         return post;
                 }
@@ -609,6 +613,28 @@ namespace NinjaCatDiscordBot {
         /// Gets the build type.
         /// </summary>
         public BuildType BuildType { get; }
+
+        #endregion
+
+        #region Methods
+
+        public static async Task<BlogEntry> Create(HttpClient httpClient, string title, string link, string description) {
+            // Get actual post content if the description in the feed is too short.
+            if (!description.ToLowerInvariant().Contains("hello windows insiders")) {
+                var doc = (await httpClient.GetStringAsync(link)).ToLowerInvariant();
+                var index = doc.IndexOf("hello windows insiders");
+
+                if (index != -1) {
+                    description = doc.Substring(index);
+                    var indexEnd = description.IndexOf("channel");
+                    if (indexEnd != -1 && indexEnd + "channel".Length < description.Length)
+                        description = description.Substring(0, indexEnd + "channel".Length);
+                }
+                
+            }
+
+            return new BlogEntry(title, link, description);
+        }
 
         #endregion
     }
