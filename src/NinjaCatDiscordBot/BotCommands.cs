@@ -260,7 +260,7 @@ namespace NinjaCatDiscordBot {
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetBotInfoAsync() {
             // Get passed time.
-            var timeSpan = DateTime.Now.ToLocalTime() - Context.Client.StartTime.ToLocalTime();
+            var timeSpan = DateTime.Now.ToUniversalTime() - Context.Client.StartTime.ToUniversalTime();
 
             // Create string. From http://stackoverflow.com/questions/1138723/timespan-to-friendly-string-library-c.
             var parts = new[]
@@ -287,7 +287,7 @@ namespace NinjaCatDiscordBot {
             embed.AddField(e => { e.Name = "Servers"; e.Value = Context.Client.Guilds.Count.ToString(); e.IsInline = true; });
             embed.AddField(e => { e.Name = "Shard"; e.Value = $"{shardId} of {Context.Client.Shards.Count}"; e.IsInline = true; });
             if (Context.Guild != null)
-                embed.AddField(e => { e.Name = "Join date"; e.Value = Context.Guild.CurrentUser.JoinedAt?.ToLocalTime().ToString("d"); e.IsInline = true; });
+                embed.AddField(e => { e.Name = "Join date"; e.Value = Context.Guild.CurrentUser.JoinedAt?.ToUniversalTime().ToString("yyyy-MM-dd"); e.IsInline = true; });
             embed.AddField(e => { e.Name = "Uptime"; e.Value = timeString; });
 
             // If in a guild, make color.
