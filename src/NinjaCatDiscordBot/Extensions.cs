@@ -39,6 +39,16 @@ namespace NinjaCatDiscordBot {
             }
             return false;
         }
+        
+        public static bool ContainsAny(this string s, params string[] strings) {
+            foreach (var str in strings) {
+                if (s.Contains (str)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         #endregion
     }

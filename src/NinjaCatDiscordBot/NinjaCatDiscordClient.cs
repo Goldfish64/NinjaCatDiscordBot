@@ -390,7 +390,7 @@ namespace NinjaCatDiscordBot {
                     // Get page.
                     var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windows-insider/feed/?paged={page}"));
                     var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                                  where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().Contains("insider-preview")
+                                  where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().ContainsAny("insider-preview", "windows-10-build")
                                   select item;
                     var posts = entries.Select(async item => await BlogEntry.Create(
                             httpClient,
