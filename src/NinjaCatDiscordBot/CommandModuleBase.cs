@@ -99,7 +99,7 @@ namespace NinjaCatDiscordBot {
             Context.Client.StartTyping(Context.Channel).Wait();
         }
 
-        protected override Task<IUserMessage> ReplyAsync(string message = null, bool isTTS = false, Embed embed = null, RequestOptions options = null, AllowedMentions allowedMentions = null) {
+        protected override Task<IUserMessage> ReplyAsync(string message = null, bool isTTS = false, Embed embed = null, RequestOptions options = null, AllowedMentions allowedMentions = null, MessageReference messageReference = null) {
             return base.ReplyAsync(message, isTTS, embed, options, allowedMentions ?? new AllowedMentions(AllowedMentionTypes.None));
         }
 
