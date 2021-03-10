@@ -438,12 +438,25 @@ namespace NinjaCatDiscordBot {
             var roleBeta = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
             var roleReleasePreview = Context.Client.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
 
-            if (roleDev != null)
+            if (roleDev != null) {
                 await ReplyAsync($"Dev role: {roleDev.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleDev.Id } });
-            if (roleBeta != null)
+            } else {
+                await ReplyAsync($"Dev role: none");
+            }
+
+            if (roleBeta != null) { 
                 await ReplyAsync($"Beta role: {roleBeta.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleBeta.Id } });
-            if (roleReleasePreview != null)
+            }
+            else {
+                await ReplyAsync($"Beta role: none");
+            }
+
+            if (roleReleasePreview != null) { 
                 await ReplyAsync($"Release Preview role: {roleReleasePreview.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleReleasePreview.Id } });
+            }
+            else {
+                await ReplyAsync($"Release Preview role: none");
+            }
         }
 
         private async void SendMessageShardAsync(NinjaCatDiscordClient client, DiscordSocketClient shard, string message) {

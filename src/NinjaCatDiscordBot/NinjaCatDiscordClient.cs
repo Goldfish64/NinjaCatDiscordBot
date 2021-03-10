@@ -108,8 +108,11 @@ namespace NinjaCatDiscordBot {
             if (File.Exists(Constants.LatestPostFileName))
                 CurrentUrl = File.ReadAllText(Constants.LatestPostFileName);
 
-            if (File.Exists(Constants.SettingsFileName))
+            if (File.Exists(Constants.SettingsFileName)) {
                 Settings = JsonConvert.DeserializeObject<NinjaCatSettings>(File.ReadAllText(Constants.SettingsFileName));
+            } else {
+                Settings = new NinjaCatSettings();
+            }
 
             // Initialize commands.
             Commands.AddModulesAsync(Assembly.GetEntryAssembly(), null).Wait();
