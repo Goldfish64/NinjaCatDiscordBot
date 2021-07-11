@@ -59,7 +59,7 @@ namespace NinjaCatDiscordBot {
             client = new NinjaCatDiscordClient();
 
             // Certain things are to be done when the bot joins a guild.
-            client.JoinedGuild += async (guild) => {
+            /*client.JoinedGuild += async (guild) => {
                 // Pause for 5 seconds.
                 await Task.Delay(TimeSpan.FromSeconds(5));
 
@@ -68,16 +68,16 @@ namespace NinjaCatDiscordBot {
                     return;
 
                 // Dev began Oct 2. 2016.
-            };
+            };*/
 
             // Log in to Discord. Token is stored in the Credentials class.
             await client.StartBotAsync();
 
             // Start checking for new builds.
             timerBuild = new Timer(async (s) => {
-                // Builds generally relase between 10AM and 5PM PST. Do not check outside these times.
-                if (DateTime.UtcNow.Hour < 17 && !string.IsNullOrWhiteSpace(client.CurrentUrl))
-                    return;
+                // Builds generally release between 10AM and 5PM PST. Do not check outside these times.
+           //     if (DateTime.UtcNow.Hour < 17 && !string.IsNullOrWhiteSpace(client.CurrentUrl))
+               //     return;
 
                 // If we cannot get the new post, try again later.
                 var post = await client.GetLatestBuildPostAsync();

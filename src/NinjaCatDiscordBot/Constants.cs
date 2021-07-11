@@ -43,7 +43,7 @@ namespace NinjaCatDiscordBot {
 #if RELEASE
         public const string AppName = "Ninja Cat";
         public const string CommandPrefix = "$nj-";
-        public const int ShardCount = 6;
+        public const int ShardCount = 2;
 #else
         public const string AppName = "Ninja Cat beta (DEBUG)";
         public const string CommandPrefix = "$njd-";

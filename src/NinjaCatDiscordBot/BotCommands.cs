@@ -121,7 +121,7 @@ namespace NinjaCatDiscordBot {
         /// Gets the T-Rex.
         /// </summary>
         [Command("trex")]
-        [Summary("shows the Windows 10 Skype emoticon")]
+        [Summary("shows the Windows Skype emoticon")]
         [Remarks(Constants.RemarkGeneral)]
         public async Task GetTrexAsync() {
             using (var stream = new MemoryStream(Resources.trex))
@@ -189,12 +189,12 @@ namespace NinjaCatDiscordBot {
             // Get build.
             var post = await Context.Client.GetLatestBuildPostAsync(BuildType.DevPc);
             if (post == null) {
-                await ReplyAsync($"The latest Windows 10 Dev Channel build couldn't be found. :crying_cat_face: :tools:");
+                await ReplyAsync($"The latest Windows Dev Channel build couldn't be found. :crying_cat_face: :tools:");
                 return;
             }
 
             // Send.
-            await ReplyAsync($"The latest Windows 10 Dev Channel build is **{post.BuildNumber}**. :cat: :tools:\n<{post.Link}>");
+            await ReplyAsync($"The latest {post.OSName} Dev Channel build is **{post.BuildNumber}**. :cat: :tools:\n<{post.Link}>");
         }
 
         /// <summary>
@@ -207,12 +207,12 @@ namespace NinjaCatDiscordBot {
             // Get build.
             var post = await Context.Client.GetLatestBuildPostAsync(BuildType.BetaPc);
             if (post == null) {
-                await ReplyAsync($"The latest Windows 10 Beta Channel build couldn't be found. :crying_cat_face: :paintbrush:");
+                await ReplyAsync($"The latest Windows Beta Channel build couldn't be found. :crying_cat_face: :paintbrush:");
                 return;
             }
 
             // Send.
-            await ReplyAsync($"The latest Windows 10 Beta Channel build is **{post.BuildNumber}**. :cat: :paintbrush:\n<{post.Link}>");
+            await ReplyAsync($"The latest {post.OSName} Beta Channel build is **{post.BuildNumber}**. :cat: :paintbrush:\n<{post.Link}>");
         }
 
         /// <summary>
@@ -225,12 +225,12 @@ namespace NinjaCatDiscordBot {
             // Get build.
             var post = await Context.Client.GetLatestBuildPostAsync(BuildType.ReleasePreviewPc);
             if (post == null) {
-                await ReplyAsync($"The latest Windows 10 Release Preview Channel build couldn't be found. :crying_cat_face: :package:");
+                await ReplyAsync($"The latest Windows Release Preview Channel build couldn't be found. :crying_cat_face: :package:");
                 return;
             }
 
             // Send.
-            await ReplyAsync($"The latest Windows 10 Release Preview Channel build is **{post.BuildNumber}**. :cat: :package:\n<{post.Link}>");
+            await ReplyAsync($"The latest {post.OSName} Release Preview Channel build is **{post.BuildNumber}**. :cat: :package:\n<{post.Link}>");
         }
 
         /// <summary>

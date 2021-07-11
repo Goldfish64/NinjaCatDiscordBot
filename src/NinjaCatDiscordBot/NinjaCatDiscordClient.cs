@@ -482,15 +482,15 @@ namespace NinjaCatDiscordBot {
                 await StartTyping(channel);
                 switch (GetRandomNumber(3)) {
                     default:
-                        await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {blogEntry.BuildNumber} has just been released{typeText}! {emotesText}\n{blogEntry.Link}");
+                        await channel.SendMessageAsync($"{roleText}{blogEntry.OSName} Insider Preview Build {blogEntry.BuildNumber} has just been released{typeText}! {emotesText}\n{blogEntry.Link}");
                         break;
 
                     case 1:
-                        await channel.SendMessageAsync($"{roleText}Windows 10 Insider Preview Build {blogEntry.BuildNumber} has just been released{typeText}! Yes! {emotesText}\n{blogEntry.Link}");
+                        await channel.SendMessageAsync($"{roleText}{blogEntry.OSName} Insider Preview Build {blogEntry.BuildNumber} has just been released{typeText}! Yes! {emotesText}\n{blogEntry.Link}");
                         break;
 
                     case 2:
-                        await channel.SendMessageAsync($"{roleText}Better check for updates now! Windows 10 Insider Preview Build {blogEntry.BuildNumber} has just been released{typeText}! {emotesText}\n{blogEntry.Link}");
+                        await channel.SendMessageAsync($"{roleText}Better check for updates now! {blogEntry.OSName} Insider Preview Build {blogEntry.BuildNumber} has just been released{typeText}! {emotesText}\n{blogEntry.Link}");
                         break;
                 }
             }
@@ -575,17 +575,25 @@ namespace NinjaCatDiscordBot {
                  }
                  var desc = Description.ToLowerInvariant().Substring(0, endIndex);*/
                 var desc = Description.ToLowerInvariant();
-                if (desc.Contains("dev channel"))
+                if (desc.Contains("dev cha"))
                     BuildType = BuildType.DevPc;
-                else if (desc.Contains("beta and release preview channels") || desc.Contains("beta and the release preview channels"))
+                else if (desc.Contains("beta and release preview cha") || desc.Contains("beta and the release preview cha"))
                     BuildType = BuildType.BetaReleasePreviewPc;
-                else if (desc.Contains("beta channel"))
+                else if (desc.Contains("beta cha"))
                     BuildType = BuildType.BetaPc;
-                else if (desc.Contains("release preview channel"))
+                else if (desc.Contains("release preview cha"))
                     BuildType = BuildType.ReleasePreviewPc;
                 else
                     BuildType = BuildType.Unknown;
             }
+
+            // Parse OS name.
+            if (Link.ToLowerInvariant().Contains("windows-10"))
+                OSName = "Windows 10";
+            else if (Link.ToLowerInvariant().Contains("windows-11"))
+                OSName = "Windows 11";
+            else
+                OSName = "Windows";
         }
 
         #endregion
@@ -616,6 +624,8 @@ namespace NinjaCatDiscordBot {
         /// Gets the build type.
         /// </summary>
         public BuildType BuildType { get; }
+
+        public string OSName { get; }
 
         #endregion
 
