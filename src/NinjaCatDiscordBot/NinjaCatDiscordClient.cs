@@ -635,10 +635,8 @@ namespace NinjaCatDiscordBot {
             // Get actual post content if the description in the feed is too short.
             if (!description.ToLowerInvariant().Contains("hello windows insiders")) {
                 var doc = (await httpClient.GetStringAsync(link)).ToLowerInvariant();
-                var index = doc.IndexOf("hello windows insiders");
 
                 if (index != -1) {
-                    description = doc.Substring(index);
                     var indexEnd = description.IndexOf("channel");
                     if (indexEnd != -1 && indexEnd + "channel".Length < description.Length)
                         description = description.Substring(0, indexEnd + "channel".Length);
