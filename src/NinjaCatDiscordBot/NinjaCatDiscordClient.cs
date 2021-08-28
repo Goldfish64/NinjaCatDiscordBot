@@ -408,9 +408,11 @@ namespace NinjaCatDiscordBot {
                     if (type == BuildType.Unknown)
                         post = posts.FirstOrDefault();
                     else if (type == BuildType.BetaPc)
-                        post = posts.Where(p => p.BuildType == BuildType.BetaPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
+                        post = posts.Where(p => p.BuildType == BuildType.BetaPc || p.BuildType == BuildType.DevBetaPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
                     else if (type == BuildType.ReleasePreviewPc)
                         post = posts.Where(p => p.BuildType == BuildType.ReleasePreviewPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
+                    else if (type == BuildType.DevPc)
+                        post = posts.Where(p => p.BuildType == BuildType.DevPc || p.BuildType == BuildType.DevBetaPc).FirstOrDefault();
                     else
                         post = posts.Where(p => p.BuildType == type).FirstOrDefault();
                     if (post != null)
@@ -470,6 +472,12 @@ namespace NinjaCatDiscordBot {
                     roleText = $"{roleBeta?.Mention} {roleReleasePreview?.Mention} ";
                     typeText = " to the Beta and Release Preview Channels";
                     emotesText += " :paintbrush: :package:";
+                    break;
+
+                case BuildType.DevBetaPc:
+                    roleText = $"{roleDev?.Mention} {roleBeta?.Mention} ";
+                    typeText = " to the Dev and Beta Channels";
+                    emotesText += " :tools: :paintbrush:";
                     break;
 
                 case BuildType.Server:
@@ -575,7 +583,9 @@ namespace NinjaCatDiscordBot {
                  }
                  var desc = Description.ToLowerInvariant().Substring(0, endIndex);*/
                 var desc = Description.ToLowerInvariant();
-                if (desc.Contains("dev cha"))
+                if (desc.Contains("dev and beta cha"))
+                    BuildType = BuildType.DevBetaPc;
+                else if (desc.Contains("dev cha"))
                     BuildType = BuildType.DevPc;
                 else if (desc.Contains("beta and release preview cha") || desc.Contains("beta and the release preview cha"))
                     BuildType = BuildType.BetaReleasePreviewPc;
@@ -664,6 +674,7 @@ namespace NinjaCatDiscordBot {
         Unknown,
         DevPc,
         BetaPc,
+        DevBetaPc,
         ReleasePreviewPc,
         BetaReleasePreviewPc,
         Server
