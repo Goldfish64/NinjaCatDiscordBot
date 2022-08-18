@@ -506,7 +506,7 @@ namespace NinjaCatDiscordBot {
                 if (build == null)
                     return;
 
-                var game = $"on {build.BuildNumber}";
+                var game = $"on build {build.BuildNumber}";
                 foreach (var shard in Shards)
                     await shard?.SetGameAsync(game);
             }

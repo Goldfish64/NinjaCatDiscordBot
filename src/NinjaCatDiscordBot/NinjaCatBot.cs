@@ -61,7 +61,7 @@ namespace NinjaCatDiscordBot {
 
             // Register commands on ready.
             client.ShardReady += async (s) => {
-                await interactionService.RegisterCommandsToGuildAsync(232352575196889091);
+                await interactionService.RegisterCommandsGloballyAsync();
             };
             client.InteractionCreated += async (s) => {
                 var ctx = new ShardedInteractionContext(client, s);
