@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: AssemblyInfo.cs
 * 
-* Copyright (c) 2016 - 2020 John Davis
+* Copyright (c) 2016 - 2022 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -32,8 +32,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Ninja Cat Bot")]
 [assembly: AssemblyTrademark("")]
-[assembly: AssemblyVersion("1.5")]
-[assembly: AssemblyInformationalVersion("1.5-{chash:6}-{c:ymd}")]
+[assembly: AssemblyVersion("2.0")]
+[assembly: AssemblyInformationalVersion("2.0-{chash:6}-{c:ymd}")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from

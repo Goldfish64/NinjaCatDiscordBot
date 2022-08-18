@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: Extensions.cs
 * 
-* Copyright (c) 2016 - 2020 John Davis
+* Copyright (c) 2016 - 2022 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -23,9 +23,6 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using Discord;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot {
     internal static class Extensions {

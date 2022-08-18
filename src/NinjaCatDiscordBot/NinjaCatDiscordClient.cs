@@ -23,7 +23,6 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using Discord;
-using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
 using Newtonsoft.Json;
@@ -32,7 +31,6 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -113,43 +111,16 @@ namespace NinjaCatDiscordBot {
             } else {
                 Settings = new NinjaCatSettings();
             }
-
-            // Initialize commands.
-            Commands.AddModulesAsync(Assembly.GetEntryAssembly(), null).Wait();
-
-            // Listen for messages.
-            MessageReceived += async (message) => {
-                var msg = message as SocketUserMessage;
-                if (msg == null)
-                    return;
-
-                // Keeps track of where the command begins.
-                var pos = 0;
-
-                // Attempt to parse a command. Silently ignore unknown commanads.
-                if (msg.HasStringPrefixLower(Constants.CommandPrefix, ref pos)) {
-                    var result = await Commands.ExecuteAsync(new NinjaCatCommandContext(this, msg), msg.Content.Substring(pos), null);
-                    if (!result.IsSuccess) {
-                        if (result.Error == CommandError.UnknownCommand)
-                            return;
-
-                        await msg.Channel.TriggerTypingAsync();
-                        await Task.Delay(TimeSpan.FromSeconds(0.5));
-
-                        await msg.Channel.SendMessageAsync($"I'm sorry, but something happened. Error: {result.ErrorReason}\n\nIf there are spaces in a parameter, make sure to surround it with quotes.");
-                    }
-                    return;
-                }
-            };
         }
 
         #endregion
 
         #region Properties
 
+        /// <summary>
+        /// Gets or sets the settings.
+        /// </summary>
         public NinjaCatSettings Settings;
-
-        public CommandService Commands { get; } = new CommandService();
 
         /// <summary>
         /// Gets the time the client started.
@@ -255,7 +226,7 @@ namespace NinjaCatDiscordBot {
             // If the channel is null, delete the entry from the dictionary and use the default one.
             if (channel == null) {
                 Settings.InsiderChannels.TryRemove(guild.Id, out ulong outVar);
-                channel = (await guild.GetChannelsAsync()).SingleOrDefault(g => g.Id == guild.DefaultChannelId) as ITextChannel;
+                channel = await guild.GetDefaultChannelAsync();
                 SaveSettings();
             }
 
@@ -317,7 +288,7 @@ namespace NinjaCatDiscordBot {
             SaveSettings();
         }
 
-        public void SetInsiderRole(IGuild guild, IRole role, RoleType roleType) {
+        public void SetRole(IGuild guild, IRole role, RoleType roleType) {
             ConcurrentDictionary<ulong, ulong> roles;
             switch (roleType) {
                 case RoleType.InsiderDev:
@@ -535,7 +506,7 @@ namespace NinjaCatDiscordBot {
                 if (build == null)
                     return;
 
-                var game = $"on {build.BuildNumber} | {Constants.CommandPrefix}{Constants.HelpCommand}";
+                var game = $"on {build.BuildNumber}";
                 foreach (var shard in Shards)
                     await shard?.SetGameAsync(game);
             }

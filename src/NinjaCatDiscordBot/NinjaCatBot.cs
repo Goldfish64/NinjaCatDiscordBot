@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: NinjaCatBot.cs
 * 
-* Copyright (c) 2016 - 2020 John Davis
+* Copyright (c) 2016 - 2022 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -22,10 +22,8 @@
 * IN THE SOFTWARE.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-using Discord;
-using Discord.WebSocket;
+using Discord.Interactions;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -56,19 +54,19 @@ namespace NinjaCatDiscordBot {
         /// Starts the bot.
         /// </summary>
         private async Task Start() {
+            // Initialize client command modules.
             client = new NinjaCatDiscordClient();
+            var interactionService = new InteractionService(client);
+            await interactionService.AddModuleAsync<BotCommandsModuleNew>(null);
 
-            // Certain things are to be done when the bot joins a guild.
-            /*client.JoinedGuild += async (guild) => {
-                // Pause for 5 seconds.
-                await Task.Delay(TimeSpan.FromSeconds(5));
-
-                // Check to see if this is a bot farm.
-                if (await CheckBotGuild(guild))
-                    return;
-
-                // Dev began Oct 2. 2016.
-            };*/
+            // Register commands on ready.
+            client.ShardReady += async (s) => {
+                await interactionService.RegisterCommandsToGuildAsync(232352575196889091);
+            };
+            client.InteractionCreated += async (s) => {
+                var ctx = new ShardedInteractionContext(client, s);
+                await interactionService.ExecuteCommandAsync(ctx, null);
+            };
 
             // Log in to Discord. Token is stored in the Credentials class.
             await client.StartBotAsync();
@@ -127,42 +125,6 @@ namespace NinjaCatDiscordBot {
 
             // Wait forever.
             await Task.Delay(-1);
-        }
-
-        private async Task<bool> CheckBotGuild(SocketGuild guild) {
-            // If the server is the Discord bots server, ignore.
-            if (guild.Id == Constants.BotsGuildId)
-                return false;
-
-            // Ensure guild is updated.
-            if (guild.Users.Count != guild.MemberCount)
-                await guild.DownloadUsersAsync();
-
-            // Is this a bot guild?
-            if (guild.MemberCount >= 50 && (guild.Users.Count(u => u.IsBot) / (double)guild.MemberCount) >= 0.9) {
-                client.LogInfo($"Leaving bot server {guild.Name}");
-                try {
-                    // Bot is typing in default channel.
-                    await guild.DefaultChannel.TriggerTypingAsync();
-
-                    // Pause for realism.
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-
-                    // Send notice.
-                    await guild.DefaultChannel.SendMessageAsync($"It looks like this server is a bot farm, so I'll show myself out. If this is a legitimate server, contact *{Constants.OwnerName}*.");
-                }
-                catch { }
-
-                // Wait 2 seconds, then leave.
-                await Task.Delay(TimeSpan.FromSeconds(2));
-                await guild.LeaveAsync();
-
-                // This was a bot server.
-                return true;
-            }
-
-            // This is not a bot server.
-            return false;
         }
 
         #endregion

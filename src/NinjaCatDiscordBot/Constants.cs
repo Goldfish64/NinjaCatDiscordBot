@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: Constants.cs
 * 
-* Copyright (c) 2016 - 2020 John Davis
+* Copyright (c) 2016 - 2022 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -42,30 +42,15 @@ namespace NinjaCatDiscordBot {
 
 #if RELEASE
         public const string AppName = "Ninja Cat";
-        public const string CommandPrefix = "$nj-";
         public const int ShardCount = 2;
 #else
         public const string AppName = "Ninja Cat beta (DEBUG)";
-        public const string CommandPrefix = "$njd-";
         public const int ShardCount = 2;
 #endif
 
-        public const string RemarkGeneral = "GeneralCommand";
-        public const string RemarkAdmin = "AdminCommand";
-        public const string RemarkInternal = "InternalCommand";
-
-        public const string HelpCommand = "help";
-        
-        public const string AnnouncementCommand = "announce"; // Bot owner only.
-
-        public const string ChannelCommand = "channel";
-        public const string RoleJumboCommand = "jumborole";
-        public const string SetRoleJumboCommand = "setjumborole";
-
         public static readonly string AboutMessage =
             $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
-            $"I was created by **{OwnerName}** with the purpose of letting you know about the latest in Windows Insider builds\n\n" +
-            $"For help on what I can do, type **{CommandPrefix}{HelpCommand}**.";
+            $"I was created by **{OwnerName}** with the purpose of letting you know about the latest in Windows Insider builds.";
 
         #endregion
     }
