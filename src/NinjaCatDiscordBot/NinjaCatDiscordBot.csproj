@@ -13,6 +13,18 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <NrtRevisionFormat>{semvertag}</NrtRevisionFormat>
+    <NrtResolveSimpleAttributes>true</NrtResolveSimpleAttributes>
+    <NrtResolveInformationalAttribute>true</NrtResolveInformationalAttribute>
+    <NrtResolveCopyright>true</NrtResolveCopyright>
+    <NrtTagMatch>v[0-9]*</NrtTagMatch>
+    <NrtRemoveTagV>true</NrtRemoveTagV>
+    <NrtRequiredVcs>git</NrtRequiredVcs>
+    <NrtShowRevision>true</NrtShowRevision>
+    <NrtProjectDirectory>$(MSBuildProjectDirectory)</NrtProjectDirectory>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Discord.Net.Interactions" Version="3.7.2" />
     <PackageReference Include="Discord.Net.WebSocket" Version="3.7.2" />
