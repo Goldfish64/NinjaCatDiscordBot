@@ -23,6 +23,7 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using Discord;
+using Discord.Interactions;
 using Discord.Net;
 using Discord.WebSocket;
 using Newtonsoft.Json;
@@ -94,6 +95,7 @@ namespace NinjaCatDiscordBot {
             // Write startup messages.
             LogInfo($"{Constants.AppName} on {RuntimeInformation.FrameworkDescription} has started.");
             LogInfo($"===============================================================");
+            Interactions = new InteractionService(this);
 
             // Listen for events.
             Log += (message) => {
@@ -121,6 +123,11 @@ namespace NinjaCatDiscordBot {
         /// Gets or sets the settings.
         /// </summary>
         public NinjaCatSettings Settings;
+
+        /// <summary>
+        /// Gets the interaction service.
+        /// </summary>
+        public InteractionService Interactions { get; }
 
         /// <summary>
         /// Gets the time the client started.

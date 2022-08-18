@@ -548,7 +548,7 @@ namespace NinjaCatDiscordBot {
             // Select and send message with embed.
             MessageComponent components = null;
             if (Context.User?.Id == Constants.OwnerId) {
-                components = new ComponentBuilder().WithButton("Update Game", "button_updategame").WithButton("Restart", "button_restart").Build();
+                components = new ComponentBuilder().WithButton("Update Game", "button_updategame").WithButton("Restart", "button_restart").WithButton("Register commands", "button_registercommands").Build();
             }
 
             await RespondRandomWithButtonsAsync(embed.Build(), components,
@@ -576,7 +576,7 @@ namespace NinjaCatDiscordBot {
         /// Restarts the bot.
         /// </summary>
         [ComponentInteraction("button_restart", true)]
-        public async Task RestartAsync() {
+        public async Task ButtonRestartAsync() {
             if (Context.User?.Id != Constants.OwnerId) {
                 await RespondAsync($"This command is owner-only.");
                 return;
@@ -584,6 +584,25 @@ namespace NinjaCatDiscordBot {
 
             await RespondAsync($"Restarting...");
             Environment.Exit(-1);
+        }
+
+        /// <summary>
+        /// Reregisters commands.
+        /// </summary>
+        [ComponentInteraction("button_registercommands", true)]
+        public async Task ButtonRegisterCommands() {
+            if (Context.User?.Id != Constants.OwnerId) {
+                await RespondAsync($"This command is owner-only.");
+                return;
+            }
+
+            // Remove all and register commands.
+            await RespondAsync($"Registering commands...");
+            await CatClient.Interactions.RemoveModuleAsync<BotCommandsModuleNew>();
+            await CatClient.Interactions.RegisterCommandsGloballyAsync();
+
+            await CatClient.Interactions.AddModuleAsync<BotCommandsModuleNew>(null);
+            await CatClient.Interactions.RegisterCommandsGloballyAsync();
         }
 
         #endregion

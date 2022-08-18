@@ -55,17 +55,25 @@ namespace NinjaCatDiscordBot {
         /// </summary>
         private async Task Start() {
             // Initialize client command modules.
+            bool commandsRegistered = false;
             client = new NinjaCatDiscordClient();
-            var interactionService = new InteractionService(client);
-            await interactionService.AddModuleAsync<BotCommandsModuleNew>(null);
+            await client.Interactions.AddModuleAsync<BotCommandsModuleNew>(null);
 
             // Register commands on ready.
             client.ShardReady += async (s) => {
-                await interactionService.RegisterCommandsGloballyAsync();
+                if (!commandsRegistered) {
+                    try {
+                        await client.Interactions.RegisterCommandsGloballyAsync();
+                        commandsRegistered = true;
+                        client.LogInfo($"Commands registered");
+                    } catch (Exception ex) {
+                        client.LogInfo($"Commands registration failed: {ex}");
+                    }
+                }
             };
             client.InteractionCreated += async (s) => {
                 var ctx = new ShardedInteractionContext(client, s);
-                await interactionService.ExecuteCommandAsync(ctx, null);
+                await client.Interactions.ExecuteCommandAsync(ctx, null);
             };
 
             // Log in to Discord. Token is stored in the Credentials class.
