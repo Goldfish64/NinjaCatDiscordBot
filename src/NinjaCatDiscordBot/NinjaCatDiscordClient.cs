@@ -227,7 +227,7 @@ namespace NinjaCatDiscordBot {
                 if (Settings.InsiderChannels[guild.Id] == 0)
                     return null;
                 else
-                    channel = (await guild.GetChannelsAsync()).SingleOrDefault(g => g.Id == Settings.InsiderChannels[guild.Id]) as ITextChannel;
+                    channel = (await guild.GetTextChannelsAsync()).SingleOrDefault(g => g.Id == Settings.InsiderChannels[guild.Id]) as ITextChannel;
             }
 
             // If the channel is null, delete the entry from the dictionary and use the default one.
