@@ -279,7 +279,9 @@ namespace NinjaCatDiscordBot {
                 if (roles[guild.Id] == 0)
                     return null;
                 else
-                    role = guild.Roles.SingleOrDefault(g => g.Id == roles[guild.Id]) as IRole;
+                    role = guild.Roles.SingleOrDefault(g => g.Id == roles[guild.Id]);
+            } else {
+                return null;
             }
 
             // If the role is null, delete the entry from the dictionary and use the default one.
