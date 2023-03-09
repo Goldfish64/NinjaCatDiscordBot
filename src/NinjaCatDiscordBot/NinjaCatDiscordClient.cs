@@ -436,6 +436,7 @@ namespace NinjaCatDiscordBot {
             }
 
             // Get all roles.
+            var roleCanary = GetRoleForIGuild(guild, RoleType.InsiderCanary);
             var roleDev = GetRoleForIGuild(guild, RoleType.InsiderDev);
             var roleBeta = GetRoleForIGuild(guild, RoleType.InsiderBeta);
             var roleReleasePreview = GetRoleForIGuild(guild, RoleType.InsiderReleasePreview);
@@ -444,6 +445,12 @@ namespace NinjaCatDiscordBot {
             var typeText = string.Empty;
             var emotesText = ":smiley_cat:";
             switch (blogEntry.BuildType) {
+                case BuildType.CanaryPc:
+                    roleText = $"{roleCanary?.Mention} ";
+                    typeText = " to the Canary Channel";
+                    emotesText += " :baby_chick:";
+                    break;
+
                 case BuildType.DevPc:
                     roleText = $"{roleDev?.Mention} ";
                     typeText = " to the Dev Channel";
@@ -525,7 +532,7 @@ namespace NinjaCatDiscordBot {
         /// <returns></returns>
         public async Task UpdateGameAsync() {
             try {
-                var build = await GetLatestBuildPostAsync(BuildType.DevPc);
+                var build = await GetLatestBuildPostAsync(BuildType.CanaryPc);
                 if (build == null)
                     return;
 
@@ -536,7 +543,7 @@ namespace NinjaCatDiscordBot {
             catch (Exception ex) {
                 LogError($"Failed to update game: {ex}");
                 foreach (var shard in Shards)
-                    await shard?.SetGameAsync("on Windows 10");
+                    await shard?.SetGameAsync("on Windows 11");
             }
         }
 
