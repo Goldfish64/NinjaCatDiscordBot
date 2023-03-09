@@ -99,6 +99,10 @@ namespace NinjaCatDiscordBot {
 
             var roleTypeName = string.Empty;
             switch (roleType) {
+                case RoleType.InsiderCanary:
+                    roleTypeName = "Canary Channel";
+                    break;
+
                 case RoleType.InsiderDev:
                     roleTypeName = "Dev Channel";
                     break;

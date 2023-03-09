@@ -118,6 +118,40 @@ namespace NinjaCatDiscordBot {
         [Group("role", "Role commands")]
         public class RoleCommandsModule : CatInteractionModuleBase {
             /// <summary>
+            /// Canary role command group (get/set/off).
+            /// </summary>
+            [Group("canary", "Canary role commands")]
+            public class CanaryRoleCommandsModule : RoleInteractionModuleBase
+            {
+                /// <summary>
+                /// Get canary role.
+                /// </summary>
+                [SlashCommand("get", "Gets the role that will be mentioned for Canary Channel Insider build announcements")]
+                public async Task GetCanaryRoleAsync()
+                {
+                    await ProcessGetRole(RoleType.InsiderCanary);
+                }
+
+                /// <summary>
+                /// Set canary role.
+                /// </summary>
+                [SlashCommand("set", "Sets the role that will be mentioned for Canary Channel Insider build announcements")]
+                public async Task SetCanaryRoleAsync(IRole role)
+                {
+                    await ProcessSetRole(role, RoleType.InsiderCanary);
+                }
+
+                /// <summary>
+                /// Turn off canary role.
+                /// </summary>
+                [SlashCommand("off", "Disables role mentions for Canary Channel Insider build announcements")]
+                public async Task OffCanaryRoleAsync()
+                {
+                    await ProcessOffRole(RoleType.InsiderCanary);
+                }
+            }
+
+            /// <summary>
             /// Dev role command group (get/set/off).
             /// </summary>
             [Group("dev", "Dev role commands")]
@@ -286,11 +320,18 @@ namespace NinjaCatDiscordBot {
                 sb.AppendLine($"Channel: {channel.Mention}; can speak: {currentUser.GetPermissions(channel).SendMessages}");
 
                 // Get all roles.
+                var roleCanary = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
                 var roleDev = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
                 var roleBeta = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
                 var roleReleasePreview = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
 
                 var mentionability = true;
+                if (roleCanary != null)
+                {
+                    var canaryMentionability = roleCanary.IsMentionable || Context.Guild.CurrentUser.GetPermissions(channel).MentionEveryone;
+                    mentionability &= canaryMentionability;
+                    sb.AppendLine($"Canary role: {roleCanary.Mention}; can mention: {canaryMentionability}");
+                }
                 if (roleDev != null) {
                     var devMentionability = roleDev.IsMentionable || Context.Guild.CurrentUser.GetPermissions(channel).MentionEveryone;
                     mentionability &= devMentionability;
@@ -326,9 +367,19 @@ namespace NinjaCatDiscordBot {
                 await RespondAsync($"Pinging roles...");
 
                 // Get all roles.
+                var roleCanary = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderCanary);
                 var roleDev = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
                 var roleBeta = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
                 var roleReleasePreview = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
+
+                if (roleCanary != null)
+                {
+                    await ReplyAsync($"Canary role: {roleCanary.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleCanary.Id } });
+                }
+                else
+                {
+                    await ReplyAsync($"Canary role: none");
+                }
 
                 if (roleDev != null) {
                     await ReplyAsync($"Dev role: {roleDev.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleDev.Id } });
@@ -416,6 +467,23 @@ namespace NinjaCatDiscordBot {
 
             var req = await httpClient.GetStreamAsync(emoteUrl);
             await RespondWithFileAsync(new FileAttachment(req, Path.GetFileName(emoteUrl)));
+        }
+
+        /// <summary>
+        /// Gets the latest Insider PC build for the Canary Channel.
+        /// </summary>
+        [SlashCommand("latestcanary", "Shows the latest Canary Channel Insider build")]
+        public async Task GetLatestCanaryBuildAsync()
+        {
+            await RespondAsync("Getting the latest Canary build...");
+            var post = await CatClient.GetLatestBuildPostAsync(BuildType.CanaryPc);
+            if (post == null)
+            {
+                await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest Windows Canary Channel build couldn't be found. :crying_cat_face: :tools:"; });
+                return;
+            }
+
+            await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest {post.OSName} Canary Channel build is **{post.BuildNumber}**. :cat: :tools:\n<{post.Link}>"; });
         }
 
         /// <summary>

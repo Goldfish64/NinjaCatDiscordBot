@@ -49,6 +49,12 @@ namespace NinjaCatDiscordBot {
         public ConcurrentDictionary<ulong, ulong> InsiderChannels { get; } = new ConcurrentDictionary<ulong, ulong>();
 
         /// <summary>
+        /// Gets the list of Canary Channel Insider roles.
+        /// </summary>
+        /// <remarks>Guild is the key, role is the value.</remarks>
+        public ConcurrentDictionary<ulong, ulong> InsiderRolesCanary { get; } = new ConcurrentDictionary<ulong, ulong>();
+
+        /// <summary>
         /// Gets the list of Dev Channel Insider roles.
         /// </summary>
         /// <remarks>Guild is the key, role is the value.</remarks>
@@ -253,6 +259,10 @@ namespace NinjaCatDiscordBot {
 
             ConcurrentDictionary<ulong, ulong> roles;
             switch (type) {
+                case RoleType.InsiderCanary:
+                    roles = Settings.InsiderRolesCanary;
+                    break;
+
                 case RoleType.InsiderDev:
                     roles = Settings.InsiderRolesDev;
                     break;
@@ -300,6 +310,10 @@ namespace NinjaCatDiscordBot {
         public void SetRole(IGuild guild, IRole role, RoleType roleType) {
             ConcurrentDictionary<ulong, ulong> roles;
             switch (roleType) {
+                case RoleType.InsiderCanary:
+                    roles = Settings.InsiderRolesCanary;
+                    break;
+
                 case RoleType.InsiderDev:
                     roles = Settings.InsiderRolesDev;
                     break;
@@ -565,6 +579,8 @@ namespace NinjaCatDiscordBot {
                 var desc = Description.ToLowerInvariant();
                 if (desc.Contains("dev and beta cha"))
                     BuildType = BuildType.DevBetaPc;
+                else if (desc.Contains("canary cha"))
+                    BuildType = BuildType.CanaryPc;
                 else if (desc.Contains("dev cha"))
                     BuildType = BuildType.DevPc;
                 else if (desc.Contains("beta and release preview cha") || desc.Contains("beta and the release preview cha"))
@@ -652,6 +668,7 @@ namespace NinjaCatDiscordBot {
 
     public enum BuildType {
         Unknown,
+        CanaryPc,
         DevPc,
         BetaPc,
         DevBetaPc,
@@ -661,6 +678,7 @@ namespace NinjaCatDiscordBot {
     }
 
     public enum RoleType {
+        InsiderCanary,
         InsiderDev,
         InsiderBeta,
         InsiderReleasePreview,
