@@ -320,7 +320,7 @@ namespace NinjaCatDiscordBot {
                 sb.AppendLine($"Channel: {channel.Mention}; can speak: {currentUser.GetPermissions(channel).SendMessages}");
 
                 // Get all roles.
-                var roleCanary = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
+                var roleCanary = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderCanary);
                 var roleDev = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
                 var roleBeta = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
                 var roleReleasePreview = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
