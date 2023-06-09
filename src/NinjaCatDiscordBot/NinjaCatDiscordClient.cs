@@ -88,7 +88,7 @@ namespace NinjaCatDiscordBot {
         private Random random = new Random();
         private object lockObject = new object();
 
-        private HttpClient httpClient = new HttpClient();
+        private HttpClient httpClient;
 
         #endregion
 
@@ -382,6 +382,12 @@ namespace NinjaCatDiscordBot {
         /// <returns>A <see cref="BlogEntry"/> representing the build blog post or null if no build was found.</returns>
         public async Task<BlogEntry> GetLatestBuildPostAsync(BuildType type = BuildType.Unknown) {
             BlogEntry post = null;
+
+            if (httpClient == null) {
+                httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.37");
+            }
+
             try {
                 for (int page = 1; page <= 10; page++) {
                     // Get page.
