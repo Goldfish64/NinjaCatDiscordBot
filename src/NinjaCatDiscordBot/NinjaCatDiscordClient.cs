@@ -419,6 +419,44 @@ namespace NinjaCatDiscordBot {
                         return post;
                 }
             }
+          //server fixup
+        if (httpClient == null) {
+                httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.37");
+            }
+
+            try {
+                for (int page = 1; page <= 10; page++) {
+                    // Get page.
+                    var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://fetchrss.com/rss/65c322e4e0ef334c71652e7665c322ca3eb28271173fcdc3.xml"));
+                    var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                                  where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().ContainsAny("insider-preview", "windows-10-build", "windows-11-build")
+                                  select item;
+                    var posts = entries.Select(async item => await BlogEntry.Create(
+                            httpClient,
+                            item.Elements().First(i => i.Name.LocalName == "title").Value,
+                            item.Elements().First(i => i.Name.LocalName == "link").Value,
+                            item.Elements().First(i => i.Name.LocalName == "description").Value))
+                        .Select(t => t.Result)
+                        .Where(i => i != null)
+                        .ToList();
+
+                    // Get first post of desired type if a type was specified.
+                    if (type == BuildType.Unknown)
+                        post = posts.FirstOrDefault();
+                    else if (type == BuildType.BetaPc)
+                        post = posts.Where(p => p.BuildType == BuildType.BetaPc || p.BuildType == BuildType.DevBetaPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
+                    else if (type == BuildType.ReleasePreviewPc)
+                        post = posts.Where(p => p.BuildType == BuildType.ReleasePreviewPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
+                    else if (type == BuildType.DevPc)
+                        post = posts.Where(p => p.BuildType == BuildType.DevPc || p.BuildType == BuildType.DevBetaPc).FirstOrDefault();
+                    else
+                        post = posts.Where(p => p.BuildType == type).FirstOrDefault();
+                    if (post != null)
+                        return post;
+                }
+                //fixup end
+            }
             catch (HttpRequestException ex) {
                 LogError($"Exception when getting post for type {type}: {ex}");
                 return null;
