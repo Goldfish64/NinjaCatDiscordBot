@@ -412,7 +412,9 @@ namespace NinjaCatDiscordBot {
                     else if (type == BuildType.ReleasePreviewPc)
                         post = posts.Where(p => p.BuildType == BuildType.ReleasePreviewPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
                     else if (type == BuildType.DevPc)
-                        post = posts.Where(p => p.BuildType == BuildType.DevPc || p.BuildType == BuildType.DevBetaPc).FirstOrDefault();
+                        post = posts.Where(p => p.BuildType == BuildType.DevPc || p.BuildType == BuildType.DevBetaPc || p.BuildType == BuildType.CanaryDevPc).FirstOrDefault();
+                    else if (type == BuildType.CanaryPc)
+                        post = posts.Where(p => p.BuildType == BuildType.CanaryPc || p.BuildType == CanaryDevPc).FirstOrDefault();
                     else
                         post = posts.Where(p => p.BuildType == type).FirstOrDefault();
                     if (post != null)
@@ -590,6 +592,8 @@ namespace NinjaCatDiscordBot {
                  }
                  var desc = Description.ToLowerInvariant().Substring(0, endIndex);*/
                 var desc = Description.ToLowerInvariant();
+                if (desc.Contains("canary and dev cha"))
+                    BuildType = BuildType.CanaryDevPc;
                 if (desc.Contains("dev and beta cha"))
                     BuildType = BuildType.DevBetaPc;
                 else if (desc.Contains("canary cha"))
@@ -687,6 +691,7 @@ namespace NinjaCatDiscordBot {
         DevBetaPc,
         ReleasePreviewPc,
         BetaReleasePreviewPc,
+        CanaryDevPc,
         Server
     }
 
