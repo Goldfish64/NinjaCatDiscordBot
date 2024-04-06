@@ -483,6 +483,12 @@ namespace NinjaCatDiscordBot {
                     emotesText += " :paintbrush: :package:";
                     break;
 
+                case BuildType.CanaryDevPc:
+                    roleText = $"{roleCanary?.Mention} {roleDev?.Mention} {roleReleasePreview?.Mention} ";
+                    typeText = " to the Canary and Dev Channels";
+                    emotesText += " :baby_chick: :tools:";
+                    break;
+
                 case BuildType.DevBetaPc:
                     roleText = $"{roleDev?.Mention} {roleBeta?.Mention} ";
                     typeText = " to the Dev and Beta Channels";
