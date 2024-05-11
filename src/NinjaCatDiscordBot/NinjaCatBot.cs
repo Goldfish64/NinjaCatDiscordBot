@@ -36,6 +36,7 @@ namespace NinjaCatDiscordBot {
 
         private NinjaCatDiscordClient client;
         private Timer timerBuild;
+        private Timer timerServerBuild;
 
         #endregion
 
@@ -117,6 +118,41 @@ namespace NinjaCatDiscordBot {
 
                 // Restart timer.
                 timerBuild.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+            }, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+
+            // Start checking for new server builds.
+            timerServerBuild = new Timer(async (s) => {
+                // If we cannot get the new server post, try again later.
+                var post = await client.GetLatestBuildPostAsync(BuildType.Server);
+                if (post == null)
+                    return;
+
+                // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
+                if (string.IsNullOrWhiteSpace(client.CurrentServerUrl)) {
+                    client.CurrentServerUrl = post.Link;
+                    client.SaveSettings();
+                    client.LogInfo($"Saved post as new latest server build: {post.Link}");
+                    return;
+                }
+
+                // Is the latest post the same? If so, no need to announce it.
+                if (client.CurrentServerUrl == post.Link)
+                    return;
+
+                // Stop timer.
+                timerServerBuild.Change(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-1));
+                client.LogInfo($"New server build received");
+
+                // Save post.
+                client.CurrentServerUrl = post.Link;
+                client.SaveSettings();
+
+                // Send build to guilds.
+                foreach (var shard in client.Shards)
+                    client.SendNewBuildToShard(shard, post);
+
+                // Restart timer.
+                timerServerBuild.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
             }, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
 
             // Wait a minute for bot to start up.

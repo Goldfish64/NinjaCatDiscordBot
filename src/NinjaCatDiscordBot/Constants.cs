@@ -30,6 +30,7 @@ namespace NinjaCatDiscordBot {
         #region Constants
 
         public const string LatestPostFileName = "nj-latestposturl.txt";
+        public const string LatestPostServerFileName = "nj-latestpostserverurl.txt";
         public const string SettingsFileName = "nj-settings.json";
 
         public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";

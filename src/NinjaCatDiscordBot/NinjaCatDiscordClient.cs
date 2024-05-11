@@ -113,6 +113,8 @@ namespace NinjaCatDiscordBot {
             // Get latest post URL, if there is one.
             if (File.Exists(Constants.LatestPostFileName))
                 CurrentUrl = File.ReadAllText(Constants.LatestPostFileName);
+            if (File.Exists(Constants.LatestPostServerFileName))
+                CurrentServerUrl = File.ReadAllText(Constants.LatestPostServerFileName);
 
             if (File.Exists(Constants.SettingsFileName)) {
                 Settings = JsonConvert.DeserializeObject<NinjaCatSettings>(File.ReadAllText(Constants.SettingsFileName));
@@ -144,6 +146,11 @@ namespace NinjaCatDiscordBot {
         /// Gets or sets the current post URL. Used for keeping track of new posts.
         /// </summary>
         public string CurrentUrl { get; set; } = "";
+
+        /// <summary>
+        /// Gets or sets the current server post URL. Used for keeping track of new posts.
+        /// </summary>
+        public string CurrentServerUrl { get; set; } = "";
 
         #endregion
 
@@ -347,6 +354,7 @@ namespace NinjaCatDiscordBot {
         public void SaveSettings() {
             lock (lockObject) {
                 File.WriteAllText(Constants.LatestPostFileName, CurrentUrl);
+                File.WriteAllText(Constants.LatestPostServerFileName, CurrentServerUrl);
                 File.WriteAllText(Constants.SettingsFileName, JsonConvert.SerializeObject(Settings));
             }
         }
@@ -388,40 +396,59 @@ namespace NinjaCatDiscordBot {
                 httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.37");
             }
 
-            try {
-                for (int page = 1; page <= 10; page++) {
-                    // Get page.
-                    var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windows-insider/feed/?paged={page}"));
-                    var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                                  where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().ContainsAny("insider-preview", "windows-10-build", "windows-11-build")
-                                  select item;
-                    var posts = entries.Select(async item => await BlogEntry.Create(
-                            httpClient,
-                            item.Elements().First(i => i.Name.LocalName == "title").Value,
-                            item.Elements().First(i => i.Name.LocalName == "link").Value,
-                            item.Elements().First(i => i.Name.LocalName == "description").Value))
-                        .Select(t => t.Result)
-                        .Where(i => i != null)
-                        .ToList();
+            if (type == BuildType.Server) {
+                // Get server feed.
+                var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://techcommunity.microsoft.com/gxcuf89792/rss/board?board.id=WindowsServerInsiders"));
+                var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                              where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().ContainsAny("announcing-windows-server-preview")
+                              select item;
+                var posts = entries.Select(async item => await BlogEntry.Create(
+                        httpClient,
+                        item.Elements().First(i => i.Name.LocalName == "title").Value,
+                        item.Elements().First(i => i.Name.LocalName == "link").Value,
+                        item.Elements().First(i => i.Name.LocalName == "description").Value))
+                    .Select(t => t.Result)
+                    .Where(i => i != null)
+                    .ToList();
+                post = posts.Where(p => p.BuildType == BuildType.Server).FirstOrDefault();
+                if (post != null)
+                    return post;
+            } else {
+                try {
+                    for (int page = 1; page <= 10; page++) {
+                        // Get page.
+                        var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://blogs.windows.com/windows-insider/feed/?paged={page}"));
+                        var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+                                      where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().ContainsAny("insider-preview", "windows-10-build", "windows-11-build")
+                                      select item;
+                        var posts = entries.Select(async item => await BlogEntry.Create(
+                                httpClient,
+                                item.Elements().First(i => i.Name.LocalName == "title").Value,
+                                item.Elements().First(i => i.Name.LocalName == "link").Value,
+                                item.Elements().First(i => i.Name.LocalName == "description").Value))
+                            .Select(t => t.Result)
+                            .Where(i => i != null)
+                            .ToList();
 
-                    // Get first post of desired type if a type was specified.
-                    if (type == BuildType.Unknown)
-                        post = posts.FirstOrDefault();
-                    else if (type == BuildType.BetaPc)
-                        post = posts.Where(p => p.BuildType == BuildType.BetaPc || p.BuildType == BuildType.DevBetaPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
-                    else if (type == BuildType.ReleasePreviewPc)
-                        post = posts.Where(p => p.BuildType == BuildType.ReleasePreviewPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
-                    else if (type == BuildType.DevPc)
-                        post = posts.Where(p => p.BuildType == BuildType.DevPc || p.BuildType == BuildType.DevBetaPc).FirstOrDefault();
-                    else
-                        post = posts.Where(p => p.BuildType == type).FirstOrDefault();
-                    if (post != null)
-                        return post;
+                        // Get first post of desired type if a type was specified.
+                        if (type == BuildType.Unknown)
+                            post = posts.FirstOrDefault();
+                        else if (type == BuildType.BetaPc)
+                            post = posts.Where(p => p.BuildType == BuildType.BetaPc || p.BuildType == BuildType.DevBetaPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
+                        else if (type == BuildType.ReleasePreviewPc)
+                            post = posts.Where(p => p.BuildType == BuildType.ReleasePreviewPc || p.BuildType == BuildType.BetaReleasePreviewPc).FirstOrDefault();
+                        else if (type == BuildType.DevPc)
+                            post = posts.Where(p => p.BuildType == BuildType.DevPc || p.BuildType == BuildType.DevBetaPc).FirstOrDefault();
+                        else
+                            post = posts.Where(p => p.BuildType == type).FirstOrDefault();
+                        if (post != null)
+                            return post;
+                    }
                 }
-            }
-            catch (HttpRequestException ex) {
-                LogError($"Exception when getting post for type {type}: {ex}");
-                return null;
+                catch (HttpRequestException ex) {
+                    LogError($"Exception when getting post for type {type}: {ex}");
+                    return null;
+                }
             }
             
             LogError($"Unable to get new post for type {type}");
@@ -663,6 +690,24 @@ namespace NinjaCatDiscordBot {
                         description = description.Substring(0, indexEnd + "channel".Length);
                 }
                 
+            }
+
+            return new BlogEntry(title, link, description);
+        }
+
+        public static async Task<BlogEntry> CreateServer(HttpClient httpClient, string title, string link, string description) {
+            // Get actual post content if the description in the feed is too short.
+            if (!description.ToLowerInvariant().Contains("hello windows server insiders")) {
+                var doc = (await httpClient.GetStringAsync(link)).ToLowerInvariant();
+                var index = doc.IndexOf("hello windows server insiders");
+
+                if (index != -1) {
+                    description = doc.Substring(index);
+                    var indexEnd = description.IndexOf("channel");
+                    if (indexEnd != -1 && indexEnd + "channel".Length < description.Length)
+                        description = description.Substring(0, indexEnd + "channel".Length);
+                }
+
             }
 
             return new BlogEntry(title, link, description);
