@@ -25,28 +25,28 @@
 using Discord;
 
 namespace NinjaCatDiscordBot {
-    internal static class Extensions {
-        #region Methods
+  internal static class Extensions {
+    #region Methods
 
-        public static bool HasStringPrefixLower(this IUserMessage msg, string str, ref int argPos) {
-            var text = msg.Content.ToLowerInvariant();
-            if (text.StartsWith(str)) {
-                argPos = str.Length;
-                return true;
-            }
-            return false;
-        }
-        
-        public static bool ContainsAny(this string s, params string[] strings) {
-            foreach (var str in strings) {
-                if (s.Contains (str)) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        #endregion
+    public static bool HasStringPrefixLower(this IUserMessage msg, string str, ref int argPos) {
+      var text = msg.Content.ToLowerInvariant();
+      if (text.StartsWith(str)) {
+        argPos = str.Length;
+        return true;
+      }
+      return false;
     }
+
+    public static bool ContainsAny(this string s, params string[] strings) {
+      foreach (var str in strings) {
+        if (s.Contains(str)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    #endregion
+  }
 }

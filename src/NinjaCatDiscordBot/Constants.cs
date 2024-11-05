@@ -23,36 +23,36 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 namespace NinjaCatDiscordBot {
-    /// <summary>
-    /// Contains constants.
-    /// </summary>
-    internal static class Constants {
-        #region Constants
+  /// <summary>
+  /// Contains constants.
+  /// </summary>
+  internal static class Constants {
+    #region Constants
 
-        public const string LatestPostFileName = "nj-latestposturl.txt";
-        public const string LatestPostServerFileName = "nj-latestpostserverurl.txt";
-        public const string SettingsFileName = "nj-settings.json";
+    public const string LatestPostFileName = "nj-latestposturl.txt";
+    public const string LatestPostServerFileName = "nj-latestpostserverurl.txt";
+    public const string SettingsFileName = "nj-settings.json";
 
-        public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
-        public const string InviteUrl = "<https://discordapp.com/oauth2/authorize?permissions=444480&client_id={0}&scope=bot>";
-        public const string UserName = "Ninja Cat";
-        public const ulong OwnerId = 191330317439598593;
-        public const ulong BotsGuildId = 110373943822540800;
-        public const ulong MsGuildId = 150662382874525696;
-        public const string OwnerName = "Goldfish64";
+    public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
+    public const string InviteUrl = "<https://discordapp.com/oauth2/authorize?permissions=444480&client_id={0}&scope=bot>";
+    public const string UserName = "Ninja Cat";
+    public const ulong OwnerId = 191330317439598593;
+    public const ulong BotsGuildId = 110373943822540800;
+    public const ulong MsGuildId = 150662382874525696;
+    public const string OwnerName = "Goldfish64";
 
 #if RELEASE
         public const string AppName = "Ninja Cat";
         public const int ShardCount = 2;
 #else
-        public const string AppName = "Ninja Cat beta (DEBUG)";
-        public const int ShardCount = 2;
+    public const string AppName = "Ninja Cat beta (DEBUG)";
+    public const int ShardCount = 2;
 #endif
 
-        public static readonly string AboutMessage =
-            $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
-            $"I was created by **{OwnerName}** with the purpose of letting you know about the latest in Windows Insider builds.";
+    public static readonly string AboutMessage =
+        $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
+        $"I was created by **{OwnerName}** with the purpose of letting you know about the latest in Windows Insider builds.";
 
-        #endregion
-    }
+    #endregion
+  }
 }
