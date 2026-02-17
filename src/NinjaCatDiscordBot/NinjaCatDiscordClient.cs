@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: NinjaCatDiscordClient.cs
 * 
-* Copyright (c) 2016 - 2024 John Davis
+* Copyright (c) 2016 - 2026 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -398,9 +398,9 @@ namespace NinjaCatDiscordBot {
       if (type == BuildType.Server) {
         try {
           // Get server feed.
-          var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://techcommunity.microsoft.com/gxcuf89792/rss/board?board.id=WindowsServerInsiders"));
+          var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://techcommunity.microsoft.com/t5/s/gxcuf89792/rss/board?board.id=WindowsServerInsiders"));
           var entries = from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
-                        where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().ContainsAny("announcing-windows-server-preview")
+                        where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().ContainsAny("announcing-windows-server-preview", "announcing-windows-server-vnext-preview")
                         select item;
           var posts = entries.Select(async item => await BlogEntry.Create(
                   httpClient,
