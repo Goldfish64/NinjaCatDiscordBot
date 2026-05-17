@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: BotCommands.cs
 * 
-* Copyright (c) 2016 - 2022 John Davis
+* Copyright (c) 2016 - 2026 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,7 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using NinjaCatDiscordBot.Models;
 using NinjaCatDiscordBot.Properties;
 using System;
 using System.Data;
@@ -43,6 +44,21 @@ namespace NinjaCatDiscordBot {
     #region Variables
 
     private readonly HttpClient httpClient = new HttpClient();
+
+    #endregion
+
+    #region Private methods
+
+    private async Task GetLatestBuildAsync(InsiderBuildType buildType) {
+      await RespondAsync($"Getting the latest {InsiderBuild.Names[buildType]} build...");
+      var build = await CatClient.GetLatestInsiderBuildAsync(buildType);
+      if (build == null) {
+        await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest {InsiderBuild.Names[buildType]} build couldn't be found. :crying_cat_face: :{InsiderBuild.Emotes[buildType]}:"; });
+        return;
+      }
+
+      await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest {InsiderBuild.Names[buildType]} build is **{build.BuildNumber}**. :cat: :{InsiderBuild.Emotes[buildType]}:\n<{build.Link}>"; });
+    }
 
     #endregion
 
@@ -113,67 +129,37 @@ namespace NinjaCatDiscordBot {
     #region Role command group
 
     /// <summary>
-    /// Role command group (dev/beta/rp).
+    /// Role command group (experimental/beta/rp).
     /// </summary>
     [Group("role", "Role commands")]
     public class RoleCommandsModule : CatInteractionModuleBase {
       /// <summary>
-      /// Canary role command group (get/set/off).
+      /// Experimental role command group (get/set/off).
       /// </summary>
-      [Group("canary", "Canary role commands")]
-      public class CanaryRoleCommandsModule : RoleInteractionModuleBase {
-        /// <summary>
-        /// Get canary role.
-        /// </summary>
-        [SlashCommand("get", "Gets the role that will be mentioned for Canary Channel Insider build announcements")]
-        public async Task GetCanaryRoleAsync() {
-          await ProcessGetRole(RoleType.InsiderCanary);
-        }
-
-        /// <summary>
-        /// Set canary role.
-        /// </summary>
-        [SlashCommand("set", "Sets the role that will be mentioned for Canary Channel Insider build announcements")]
-        public async Task SetCanaryRoleAsync(IRole role) {
-          await ProcessSetRole(role, RoleType.InsiderCanary);
-        }
-
-        /// <summary>
-        /// Turn off canary role.
-        /// </summary>
-        [SlashCommand("off", "Disables role mentions for Canary Channel Insider build announcements")]
-        public async Task OffCanaryRoleAsync() {
-          await ProcessOffRole(RoleType.InsiderCanary);
-        }
-      }
-
-      /// <summary>
-      /// Dev role command group (get/set/off).
-      /// </summary>
-      [Group("dev", "Dev role commands")]
-      public class DevRoleCommandsModule : RoleInteractionModuleBase {
+      [Group("experimental", "Experimental role commands")]
+      public class ExperimentalRoleCommandsModule : RoleInteractionModuleBase {
         /// <summary>
         /// Get dev role.
         /// </summary>
-        [SlashCommand("get", "Gets the role that will be mentioned for Dev Channel Insider build announcements")]
-        public async Task GetDevRoleAsync() {
-          await ProcessGetRole(RoleType.InsiderDev);
+        [SlashCommand("get", "Gets the role that will be mentioned for Experimental Channel Insider build announcements")]
+        public async Task GetExperimentalRoleAsync() {
+          await ProcessGetRole(RoleType.InsiderExperimental);
         }
 
         /// <summary>
         /// Set dev role.
         /// </summary>
-        [SlashCommand("set", "Sets the role that will be mentioned for Dev Channel Insider build announcements")]
-        public async Task SetDevRoleAsync(IRole role) {
-          await ProcessSetRole(role, RoleType.InsiderDev);
+        [SlashCommand("set", "Sets the role that will be mentioned for Experimental Channel Insider build announcements")]
+        public async Task SetExperimentalRoleAsync(IRole role) {
+          await ProcessSetRole(role, RoleType.InsiderExperimental);
         }
 
         /// <summary>
         /// Turn off dev role.
         /// </summary>
-        [SlashCommand("off", "Disables role mentions for Dev Channel Insider build announcements")]
-        public async Task OffDevRoleAsync() {
-          await ProcessOffRole(RoleType.InsiderDev);
+        [SlashCommand("off", "Disables role mentions for Experimental Channel Insider build announcements")]
+        public async Task OffExperimentalRoleAsync() {
+          await ProcessOffRole(RoleType.InsiderExperimental);
         }
       }
 
@@ -316,21 +302,15 @@ namespace NinjaCatDiscordBot {
         sb.AppendLine($"Channel: {channel.Mention}; can speak: {currentUser.GetPermissions(channel).SendMessages}");
 
         // Get all roles.
-        var roleCanary = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderCanary);
-        var roleDev = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
+        var roleExperimental = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderExperimental);
         var roleBeta = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
         var roleReleasePreview = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
 
         var mentionability = true;
-        if (roleCanary != null) {
-          var canaryMentionability = roleCanary.IsMentionable || Context.Guild.CurrentUser.GetPermissions(channel).MentionEveryone;
-          mentionability &= canaryMentionability;
-          sb.AppendLine($"Canary role: {roleCanary.Mention}; can mention: {canaryMentionability}");
-        }
-        if (roleDev != null) {
-          var devMentionability = roleDev.IsMentionable || Context.Guild.CurrentUser.GetPermissions(channel).MentionEveryone;
-          mentionability &= devMentionability;
-          sb.AppendLine($"Dev role: {roleDev.Mention}; can mention: {devMentionability}");
+        if (roleExperimental != null) {
+          var experimentalMentionability = roleExperimental.IsMentionable || Context.Guild.CurrentUser.GetPermissions(channel).MentionEveryone;
+          mentionability &= experimentalMentionability;
+          sb.AppendLine($"Experimental role: {roleExperimental.Mention}; can mention: {experimentalMentionability}");
         }
         if (roleBeta != null) {
           var betaMentionability = roleBeta.IsMentionable || Context.Guild.CurrentUser.GetPermissions(channel).MentionEveryone;
@@ -362,21 +342,14 @@ namespace NinjaCatDiscordBot {
         await RespondAsync($"Pinging roles...");
 
         // Get all roles.
-        var roleCanary = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderCanary);
-        var roleDev = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
+        var roleExperimental = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderExperimental);
         var roleBeta = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
         var roleReleasePreview = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
 
-        if (roleCanary != null) {
-          await ReplyAsync($"Canary role: {roleCanary.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleCanary.Id } });
+        if (roleExperimental != null) {
+          await ReplyAsync($"Experimental role: {roleExperimental.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleExperimental.Id } });
         } else {
-          await ReplyAsync($"Canary role: none");
-        }
-
-        if (roleDev != null) {
-          await ReplyAsync($"Dev role: {roleDev.Mention}", allowedMentions: new AllowedMentions() { RoleIds = { roleDev.Id } });
-        } else {
-          await ReplyAsync($"Dev role: none");
+          await ReplyAsync($"Experimental role: none");
         }
 
         if (roleBeta != null) {
@@ -458,63 +431,51 @@ namespace NinjaCatDiscordBot {
     }
 
     /// <summary>
-    /// Gets the latest Insider PC build for the Canary Channel.
+    /// Gets the latest Insider build for the Experimental Channel.
     /// </summary>
-    [SlashCommand("latestcanary", "Shows the latest Canary Channel Insider build")]
-    public async Task GetLatestCanaryBuildAsync() {
-      await RespondAsync("Getting the latest Canary build...");
-      var post = await CatClient.GetLatestBuildPostAsync(BuildType.CanaryPc);
-      if (post == null) {
-        await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest Windows Canary Channel build couldn't be found. :crying_cat_face: :tools:"; });
-        return;
-      }
-
-      await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest {post.OSName} Canary Channel build is **{post.BuildNumber}**. :cat: :tools:\n<{post.Link}>"; });
+    [SlashCommand("latestexperimental", "Shows the latest Experimental Insider build")]
+    public async Task GetLatestExperimentalBuildAsync() {
+      await GetLatestBuildAsync(InsiderBuildType.Experimental);
     }
 
     /// <summary>
-    /// Gets the latest Insider PC build for the Dev Channel.
+    /// Gets the latest Insider build for the Experimental (Future Platforms) Channel.
     /// </summary>
-    [SlashCommand("latestdev", "Shows the latest Dev Channel Insider build")]
-    public async Task GetLatestDevBuildAsync() {
-      await RespondAsync("Getting the latest Dev build...");
-      var post = await CatClient.GetLatestBuildPostAsync(BuildType.DevPc);
-      if (post == null) {
-        await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest Windows Dev Channel build couldn't be found. :crying_cat_face: :tools:"; });
-        return;
-      }
-
-      await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest {post.OSName} Dev Channel build is **{post.BuildNumber}**. :cat: :tools:\n<{post.Link}>"; });
+    [SlashCommand("latestexperimentalfuture", "Shows the latest Experimental (Future Platforms) Insider build")]
+    public async Task GetLatestExperimentalFuturePlatformsBuildAsync() {
+      await GetLatestBuildAsync(InsiderBuildType.ExperimentalFuturePlatforms);
     }
 
     /// <summary>
-    /// Gets the latest Insider PC build for the Beta Channel.
+    /// Gets the latest Insider build for the Beta Channel.
     /// </summary>
-    [SlashCommand("latestbeta", "Shows the latest Beta Channel Insider build")]
+    [SlashCommand("latestbeta", "Shows the latest Beta Insider build")]
     public async Task GetLatestBetaBuildAsync() {
-      await RespondAsync("Getting the latest Beta build...");
-      var post = await CatClient.GetLatestBuildPostAsync(BuildType.BetaPc);
-      if (post == null) {
-        await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest Windows Beta Channel build couldn't be found. :crying_cat_face: :paintbrush:"; });
-        return;
-      }
-
-      await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest {post.OSName} Beta Channel build is **{post.BuildNumber}**. :cat: :paintbrush:\n<{post.Link}>"; });
+      await GetLatestBuildAsync(InsiderBuildType.Beta);
     }
 
     /// <summary>
-    /// Gets the latest Insider PC build for the Release Preview Channel.
+    /// Gets the latest Insider build for the Experimental (26H1) Channel.
     /// </summary>
-    [SlashCommand("latestrp", "Shows the latest Release Preview Channel Insider build")]
-    public async Task GetLatestReleasePreviewBuildAsync() {
-      await RespondAsync("Getting the latest Release Preview build...");
-      var post = await CatClient.GetLatestBuildPostAsync(BuildType.ReleasePreviewPc);
-      if (post == null) {
-        await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest Windows Release Preview Channel build couldn't be found. :crying_cat_face: :package:"; });
-        return;
-      }
+    [SlashCommand("latestexp26h1", "Shows the latest Experimental (26H1) Insider build")]
+    public async Task GetLatestExperimental26H1BuildAsync() {
+      await GetLatestBuildAsync(InsiderBuildType.Experimental26H1);
+    }
 
-      await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest {post.OSName} Release Preview Channel build is **{post.BuildNumber}**. :cat: :package:\n<{post.Link}>"; });
+    /// <summary>
+    /// Gets the latest Insider build for the Release Preview Channel.
+    /// </summary>
+    [SlashCommand("latestrp26h1", "Shows the latest Release Preview (26H1) Insider build")]
+    public async Task GetLatestReleasePreview26H1BuildAsync() {
+      await GetLatestBuildAsync(InsiderBuildType.ReleasePreview26H1);
+    }
+
+    /// <summary>
+    /// Gets the latest Insider build for the Release Preview 24H2/25H2 Channel.
+    /// </summary>
+    [SlashCommand("latestrp24h2-25h2", "Shows the latest Release Preview (24H2/25H2) Insider build")]
+    public async Task GetLatestReleasePreview24H2BuildAsync() {
+      await GetLatestBuildAsync(InsiderBuildType.ReleasePreview24H2_25H2);
     }
 
     /// <summary>
@@ -522,14 +483,7 @@ namespace NinjaCatDiscordBot {
     /// </summary>
     [SlashCommand("latestserver", "Shows the latest Server Insider build")]
     public async Task GetLatestServerBuildAsync() {
-      await RespondAsync("Getting the latest Server build...");
-      var post = await CatClient.GetLatestBuildPostAsync(BuildType.Server);
-      if (post == null) {
-        await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest Windows Insider Server build couldn't be found. :crying_cat_face: :desktop:"; });
-        return;
-      }
-
-      await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest Windows Insider Server build is **{post.BuildNumber}**. :cat: :desktop:\n<{post.Link}>"; });
+      await GetLatestBuildAsync(InsiderBuildType.Server);
     }
 
     /// <summary>
@@ -586,11 +540,11 @@ namespace NinjaCatDiscordBot {
 
         // Add channel and roles.
         var channel = CatClient.GetSpeakingChannelForSocketGuild(Context.Guild);
-        var roleDev = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderDev);
+        var roleExperimental = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderExperimental);
         var roleBeta = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderBeta);
         var roleReleasePreview = CatClient.GetRoleForIGuild(Context.Guild, RoleType.InsiderReleasePreview);
         embed.AddField(e => { e.Name = "Insider channel"; e.Value = channel?.Mention ?? "None"; });
-        embed.AddField(e => { e.Name = "Insider Dev role"; e.Value = roleDev?.Mention ?? "None"; e.IsInline = true; });
+        embed.AddField(e => { e.Name = "Insider Experimental role"; e.Value = roleExperimental?.Mention ?? "None"; e.IsInline = true; });
         embed.AddField(e => { e.Name = "Insider Beta role"; e.Value = roleBeta?.Mention ?? "None"; e.IsInline = true; });
         embed.AddField(e => { e.Name = "Insider Release Preview role"; e.Value = roleReleasePreview?.Mention ?? "None"; e.IsInline = true; });
       } else {

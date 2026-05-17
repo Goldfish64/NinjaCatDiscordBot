@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-* File: Constants.cs
+* File: LearnToc.cs
 * 
-* Copyright (c) 2016 - 2026 John Davis
+* Copyright (c) 2026 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -22,36 +22,29 @@
 * IN THE SOFTWARE.
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-namespace NinjaCatDiscordBot {
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+
+namespace NinjaCatDiscordBot.Models {
   /// <summary>
-  /// Contains constants.
+  /// Represents a Learn table of contents item.
   /// </summary>
-  internal static class Constants {
-    #region Constants
+  public class LearnTocItem {
+    [JsonPropertyName("href")]
+    public string LinkHref { get; set; }
 
-    public const string LatestInsiderBuildsFileName = "nj-latestbuilds.json";
-    public const string SettingsFileName = "nj-settings.json";
+    [JsonPropertyName("toc_title")]
+    public string Title { get; set; }
 
-    public const string AppUrl = "https://github.com/Goldfish64/NinjaCatDiscordBot";
-    public const string InviteUrl = "<https://discordapp.com/oauth2/authorize?permissions=444480&client_id={0}&scope=bot>";
-    public const string UserName = "Ninja Cat";
-    public const ulong OwnerId = 191330317439598593;
-    public const ulong BotsGuildId = 110373943822540800;
-    public const ulong MsGuildId = 150662382874525696;
-    public const string OwnerName = "Goldfish64";
+    [JsonPropertyName("children")]
+    public List<LearnTocItem> Children { get; set; }
+  }
 
-#if RELEASE
-        public const string AppName = "Ninja Cat";
-        public const int ShardCount = 2;
-#else
-    public const string AppName = "Ninja Cat beta (DEBUG)";
-    public const int ShardCount = 2;
-#endif
-
-    public static readonly string AboutMessage =
-        $"Hi there! I am {UserName}, a Discord.Net bot!\n" +
-        $"I was created by **{OwnerName}** with the purpose of letting you know about the latest in Windows Insider builds.";
-
-    #endregion
+  /// <summary>
+  /// Represents a Learn tables of contents.
+  /// </summary>
+  public class LearnToc {
+    [JsonPropertyName("items")]
+    public List<LearnTocItem> Items { get; set; }
   }
 }

@@ -1,7 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * File: NinjaCatBot.cs
 * 
-* Copyright (c) 2016 - 2022 John Davis
+* Copyright (c) 2016 - 2026 John Davis
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -82,77 +82,47 @@ namespace NinjaCatDiscordBot {
 
       // Start checking for new builds.
       timerBuild = new Timer(async (s) => {
-        // Builds generally release between 10AM and 5PM PST. Do not check outside these times.
-        //     if (DateTime.UtcNow.Hour < 17 && !string.IsNullOrWhiteSpace(client.CurrentUrl))
-        //     return;
 
-        // If we cannot get the new post, try again later.
-        var post = await client.GetLatestBuildPostAsync();
-        if (post == null)
-          return;
-
-        // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
-        if (string.IsNullOrWhiteSpace(client.CurrentUrl)) {
-          client.CurrentUrl = post.Link;
-          client.SaveSettings();
-          client.LogInfo($"Saved post as new latest build: {post.Link}");
-          return;
-        }
-
-        // Is the latest post the same? If so, no need to announce it.
-        if (client.CurrentUrl == post.Link)
+        // Check for latest builds.
+        var builds = await client.GetAllLatestInsiderBuildsAsync();
+        if (builds == null)
           return;
 
         // Stop timer.
         timerBuild.Change(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-1));
-        client.LogInfo($"New build received");
 
-        // Save post.
-        client.CurrentUrl = post.Link;
-        client.SaveSettings();
+        // Check for any new builds.
+        foreach (var build in builds.Keys) {
+          if (builds[build] == null) {
+            continue;
+          }
 
-        // Send build to guilds.
-        foreach (var shard in client.Shards)
-          client.SendNewBuildToShard(shard, post);
-        await client.UpdateGameAsync();
+          // Have we seen this build type yet? This prevents false announcements if the bot has never seen this build before.
+          if (!client.CurrentInsiderBuilds.ContainsKey(build) || string.IsNullOrWhiteSpace(client.CurrentInsiderBuilds[build])) {
+            client.CurrentInsiderBuilds[build] = builds[build].Link;
+            client.SaveSettings();
+            client.LogInfo($"Saved new latest build type {builds[build].Type}: {builds[build].Link}");
+            continue;
+          }
+
+          if (client.CurrentInsiderBuilds[build] == builds[build].Link) {
+            continue;
+          }
+
+          client.LogInfo($"New build type {builds[build].Type} received: {builds[build].Link}");
+          client.CurrentInsiderBuilds[build] = builds[build].Link;
+          client.SaveSettings();
+
+          foreach (var shard in client.Shards)
+            client.SendNewInsiderBuildToShard(shard, builds[build]);
+
+          if (builds[build].Type == Models.InsiderBuildType.Experimental) {
+            await client.UpdateGameAsync();
+          }
+        }
 
         // Restart timer.
         timerBuild.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
-      }, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
-
-      // Start checking for new server builds.
-      timerServerBuild = new Timer(async (s) => {
-        // If we cannot get the new server post, try again later.
-        var post = await client.GetLatestBuildPostAsync(BuildType.Server);
-        if (post == null)
-          return;
-
-        // Have we ever seen a post yet? This prevents false announcements if the bot has never seen a post before.
-        if (string.IsNullOrWhiteSpace(client.CurrentServerUrl)) {
-          client.CurrentServerUrl = post.Link;
-          client.SaveSettings();
-          client.LogInfo($"Saved post as new latest server build: {post.Link}");
-          return;
-        }
-
-        // Is the latest post the same? If so, no need to announce it.
-        if (client.CurrentServerUrl == post.Link)
-          return;
-
-        // Stop timer.
-        timerServerBuild.Change(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-1));
-        client.LogInfo($"New server build received");
-
-        // Save post.
-        client.CurrentServerUrl = post.Link;
-        client.SaveSettings();
-
-        // Send build to guilds.
-        foreach (var shard in client.Shards)
-          client.SendNewBuildToShard(shard, post);
-
-        // Restart timer.
-        timerServerBuild.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
       }, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
 
       // Wait a minute for bot to start up.

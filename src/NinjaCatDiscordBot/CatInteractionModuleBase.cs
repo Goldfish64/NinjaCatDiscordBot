@@ -23,12 +23,9 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using Discord;
-using Discord.Commands;
 using Discord.Interactions;
+using NinjaCatDiscordBot.Models;
 using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace NinjaCatDiscordBot {
@@ -99,12 +96,8 @@ namespace NinjaCatDiscordBot {
 
       var roleTypeName = string.Empty;
       switch (roleType) {
-        case RoleType.InsiderCanary:
-          roleTypeName = "Canary Channel";
-          break;
-
-        case RoleType.InsiderDev:
-          roleTypeName = "Dev Channel";
+        case RoleType.InsiderExperimental:
+          roleTypeName = "Experimental Channel";
           break;
 
         case RoleType.InsiderBeta:
