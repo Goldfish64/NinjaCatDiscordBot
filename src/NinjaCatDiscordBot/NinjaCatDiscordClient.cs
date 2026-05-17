@@ -47,31 +47,31 @@ namespace NinjaCatDiscordBot {
     /// Gets the list of Insider channels.
     /// </summary>
     /// <remarks>Guild is the key, channel is the value.</remarks>
-    public ConcurrentDictionary<ulong, ulong> InsiderChannels { get; } = new ConcurrentDictionary<ulong, ulong>();
+    public ConcurrentDictionary<ulong, ulong> InsiderChannels { get; set; } = new ConcurrentDictionary<ulong, ulong>();
 
     /// <summary>
     /// Gets the list of Dev Channel Insider roles.
     /// </summary>
     /// <remarks>Guild is the key, role is the value.</remarks>
-    public ConcurrentDictionary<ulong, ulong> InsiderRolesDev { get; } = new ConcurrentDictionary<ulong, ulong>();
+    public ConcurrentDictionary<ulong, ulong> InsiderRolesDev { get; set; } = new ConcurrentDictionary<ulong, ulong>();
 
     /// <summary>
     /// Gets the list of Beta Channel Insider roles.
     /// </summary>
     /// <remarks>Guild is the key, role is the value.</remarks>
-    public ConcurrentDictionary<ulong, ulong> InsiderRolesBeta { get; } = new ConcurrentDictionary<ulong, ulong>();
+    public ConcurrentDictionary<ulong, ulong> InsiderRolesBeta { get; set; } = new ConcurrentDictionary<ulong, ulong>();
 
     /// <summary>
     /// Gets the list of Release Preview Insider roles.
     /// </summary>
     /// <remarks>Guild is the key, role is the value.</remarks>
-    public ConcurrentDictionary<ulong, ulong> InsiderRolesReleasePreview { get; } = new ConcurrentDictionary<ulong, ulong>();
+    public ConcurrentDictionary<ulong, ulong> InsiderRolesReleasePreview { get; set; } = new ConcurrentDictionary<ulong, ulong>();
 
     /// <summary>
     /// Gets the list of jumbo roles.
     /// </summary>
     /// <remarks>Guild is the key, role is the value.</remarks>
-    public ConcurrentDictionary<ulong, ulong> JumboRoles { get; } = new ConcurrentDictionary<ulong, ulong>();
+    public ConcurrentDictionary<ulong, ulong> JumboRoles { get; set; } = new ConcurrentDictionary<ulong, ulong>();
   }
 
   /// <summary>
@@ -115,7 +115,10 @@ namespace NinjaCatDiscordBot {
       }
 
       if (File.Exists(Constants.SettingsFileName)) {
-        Settings = JsonSerializer.Deserialize<NinjaCatSettings>(File.ReadAllText(Constants.SettingsFileName));
+        var options = new JsonSerializerOptions {
+          PropertyNameCaseInsensitive = true,
+        };
+        Settings = JsonSerializer.Deserialize<NinjaCatSettings>(File.ReadAllText(Constants.SettingsFileName), options);
       } else {
         Settings = new NinjaCatSettings();
       }
