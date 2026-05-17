@@ -32,8 +32,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Ninja Cat Bot")]
 [assembly: AssemblyTrademark("")]
-[assembly: AssemblyVersion("2.0")]
-[assembly: AssemblyInformationalVersion("2.0-{chash:6}-{c:ymd}")]
+[assembly: AssemblyVersion("3.0")]
+[assembly: AssemblyInformationalVersion("3.0-{chash:6}-{c:ymd}")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
