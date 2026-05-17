@@ -36,7 +36,6 @@ namespace NinjaCatDiscordBot {
 
     private NinjaCatDiscordClient client;
     private Timer timerBuild;
-    private Timer timerServerBuild;
 
     #endregion
 
