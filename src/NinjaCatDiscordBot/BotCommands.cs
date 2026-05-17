@@ -441,7 +441,7 @@ namespace NinjaCatDiscordBot {
     /// <summary>
     /// Gets the latest Insider build for the Experimental (Future Platforms) Channel.
     /// </summary>
-    [SlashCommand("latestexperimentalfuture", "Shows the latest Experimental (Future Platforms) Insider build")]
+    [SlashCommand("latestexperimental-future", "Shows the latest Experimental (Future Platforms) Insider build")]
     public async Task GetLatestExperimentalFuturePlatformsBuildAsync() {
       await GetLatestBuildAsync(InsiderBuildType.ExperimentalFuturePlatforms);
     }
@@ -457,7 +457,7 @@ namespace NinjaCatDiscordBot {
     /// <summary>
     /// Gets the latest Insider build for the Experimental (26H1) Channel.
     /// </summary>
-    [SlashCommand("latestexp26h1", "Shows the latest Experimental (26H1) Insider build")]
+    [SlashCommand("latestexperimental-26h1", "Shows the latest Experimental (26H1) Insider build")]
     public async Task GetLatestExperimental26H1BuildAsync() {
       await GetLatestBuildAsync(InsiderBuildType.Experimental26H1);
     }
@@ -465,7 +465,7 @@ namespace NinjaCatDiscordBot {
     /// <summary>
     /// Gets the latest Insider build for the Release Preview Channel.
     /// </summary>
-    [SlashCommand("latestrp26h1", "Shows the latest Release Preview (26H1) Insider build")]
+    [SlashCommand("latestreleasepreview-26h1", "Shows the latest Release Preview (26H1) Insider build")]
     public async Task GetLatestReleasePreview26H1BuildAsync() {
       await GetLatestBuildAsync(InsiderBuildType.ReleasePreview26H1);
     }
@@ -473,7 +473,7 @@ namespace NinjaCatDiscordBot {
     /// <summary>
     /// Gets the latest Insider build for the Release Preview 24H2/25H2 Channel.
     /// </summary>
-    [SlashCommand("latestrp24h2-25h2", "Shows the latest Release Preview (24H2/25H2) Insider build")]
+    [SlashCommand("latestreleasepreview-24h2-25h2", "Shows the latest Release Preview (24H2/25H2) Insider build")]
     public async Task GetLatestReleasePreview24H2BuildAsync() {
       await GetLatestBuildAsync(InsiderBuildType.ReleasePreview24H2_25H2);
     }
