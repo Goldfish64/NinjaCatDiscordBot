@@ -1,11 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>NinjaCatDiscordBot</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>NinjaCatDiscordBot</PackageId>
-    <RuntimeFrameworkVersion>3.1.0</RuntimeFrameworkVersion>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
@@ -28,8 +27,7 @@
   <ItemGroup>
     <PackageReference Include="Discord.Net.Interactions" Version="3.16.0" />
     <PackageReference Include="Discord.Net.WebSocket" Version="3.16.0" />
-    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
-    <PackageReference Include="Unclassified.NetRevisionTask" Version="0.4.3">
+    <PackageReference Include="Unclassified.NetRevisionTask" Version="0.4.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
