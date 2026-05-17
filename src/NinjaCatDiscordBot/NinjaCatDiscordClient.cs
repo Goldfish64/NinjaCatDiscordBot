@@ -26,16 +26,17 @@ using Discord;
 using Discord.Interactions;
 using Discord.Net;
 using Discord.WebSocket;
-using System.Text.Json;
+using NinjaCatDiscordBot.Models;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading.Tasks;
-using NinjaCatDiscordBot.Models;
-using System.Collections.Generic;
+using System.Xml.Linq;
 
 namespace NinjaCatDiscordBot {
   /// <summary>
@@ -95,6 +96,10 @@ namespace NinjaCatDiscordBot {
       // Write startup messages.
       LogInfo($"{Constants.AppName} on {RuntimeInformation.FrameworkDescription} has started.");
       LogInfo($"===============================================================");
+
+      httpClient = new HttpClient();
+      httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.37");
+
       Interactions = new InteractionService(this);
 
       // Listen for events.
@@ -362,11 +367,6 @@ namespace NinjaCatDiscordBot {
     }
 
     private async Task<LearnToc> GetLearnTocAsync() {
-      if (httpClient == null) {
-        httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.37");
-      }
-
       var flightHubTocJson = await httpClient.GetStringAsync("https://learn.microsoft.com/en-us/windows-insider/toc.json");
       return JsonSerializer.Deserialize<LearnToc>(flightHubTocJson);
     }
@@ -402,15 +402,37 @@ namespace NinjaCatDiscordBot {
 
     public async Task<InsiderBuild> GetLatestInsiderBuildAsync(InsiderBuildType buildType) {
       if (buildType == InsiderBuildType.Server) {
-        return null; // TODO
+        try {
+          // Get server feed.
+          var doc = XDocument.Parse(await httpClient.GetStringAsync($"https://techcommunity.microsoft.com/t5/s/gxcuf89792/rss/board?board.id=WindowsServerInsiders"));
+          var blogEntry = (
+            from item in doc.Root.Descendants().First(i => i.Name.LocalName == "channel").Elements().Where(i => i.Name.LocalName == "item")
+            where item.Elements().First(i => i.Name.LocalName == "link").Value.ToLowerInvariant().ContainsAny("announcing-windows-server-preview", "announcing-windows-server-vnext-preview")
+            select item).FirstOrDefault();
+
+          if (blogEntry != null) {
+            var buildTitle = blogEntry.Elements().First(i => i.Name.LocalName == "title").Value.ToLowerInvariant();
+            const string buildText = "build ";
+            return new InsiderBuild() {
+              BuildNumber = buildTitle.Substring(buildTitle.IndexOf(buildText) + buildText.Length),
+              Link = blogEntry.Elements().First(i => i.Name.LocalName == "link").Value,
+              Type = buildType
+            };
+          }
+        } catch (HttpRequestException ex) {
+          LogError($"Exception when getting post for server: {ex}");
+        }
+
+        return null;
       }
 
       try {
         return GetInsiderBuildFromToc(await GetLearnTocAsync(), buildType);
       } catch (Exception ex) {
         LogError($"Exception when getting build for type {buildType}: {ex}");
-        return null;
       }
+
+      return null;
     }
 
     public async Task<Dictionary<InsiderBuildType, InsiderBuild>> GetAllLatestInsiderBuildsAsync() {
