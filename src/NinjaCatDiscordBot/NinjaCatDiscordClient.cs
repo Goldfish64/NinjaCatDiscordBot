@@ -111,7 +111,7 @@ namespace NinjaCatDiscordBot {
 
       // Get latest build data and settings files.
       if (File.Exists(Constants.LatestInsiderBuildsFileName)) {
-        CurrentInsiderBuilds = JsonSerializer.Deserialize<Dictionary<InsiderBuildType, string>>(File.ReadAllText(Constants.LatestInsiderBuildsFileName));
+        CurrentInsiderBuilds = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Constants.LatestInsiderBuildsFileName));
       }
 
       if (File.Exists(Constants.SettingsFileName)) {
@@ -146,7 +146,7 @@ namespace NinjaCatDiscordBot {
     /// <summary>
     /// Gets or sets the current Insider build URLs, used for keeping track of new releases.
     /// </summary>
-    public Dictionary<InsiderBuildType, string> CurrentInsiderBuilds { get; set; } = new();
+    public Dictionary<string, string> CurrentInsiderBuilds { get; set; } = [];
 
     #endregion
 
@@ -374,36 +374,42 @@ namespace NinjaCatDiscordBot {
       return JsonSerializer.Deserialize<LearnToc>(flightHubTocJson);
     }
 
-    private InsiderBuild GetInsiderBuildFromToc(LearnToc toc, InsiderBuildType buildType) {
+    private List<InsiderBuild> GetInsiderBuildsFromToc(LearnToc toc, InsiderBuildType buildType) {
+      var builds = new List<InsiderBuild>();
+
       // Get the first build for the type
-      var latestBuildItem = (
+      var latestBuildItems = (
         // Top level ->
         from releaseNotesToc in toc.Items
-        where releaseNotesToc.Title.ToLowerInvariant() == "release notes"
+        where releaseNotesToc.Title.ToLowerInvariant().StartsWith("release notes for windows")
 
         // Release notes ->
         from buildTypeToc in releaseNotesToc.Children
-        where buildTypeToc.Title.ToLowerInvariant() == InsiderBuild.Names[buildType].ToLowerInvariant()
+        where buildTypeToc.Title.ToLowerInvariant().StartsWith(InsiderBuild.Names[buildType].ToLowerInvariant())
 
-        // Beta/Experimental/etc ->
-        from buildToc in buildTypeToc.Children
-        select buildToc).FirstOrDefault();
+        // First build from each general type ->
+        select buildTypeToc.Children.First()).ToList();
 
-      if (latestBuildItem != null) {
-        var buildTitle = latestBuildItem.Title.ToLowerInvariant();
+      foreach (var buildItem in latestBuildItems) {
+        var subtypeStartIndex = buildItem.LinkHref.IndexOf('/') + 1;
+        var subtypeEndIndex = buildItem.LinkHref.IndexOf('/', subtypeStartIndex);
+
+        var buildTitle = buildItem.Title.ToLowerInvariant();
         const string buildText = "build ";
-        return new InsiderBuild() {
+        var build = new InsiderBuild() {
+          SubType = buildItem.LinkHref.Substring(subtypeStartIndex, subtypeEndIndex - subtypeStartIndex).ToLowerInvariant(),
           BuildNumber = buildTitle.Substring(buildTitle.IndexOf(buildText) + buildText.Length),
-          Link = "https://learn.microsoft.com/en-us/windows-insider/" + latestBuildItem.LinkHref,
+          Link = "https://learn.microsoft.com/en-us/windows-insider/" + buildItem.LinkHref,
           Type = buildType
         };
+
+        builds.Add(build);
       }
 
-      //LogError($"Unable to get build for type {buildType}");
-      return null;
+      return builds;
     }
 
-    public async Task<InsiderBuild> GetLatestInsiderBuildAsync(InsiderBuildType buildType) {
+    public async Task<List<InsiderBuild>> GetLatestInsiderBuildsAsync(InsiderBuildType buildType) {
       if (buildType == InsiderBuildType.Server) {
         try {
           // Get server feed.
@@ -416,11 +422,12 @@ namespace NinjaCatDiscordBot {
           if (blogEntry != null) {
             var buildTitle = blogEntry.Elements().First(i => i.Name.LocalName == "title").Value.ToLowerInvariant();
             const string buildText = "build ";
-            return new InsiderBuild() {
+            return [ new InsiderBuild() {
+              SubType = "server",
               BuildNumber = buildTitle.Substring(buildTitle.IndexOf(buildText) + buildText.Length),
               Link = blogEntry.Elements().First(i => i.Name.LocalName == "link").Value,
               Type = buildType
-            };
+            }];
           }
         } catch (HttpRequestException ex) {
           LogError($"Exception when getting post for server: {ex}");
@@ -430,7 +437,7 @@ namespace NinjaCatDiscordBot {
       }
 
       try {
-        return GetInsiderBuildFromToc(await GetLearnTocAsync(), buildType);
+        return GetInsiderBuildsFromToc(await GetLearnTocAsync(), buildType);
       } catch (Exception ex) {
         LogError($"Exception when getting build for type {buildType}: {ex}");
       }
@@ -438,8 +445,8 @@ namespace NinjaCatDiscordBot {
       return null;
     }
 
-    public async Task<Dictionary<InsiderBuildType, InsiderBuild>> GetAllLatestInsiderBuildsAsync() {
-      var builds = new Dictionary<InsiderBuildType, InsiderBuild>();
+    public async Task<Dictionary<string, InsiderBuild>> GetAllLatestInsiderBuildsAsync() {
+      var allBuilds = new Dictionary<string, InsiderBuild>();
 
       try {
         // Get flight hub TOC.
@@ -447,9 +454,12 @@ namespace NinjaCatDiscordBot {
 
         // Get each build type.
         foreach (InsiderBuildType buildType in Enum.GetValues(typeof(InsiderBuildType))) {
-          builds[buildType] = GetInsiderBuildFromToc(flightHubToc, buildType);
+          var builds = GetInsiderBuildsFromToc(flightHubToc, buildType);
+          foreach (var build in builds) {
+            allBuilds[build.SubType] = build;
+          }
         }
-        return builds;
+        return allBuilds;
       } catch (Exception ex) {
         LogError($"Exception when getting builds: {ex}");
         return null;
@@ -491,7 +501,7 @@ namespace NinjaCatDiscordBot {
       }
 
 
-      var typeText = InsiderBuild.Names[build.Type];
+      var typeText = build.GetDisplayName();
       var emotesText = $":smiley_cat: :{InsiderBuild.Emotes[build.Type]}:";
 
       try {
@@ -538,11 +548,14 @@ namespace NinjaCatDiscordBot {
     /// <returns></returns>
     public async Task UpdateGameAsync() {
       try {
-        var build = await GetLatestInsiderBuildAsync(InsiderBuildType.ExperimentalFuturePlatforms);
-        if (build == null)
+        var builds = await GetLatestInsiderBuildsAsync(InsiderBuildType.Experimental);
+        if (builds?.Count == 0)
+          return;
+        var expBuild = (from build in builds where build.SubType.Contains("future") select build).FirstOrDefault();
+        if (expBuild == null)
           return;
 
-        var game = $"on build {build.BuildNumber}";
+        var game = $"on build {expBuild.BuildNumber}";
         foreach (var shard in Shards)
           await shard?.SetGameAsync(game);
       } catch (Exception ex) {

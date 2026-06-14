@@ -49,15 +49,20 @@ namespace NinjaCatDiscordBot {
 
     #region Private methods
 
-    private async Task GetLatestBuildAsync(InsiderBuildType buildType) {
-      await RespondAsync($"Getting the latest {InsiderBuild.Names[buildType]} build...");
-      var build = await CatClient.GetLatestInsiderBuildAsync(buildType);
-      if (build == null) {
-        await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest {InsiderBuild.Names[buildType]} build couldn't be found. :crying_cat_face: :{InsiderBuild.Emotes[buildType]}:"; });
+    private async Task GetLatestBuildsAsync(InsiderBuildType buildType) {
+      await RespondAsync($"Getting the latest {InsiderBuild.Names[buildType]} builds...");
+      var builds = await CatClient.GetLatestInsiderBuildsAsync(buildType);
+      if (builds?.Count == 0) {
+        await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest {InsiderBuild.Names[buildType]} builds couldn't be found. :crying_cat_face: :{InsiderBuild.Emotes[buildType]}:"; });
         return;
       }
 
-      await ModifyOriginalResponseAsync((m) => { m.Content = $"The latest {InsiderBuild.Names[buildType]} build is **{build.BuildNumber}**. :cat: :{InsiderBuild.Emotes[buildType]}:\n<{build.Link}>"; });
+      var message = $"Here's the latest {InsiderBuild.Names[buildType]} builds: :cat: :{InsiderBuild.Emotes[buildType]}:\n\n";
+      foreach (var build in builds) {
+        message += $"**{build.GetDisplayName()}** ({build.BuildNumber}): <{build.Link}>\n";
+      }
+
+      await ModifyOriginalResponseAsync((m) => { m.Content = message; });
     }
 
     #endregion
@@ -431,51 +436,27 @@ namespace NinjaCatDiscordBot {
     }
 
     /// <summary>
-    /// Gets the latest Insider build for the Experimental Channel.
+    /// Gets the latest Insider builds for the Experimental Channel.
     /// </summary>
-    [SlashCommand("latestexperimental", "Shows the latest Experimental Insider build")]
-    public async Task GetLatestExperimentalBuildAsync() {
-      await GetLatestBuildAsync(InsiderBuildType.Experimental);
+    [SlashCommand("latestexperimental", "Shows the latest Experimental Insider builds")]
+    public async Task GetLatestExperimentalBuildsAsync() {
+      await GetLatestBuildsAsync(InsiderBuildType.Experimental);
     }
 
     /// <summary>
-    /// Gets the latest Insider build for the Experimental (Future Platforms) Channel.
+    /// Gets the latest Insider builds for the Beta Channel.
     /// </summary>
-    [SlashCommand("latestexperimental-future", "Shows the latest Experimental (Future Platforms) Insider build")]
-    public async Task GetLatestExperimentalFuturePlatformsBuildAsync() {
-      await GetLatestBuildAsync(InsiderBuildType.ExperimentalFuturePlatforms);
+    [SlashCommand("latestbeta", "Shows the latest Beta Insider builds")]
+    public async Task GetLatestBetaBuildsAsync() {
+      await GetLatestBuildsAsync(InsiderBuildType.Beta);
     }
 
     /// <summary>
-    /// Gets the latest Insider build for the Beta Channel.
+    /// Gets the latest Insider builds for the Release Preview Channel.
     /// </summary>
-    [SlashCommand("latestbeta", "Shows the latest Beta Insider build")]
-    public async Task GetLatestBetaBuildAsync() {
-      await GetLatestBuildAsync(InsiderBuildType.Beta);
-    }
-
-    /// <summary>
-    /// Gets the latest Insider build for the Experimental (26H1) Channel.
-    /// </summary>
-    [SlashCommand("latestexperimental-26h1", "Shows the latest Experimental (26H1) Insider build")]
-    public async Task GetLatestExperimental26H1BuildAsync() {
-      await GetLatestBuildAsync(InsiderBuildType.Experimental26H1);
-    }
-
-    /// <summary>
-    /// Gets the latest Insider build for the Release Preview Channel.
-    /// </summary>
-    [SlashCommand("latestreleasepreview-26h1", "Shows the latest Release Preview (26H1) Insider build")]
-    public async Task GetLatestReleasePreview26H1BuildAsync() {
-      await GetLatestBuildAsync(InsiderBuildType.ReleasePreview26H1);
-    }
-
-    /// <summary>
-    /// Gets the latest Insider build for the Release Preview 24H2/25H2 Channel.
-    /// </summary>
-    [SlashCommand("latestreleasepreview-24h2-25h2", "Shows the latest Release Preview (24H2/25H2) Insider build")]
-    public async Task GetLatestReleasePreview24H2BuildAsync() {
-      await GetLatestBuildAsync(InsiderBuildType.ReleasePreview24H2_25H2);
+    [SlashCommand("latestreleasepreview", "Shows the latest Release Preview Insider builds")]
+    public async Task GetLatestReleasePreviewBuildsAsync() {
+      await GetLatestBuildsAsync(InsiderBuildType.ReleasePreview);
     }
 
     /// <summary>
@@ -483,7 +464,7 @@ namespace NinjaCatDiscordBot {
     /// </summary>
     [SlashCommand("latestserver", "Shows the latest Server Insider build")]
     public async Task GetLatestServerBuildAsync() {
-      await GetLatestBuildAsync(InsiderBuildType.Server);
+      await GetLatestBuildsAsync(InsiderBuildType.Server);
     }
 
     /// <summary>

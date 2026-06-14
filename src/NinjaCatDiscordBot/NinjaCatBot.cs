@@ -79,9 +79,10 @@ namespace NinjaCatDiscordBot {
       // Log in to Discord. Token is stored in the Credentials class.
       await client.StartBotAsync();
 
+      var firstRun = true;
+
       // Start checking for new builds.
       timerBuild = new Timer(async (s) => {
-
         // Check for latest builds.
         var builds = await client.GetAllLatestInsiderBuildsAsync();
         if (builds == null)
@@ -96,21 +97,20 @@ namespace NinjaCatDiscordBot {
             continue;
           }
 
-          // Have we seen this build type yet? This prevents false announcements if the bot has never seen this build before.
-          if (!client.CurrentInsiderBuilds.ContainsKey(build) || string.IsNullOrWhiteSpace(client.CurrentInsiderBuilds[build])) {
-            client.CurrentInsiderBuilds[build] = builds[build].Link;
-            client.SaveSettings();
-            client.LogInfo($"Saved new latest build type {builds[build].Type}: {builds[build].Link}");
-            continue;
-          }
-
-          if (client.CurrentInsiderBuilds[build] == builds[build].Link) {
+          var hasBuildPreviously = client.CurrentInsiderBuilds.ContainsKey(build);
+          if (hasBuildPreviously && client.CurrentInsiderBuilds[build] == builds[build].Link) {
             continue;
           }
 
           client.LogInfo($"New build type {builds[build].Type} received: {builds[build].Link}");
           client.CurrentInsiderBuilds[build] = builds[build].Link;
           client.SaveSettings();
+
+          // Disregard if the bot just started and the build type was never seen before.
+          if (firstRun && !hasBuildPreviously) {
+            client.LogInfo("Bot just started, ignoring new build");
+            continue;
+          }
 
           foreach (var shard in client.Shards)
             client.SendNewInsiderBuildToShard(shard, builds[build]);
@@ -119,6 +119,8 @@ namespace NinjaCatDiscordBot {
             await client.UpdateGameAsync();
           }
         }
+
+        firstRun = false;
 
         // Restart timer.
         timerBuild.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));

@@ -23,6 +23,7 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace NinjaCatDiscordBot.Models {
   /// <summary>
@@ -30,14 +31,9 @@ namespace NinjaCatDiscordBot.Models {
   /// </summary>
   public enum InsiderBuildType {
     Experimental,
-    ExperimentalFuturePlatforms,
     Beta,
-    Server,
-
-    // Release-specific.
-    Experimental26H1,
-    ReleasePreview26H1,
-    ReleasePreview24H2_25H2
+    ReleasePreview,
+    Server
   }
 
   /// <summary>
@@ -49,14 +45,9 @@ namespace NinjaCatDiscordBot.Models {
     /// </summary>
     public static readonly Dictionary<InsiderBuildType, string> Names = new() {
       { InsiderBuildType.Experimental, "Experimental" },
-      { InsiderBuildType.ExperimentalFuturePlatforms, "Experimental (Future Platforms)" },
       { InsiderBuildType.Beta, "Beta" },
-      { InsiderBuildType.Server, "Server" },
-
-      // Release-specific.
-      { InsiderBuildType.Experimental26H1, "Experimental (26H1)" },
-      { InsiderBuildType.ReleasePreview26H1, "Release Preview 24H2/25H2" },
-      { InsiderBuildType.ReleasePreview24H2_25H2, "Release Preview 26H1" },
+      { InsiderBuildType.ReleasePreview, "Release Preview" },
+      { InsiderBuildType.Server, "Server" }
     };
 
     /// <summary>
@@ -64,14 +55,9 @@ namespace NinjaCatDiscordBot.Models {
     /// </summary>
     public static readonly Dictionary<InsiderBuildType, string> Emotes = new() {
       { InsiderBuildType.Experimental, "test_tube" },
-      { InsiderBuildType.ExperimentalFuturePlatforms, "test_tube" },
       { InsiderBuildType.Beta, "paintbrush" },
-      { InsiderBuildType.Server, "desktop" },
-
-      // Release-specific.
-      { InsiderBuildType.Experimental26H1, "test_tube" },
-      { InsiderBuildType.ReleasePreview26H1, "package" },
-      { InsiderBuildType.ReleasePreview24H2_25H2, "package" },
+      { InsiderBuildType.ReleasePreview, "package" },
+      { InsiderBuildType.Server, "desktop" }
     };
 
     /// <summary>
@@ -79,20 +65,28 @@ namespace NinjaCatDiscordBot.Models {
     /// </summary>
     public static readonly Dictionary<InsiderBuildType, RoleType> Roles = new() {
       { InsiderBuildType.Experimental, RoleType.InsiderExperimental },
-      { InsiderBuildType.ExperimentalFuturePlatforms, RoleType.InsiderExperimental },
       { InsiderBuildType.Beta, RoleType.InsiderBeta },
-      { InsiderBuildType.Server, RoleType.None },
-
-      // Release-specific.
-      { InsiderBuildType.Experimental26H1, RoleType.InsiderExperimental },
-      { InsiderBuildType.ReleasePreview26H1, RoleType.InsiderReleasePreview },
-      { InsiderBuildType.ReleasePreview24H2_25H2,RoleType.InsiderReleasePreview },
+      { InsiderBuildType.ReleasePreview, RoleType.InsiderReleasePreview },
+      { InsiderBuildType.Server, RoleType.None }
     };
 
     /// <summary>
     /// Gets or sets the type of Insider build.
     /// </summary>
     public InsiderBuildType Type { get; set; }
+
+    /// <summary>
+    /// Gets or sets the subtype of Insider build.
+    /// </summary>
+    public string SubType { get; set; }
+
+    /// <summary>
+    /// Gets the subtype display name of Insider build.
+    /// </summary>
+    public string GetDisplayName() {
+      var textInfo = CultureInfo.CurrentCulture.TextInfo;
+      return textInfo.ToTitleCase(SubType.Replace('-', ' ').ToLowerInvariant());
+    }
 
     /// <summary>
     /// Gets or sets the build number.
